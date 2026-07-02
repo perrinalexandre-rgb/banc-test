@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Banc de test — supervision</title>
+<style>
+  body { background:#0f172a; color:#e2e8f0; font-family:system-ui,sans-serif;
+         max-width:720px; margin:0 auto; padding:20px; }
+  h1 { font-size:1.3rem; margin-bottom:4px; }
+  #statut { color:#94a3b8; font-size:.9rem; margin-bottom:20px; }
+  #pastille { display:inline-block; width:10px; height:10px; border-radius:50%;
+              background:#94a3b8; margin-right:6px; }
+  .cartes { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+            gap:12px; margin-bottom:20px; }
+  .carte { background:#1e293b; border:1px solid #334155; border-radius:10px;
+           padding:14px; text-align:center; }
+  .carte .lbl { color:#94a3b8; font-size:.8rem; margin-bottom:6px; }
+  .carte .val { font-size:1.5rem; font-weight:700; }
+  canvas { width:100%; background:#1e293b; border:1px solid #334155;
+           border-radius:10px; margin-bottom:20px; }
+  h2 { font-size:.9rem; color:#94a3b8; margin-bottom:8px; }
+  pre { background:#1e293b; border:1px solid #334155; border-radius:10px;
+        padding:14px; font-size:.8rem; overflow-x:auto; white-space:pre-wrap; }
+  #erreur { display:none; background:rgba(239,68,68,.12); border:1px solid #ef4444;
+            color:#ef4444; padding:10px 14px; border-radius:10px; margin-bottom:16px; }
+</style>
+</head>
+<body>
+
+<h1>Banc de test — supervision</h1>
+<div id="statut"><span id="pastille"></span><span id="statut-txt">connexion...</span></div>
+<div id="erreur"></div>
+
+<div class="cartes">
+  <div class="carte"><div class="lbl">Séquence</div><div class="val" id="seq">--</div></div>
+  <div class="carte"><div class="lbl">Uptime ESP32</div><div class="val" id="uptime">--</div></div>
+  <div class="carte"><div class="lbl">WiFi RSSI</div><div class="val" id="rssi">--</div></div>
+  <div class="carte"><div class="lbl">Valeur test</div><div class="val" id="testval">--</div></div>
+</div>
+
+<h2>Valeur test (historique local, ~10 min)</h2>
+<canvas id="courbe" width="680" height="160"></canvas>
+
+<h2>JSON brut reçu</h2>
+<pre id="brut">--</pre>
+
+<script>
+const $ = id => document.getElementById(id);
+const historique = [];   // valeurs de test cote navigateur (max 120 points)
+
+function tracer() {
+  const cv = $("courbe"), ctx = cv.getContext("2d");
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  if (historique.length < 2) return;
+  ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 2; ctx.beginPath();
+  historique.forEach((v, i) => {
+    const x = i / (historique.length - 1) * (cv.width - 20) + 10;
+    const y = cv.height - 10 - (v / 100) * (cv.height - 20);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+}
+
+function afficher(d) {
+  $("brut").textContent = JSON.stringify(d, null, 2);
+
+  if (!d || d.seq === undefined) {   // rien recu du device pour l'instant
+    $("statut-txt").textContent = d && d.message ? d.message : "en attente ESP32...";
+    $("pastille").style.background = "#f59e0b";
+    return;
+  }
+
+  $("seq").textContent = d.seq;
+  const s = d.uptime_s ?? 0;
+  $("uptime").textContent = Math.floor(s/3600) + "h " + Math.floor((s%3600)/60) + "m";
+  $("rssi").textContent = (d.rssi_dbm ?? "--") + " dBm";
+  $("testval").textContent = d.test_value !== undefined ? Number(d.test_value).toFixed(1) : "--";
+
+  if (d.test_value !== undefined) {
+    /* n'ajoute un point que si la sequence a change (nouvelle mesure) */
+    if (historique.seqPrec !== d.seq) {
+      historique.push(Number(d.test_value));
+      if (historique.length > 120) historique.shift();
+      historique.seqPrec = d.seq;
+      tracer();
+    }
+  }
+
+  $("statut-txt").textContent = "dernier dépôt API : " + (d._received_at || "?");
+  $("pastille").style.background = "#22c55e";
+}
+
+async function rafraichir() {
+  try {
+    const rep = await fetch("/api/data", { cache: "no-store" });
+    if (!rep.ok) throw new Error("HTTP " + rep.status);
+    afficher(await rep.json());
+    $("erreur").style.display = "none";
+  } catch (e) {
+    $("erreur").textContent = "API injoignable : " + e.message;
+    $("erreur").style.display = "block";
+    $("pastille").style.background = "#ef4444";
+    $("statut-txt").textContent = "API injoignable";
+  }
+}
+
+rafraichir();
+setInterval(rafraichir, 5000);
+</script>
+
+</body>
+</html>
