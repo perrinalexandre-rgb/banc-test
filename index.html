@@ -3,108 +3,173 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Banc de test — supervision</title>
+<title>enovaQ — Supervision</title>
 <style>
-  body { background:#0f172a; color:#e2e8f0; font-family:system-ui,sans-serif;
-         max-width:720px; margin:0 auto; padding:20px; }
-  h1 { font-size:1.3rem; margin-bottom:4px; }
-  #statut { color:#94a3b8; font-size:.9rem; margin-bottom:20px; }
-  #pastille { display:inline-block; width:10px; height:10px; border-radius:50%;
-              background:#94a3b8; margin-right:6px; }
-  .cartes { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-            gap:12px; margin-bottom:20px; }
-  .carte { background:#1e293b; border:1px solid #334155; border-radius:10px;
-           padding:14px; text-align:center; }
-  .carte .lbl { color:#94a3b8; font-size:.8rem; margin-bottom:6px; }
-  .carte .val { font-size:1.5rem; font-weight:700; }
-  canvas { width:100%; background:#1e293b; border:1px solid #334155;
-           border-radius:10px; margin-bottom:20px; }
-  h2 { font-size:.9rem; color:#94a3b8; margin-bottom:8px; }
-  pre { background:#1e293b; border:1px solid #334155; border-radius:10px;
-        padding:14px; font-size:.8rem; overflow-x:auto; white-space:pre-wrap; }
-  #erreur { display:none; background:rgba(239,68,68,.12); border:1px solid #ef4444;
-            color:#ef4444; padding:10px 14px; border-radius:10px; margin-bottom:16px; }
+  :root { --fond:#0f172a; --carte:#1e293b; --bord:#334155; --txt:#e2e8f0;
+          --gris:#94a3b8; --ok:#22c55e; --ko:#ef4444; --acc:#38bdf8; --org:#f59e0b; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--fond); color:var(--txt);
+         font-family:system-ui,sans-serif; padding:16px; max-width:1100px; margin:0 auto; }
+  header { display:flex; justify-content:space-between; align-items:center;
+           flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  h1 { font-size:1.25rem; } h1 span { color:var(--acc); }
+  nav a { color:var(--acc); text-decoration:none; font-size:.9rem; margin-left:14px; }
+  #barre { display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+           color:var(--gris); font-size:.85rem; margin-bottom:16px; }
+  #pastille { width:10px; height:10px; border-radius:50%; background:var(--gris); }
+  select { background:var(--carte); color:var(--txt); border:1px solid var(--bord);
+           border-radius:8px; padding:5px 8px; }
+  .tag { font-size:.7rem; padding:2px 8px; border-radius:10px; font-weight:600; }
+  .tag.simu { background:rgba(245,158,11,.15); color:var(--org); }
+  .tag.cfg  { background:rgba(56,189,248,.15); color:var(--acc); }
+
+  h2.section { font-size:.85rem; color:var(--gris); text-transform:uppercase;
+               letter-spacing:.05em; margin:18px 0 8px; }
+  .grille { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; }
+  .carte { background:var(--carte); border:1px solid var(--bord);
+           border-radius:10px; padding:12px; }
+  .carte h3 { font-size:.85rem; margin-bottom:8px; display:flex;
+              justify-content:space-between; align-items:center; }
+  .ligne { display:flex; justify-content:space-between; font-size:.85rem; padding:3px 0; }
+  .ligne .l { color:var(--gris); } .ligne .v { font-weight:600; font-variant-numeric:tabular-nums; }
+
+  .circuit { background:var(--carte); border:1px solid var(--bord);
+             border-radius:12px; padding:14px; margin-bottom:12px; }
+  .circuit.inactif { opacity:.45; }
+  .circuit-tete { display:flex; justify-content:space-between; align-items:center;
+                  margin-bottom:10px; flex-wrap:wrap; gap:6px; }
+  .circuit-tete b { font-size:1rem; }
+  .sats { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; }
+  .sat { background:var(--fond); border:1px solid var(--bord); border-radius:10px; padding:10px; }
+  .sat h4 { font-size:.8rem; color:var(--gris); margin-bottom:8px; }
+  .cuve { display:flex; flex-direction:column-reverse; gap:3px; width:34px; float:right; }
+  .cuve div { height:12px; border-radius:3px; background:#0b1220; border:1px solid var(--bord); }
+  .cuve div.on { background:var(--acc); border-color:var(--acc); }
+  .alerte { color:var(--ko); font-weight:700; }
+
+  pre { background:var(--carte); border:1px solid var(--bord); border-radius:10px;
+        padding:12px; font-size:.75rem; overflow-x:auto; white-space:pre-wrap;
+        max-height:300px; overflow-y:auto; }
+  #erreur { display:none; background:rgba(239,68,68,.12); border:1px solid var(--ko);
+            color:var(--ko); padding:10px 14px; border-radius:10px; margin-bottom:14px; }
 </style>
 </head>
 <body>
 
-<h1>Banc de test — supervision</h1>
-<div id="statut"><span id="pastille"></span><span id="statut-txt">connexion...</span></div>
+<header>
+  <h1>enova<span>Q</span> — Supervision</h1>
+  <nav><a href="config.html">⚙ Configuration →</a></nav>
+</header>
+
+<div id="barre">
+  <span id="pastille"></span><span id="statut">connexion...</span>
+  <label>Chaufferie : <select id="sel-device"></select></label>
+  <span class="tag simu" id="tag-simu" style="display:none">SIMULATION</span>
+  <span class="tag cfg" id="tag-cfg">config v?</span>
+</div>
 <div id="erreur"></div>
 
-<div class="cartes">
-  <div class="carte"><div class="lbl">Séquence</div><div class="val" id="seq">--</div></div>
-  <div class="carte"><div class="lbl">Uptime ESP32</div><div class="val" id="uptime">--</div></div>
-  <div class="carte"><div class="lbl">WiFi RSSI</div><div class="val" id="rssi">--</div></div>
-  <div class="carte"><div class="lbl">Valeur test</div><div class="val" id="testval">--</div></div>
-</div>
+<h2 class="section">Chaufferie</h2>
+<div class="grille" id="zone-chaufferie"></div>
 
-<h2>Valeur test (historique local, ~10 min)</h2>
-<canvas id="courbe" width="680" height="160"></canvas>
+<h2 class="section">Circuits & satellites</h2>
+<div id="zone-circuits"></div>
 
-<h2>JSON brut reçu</h2>
+<h2 class="section">JSON brut (dernier reçu)</h2>
 <pre id="brut">--</pre>
 
 <script>
 const $ = id => document.getElementById(id);
-const historique = [];   // valeurs de test cote navigateur (max 120 points)
+let deviceChoisi = null;
+const f = (v, d=1) => (v===undefined||v===null) ? "--" : Number(v).toFixed(d);
 
-function tracer() {
-  const cv = $("courbe"), ctx = cv.getContext("2d");
-  ctx.clearRect(0, 0, cv.width, cv.height);
-  if (historique.length < 2) return;
-  ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 2; ctx.beginPath();
-  historique.forEach((v, i) => {
-    const x = i / (historique.length - 1) * (cv.width - 20) + 10;
-    const y = cv.height - 10 - (v / 100) * (cv.height - 20);
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  });
-  ctx.stroke();
+function carte(titre, ok, lignes) {
+  const badge = ok===undefined ? "" :
+    `<span class="tag" style="background:${ok?'rgba(34,197,94,.15)':'rgba(239,68,68,.15)'};
+      color:${ok?'var(--ok)':'var(--ko)'}">${ok?'OK':'KO'}</span>`;
+  return `<div class="carte"><h3>${titre}${badge}</h3>` +
+    lignes.map(([l,v])=>`<div class="ligne"><span class="l">${l}</span><span class="v">${v}</span></div>`).join("") +
+    `</div>`;
 }
 
-function afficher(d) {
+function cuve(niveau) {
+  const n = niveau==="HAUT" ? 3 : niveau==="MILIEU" ? 2 : niveau==="BAS" ? 1 : 0;
+  return `<div class="cuve">${[1,2,3].map(i=>`<div class="${i<=n?'on':''}"></div>`).join("")}</div>`;
+}
+
+function afficherDevice(d) {
   $("brut").textContent = JSON.stringify(d, null, 2);
+  $("tag-simu").style.display = d.simulation ? "" : "none";
+  $("tag-cfg").textContent = "config v" + (d.cfg_version ?? "?") + " appliquée";
 
-  if (!d || d.seq === undefined) {   // rien recu du device pour l'instant
-    $("statut-txt").textContent = d && d.message ? d.message : "en attente ESP32...";
-    $("pastille").style.background = "#f59e0b";
-    return;
-  }
+  const ch = d.chaufferie || {};
+  $("zone-chaufferie").innerHTML =
+    carte("VFD (pompe)", ch.vfd?.ok, [
+      ["Fréquence", f(ch.vfd?.freq_hz,1)+" Hz"], ["Courant", f(ch.vfd?.courant_a,2)+" A"]]) +
+    carte("SDM120 (élec)", ch.sdm120?.ok, [
+      ["Tension", f(ch.sdm120?.tension_v,1)+" V"], ["Puissance", f(ch.sdm120?.puissance_w,0)+" W"]]) +
+    carte("Maddalena (therm.)", ch.maddalena?.ok, [
+      ["T départ", f(ch.maddalena?.t_depart_c)+" °C"], ["T retour", f(ch.maddalena?.t_retour_c)+" °C"],
+      ["Débit", f(ch.maddalena?.debit_lh,0)+" l/h"]]) +
+    carte("Eau / vanne", undefined, [
+      ["Volume", f(ch.eau?.litres,0)+" L"], ["Vanne R1.2", ch.vanne_r12 ?? "--"],
+      ["Uptime", Math.floor((d.uptime_s??0)/60)+" min"], ["WiFi", (d.rssi_dbm??"--")+" dBm"]]);
 
-  $("seq").textContent = d.seq;
-  const s = d.uptime_s ?? 0;
-  $("uptime").textContent = Math.floor(s/3600) + "h " + Math.floor((s%3600)/60) + "m";
-  $("rssi").textContent = (d.rssi_dbm ?? "--") + " dBm";
-  $("testval").textContent = d.test_value !== undefined ? Number(d.test_value).toFixed(1) : "--";
-
-  if (d.test_value !== undefined) {
-    /* n'ajoute un point que si la sequence a change (nouvelle mesure) */
-    if (historique.seqPrec !== d.seq) {
-      historique.push(Number(d.test_value));
-      if (historique.length > 120) historique.shift();
-      historique.seqPrec = d.seq;
-      tracer();
-    }
-  }
-
-  $("statut-txt").textContent = "dernier dépôt API : " + (d._received_at || "?");
-  $("pastille").style.background = "#22c55e";
+  $("zone-circuits").innerHTML = (d.circuits || []).map(c => `
+    <div class="circuit ${c.actif ? "" : "inactif"}">
+      <div class="circuit-tete">
+        <b>Circuit ${c.circuit_id}</b>
+        <span>${c.actif ? "ACTIF" : "désactivé"} — départ ${f(c.t_depart_c)} °C</span>
+      </div>
+      <div class="sats">
+        ${(c.satellites || []).map(s => `
+          <div class="sat">
+            ${cuve(s.niveau)}
+            <h4>Satellite ${s.sat_id}</h4>
+            <div class="ligne"><span class="l">Niveau</span><span class="v">${s.niveau ?? "--"}</span></div>
+            <div class="ligne"><span class="l">Temp</span><span class="v">${f(s.temp_c)} °C</span></div>
+            <div class="ligne"><span class="l">Seuil</span>
+              <span class="v ${s.temp_sup_50c ? "alerte":""}">${s.temp_sup_50c ? "DÉPASSÉ ⚠" : "ok"}</span></div>
+            <div class="ligne"><span class="l">Vanne</span><span class="v">${s.vanne ? "OUVERTE" : "fermée"}</span></div>
+          </div>`).join("")}
+      </div>
+    </div>`).join("") || "<p style='color:var(--gris)'>aucun circuit</p>";
 }
 
 async function rafraichir() {
   try {
     const rep = await fetch("/api/data", { cache: "no-store" });
     if (!rep.ok) throw new Error("HTTP " + rep.status);
-    afficher(await rep.json());
+    const j = await rep.json();
     $("erreur").style.display = "none";
+
+    const ids = Object.keys(j.devices || {});
+    if (!ids.length) {
+      $("statut").textContent = "en attente d'un premier envoi ESP32...";
+      $("pastille").style.background = "var(--org)";
+      return;
+    }
+    /* menu deroulant des chaufferies */
+    const sel = $("sel-device");
+    if (sel.options.length !== ids.length) {
+      sel.innerHTML = ids.map(i => `<option>${i}</option>`).join("");
+      if (deviceChoisi && ids.includes(deviceChoisi)) sel.value = deviceChoisi;
+    }
+    deviceChoisi = sel.value || ids[0];
+
+    const d = j.devices[deviceChoisi];
+    afficherDevice(d);
+    $("statut").textContent = "dernier dépôt : " + (d._received_at || "?");
+    $("pastille").style.background = "var(--ok)";
   } catch (e) {
     $("erreur").textContent = "API injoignable : " + e.message;
     $("erreur").style.display = "block";
-    $("pastille").style.background = "#ef4444";
-    $("statut-txt").textContent = "API injoignable";
+    $("pastille").style.background = "var(--ko)";
+    $("statut").textContent = "API injoignable";
   }
 }
 
+$("sel-device").addEventListener("change", () => { deviceChoisi = $("sel-device").value; rafraichir(); });
 rafraichir();
 setInterval(rafraichir, 5000);
 </script>
