@@ -283,7 +283,18 @@
 <script>
 const DATA_API = "/api/data";
 const CFG_API  = "/api/config";
+const DEVICE_ID = "chaufferie-01";
 const MAX_SATS = 8;
+
+// L'API enveloppe la trame dans { devices: { "chaufferie-01": {...} } }.
+function unwrap(payload){
+  if(payload && payload.devices && typeof payload.devices==="object"){
+    if(payload.devices[DEVICE_ID]) return payload.devices[DEVICE_ID];
+    const first = Object.values(payload.devices)[0];
+    if(first) return first;
+  }
+  return payload;
+}
 
 // bornes miroir du firmware (appliquerConfigCloud)
 const SAT_FIELDS = [
@@ -353,7 +364,8 @@ async function loadCurrent(){
   try{
     const r = await fetch(DATA_API,{cache:"no-store"});
     if(!r.ok) throw 0;
-    const d = await r.json();
+    const d = unwrap(await r.json());
+    if(!d || d.seq===undefined) throw 0;
     curCfgVersion = d.cfg_version || 0;
     document.getElementById("curVer").textContent = curCfgVersion;
     document.getElementById("nextVer").textContent = curCfgVersion+1;
