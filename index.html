@@ -517,13 +517,30 @@ function render(d){
   else banner(null);
 }
 
+// L'API enveloppe la trame : { devices: { "chaufferie-01": {...} }, configs:{} }.
+// On déballe le device voulu (DEVICE_ID) ; repli sur le 1er device, puis sur
+// la racine si jamais l'API renvoyait déjà du plat.
+const DEVICE_ID = "chaufferie-01";
+function unwrap(payload){
+  if(payload && payload.devices && typeof payload.devices==="object"){
+    if(payload.devices[DEVICE_ID]) return payload.devices[DEVICE_ID];
+    const first = Object.values(payload.devices)[0];
+    if(first) return first;
+  }
+  return payload;
+}
+
 async function tick(){
   try{
     const r = await fetch(API, {cache:"no-store"});
     if(!r.ok) throw new Error("HTTP "+r.status);
-    const d = await r.json();
+    const raw = await r.json();
+    const d = unwrap(raw);
+    if(!d || d.seq===undefined){ // device pas encore vu
+      if(!everConnected) setStatus("off");
+      return;
+    }
     lastRxAt = Date.now(); everConnected = true;
-    // le back renvoie _received_at ; on se base sur seq pour la fraîcheur
     if(d.seq!==lastSeq){ lastSeq=d.seq; }
     render(d);
     setStatus("live");
