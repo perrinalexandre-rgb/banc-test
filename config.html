@@ -3,156 +3,539 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>enovaQ — Configuration</title>
+<title>enovaQ — Supervision</title>
 <style>
-  :root { --fond:#0f172a; --carte:#1e293b; --bord:#334155; --txt:#e2e8f0;
-          --gris:#94a3b8; --ok:#22c55e; --ko:#ef4444; --acc:#38bdf8; --org:#f59e0b; }
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { background:var(--fond); color:var(--txt); font-family:system-ui,sans-serif;
-         max-width:640px; margin:0 auto; padding:16px; }
-  header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
-  h1 { font-size:1.25rem; } h1 span { color:var(--acc); }
-  nav a { color:var(--acc); text-decoration:none; font-size:.9rem; }
-  .carte { background:var(--carte); border:1px solid var(--bord); border-radius:12px;
-           padding:16px; margin-bottom:14px; }
-  label { display:block; color:var(--gris); font-size:.85rem; margin:12px 0 4px; }
-  input[type=number], input[type=password], select {
-    width:100%; background:var(--fond); color:var(--txt); border:1px solid var(--bord);
-    border-radius:8px; padding:8px 10px; font-size:.95rem; }
-  .switch { display:flex; align-items:center; gap:10px; margin-top:8px; }
-  .switch input { width:20px; height:20px; accent-color:var(--acc); }
-  button { width:100%; margin-top:16px; background:var(--acc); color:#04263a; border:none;
-           border-radius:10px; padding:12px; font-size:1rem; font-weight:700; cursor:pointer; }
-  button:disabled { opacity:.5; cursor:wait; }
-  #suivi { margin-top:14px; padding:12px; border-radius:10px; font-size:.9rem; display:none; }
-  #suivi.attente { display:block; background:rgba(245,158,11,.12);
-                   border:1px solid var(--org); color:var(--org); }
-  #suivi.applique { display:block; background:rgba(34,197,94,.12);
-                    border:1px solid var(--ok); color:var(--ok); }
-  #suivi.erreur { display:block; background:rgba(239,68,68,.12);
-                  border:1px solid var(--ko); color:var(--ko); }
-  .etat { display:flex; justify-content:space-between; font-size:.85rem;
-          color:var(--gris); padding:3px 0; }
-  .etat b { color:var(--txt); }
-  pre { background:var(--fond); border:1px solid var(--bord); border-radius:8px;
-        padding:10px; font-size:.75rem; white-space:pre-wrap; margin-top:10px; }
+  :root{
+    --cream:#F6F3EC; --paper:#FFFFFF; --ink:#1E1B16; --ink-2:#5A554C;
+    --ink-3:#8C867A; --line:#E4DFD3; --line-2:#D2CBBB;
+    --cold:#185FA5; --cold-bg:#E6F1FB; --cold-ink:#0C447C;
+    --hot:#BA7517;  --hot-bg:#FAEEDA;  --hot-ink:#854F0B;
+    --ok:#0F6E56;   --ok-bg:#E1F5EE;
+    --warn:#854F0B; --warn-bg:#FAEEDA;
+    --bad:#A32D2D;  --bad-bg:#FCEBEB;
+    --radius:10px;
+    --mono:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --cond:"Inter",-apple-system,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --cream:#171512; --paper:#211E1A; --ink:#F1ECE2; --ink-2:#B6AF9F;
+      --ink-3:#847E71; --line:#332F28; --line-2:#433E35;
+      --cold-bg:#0C2942; --cold-ink:#85B7EB; --cold:#378ADD;
+      --hot-bg:#3A2606; --hot-ink:#EF9F27; --hot:#EF9F27;
+      --ok-bg:#08302A; --ok:#5DCAA5;
+      --warn-bg:#3A2606; --warn:#EF9F27;
+      --bad-bg:#3A1414; --bad:#F09595;
+    }
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--cream);color:var(--ink);font-family:var(--sans);
+    line-height:1.55;-webkit-font-smoothing:antialiased;padding:0 0 3rem;}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+  a{color:inherit}
+
+  /* ---- top bar ---- */
+  header{position:sticky;top:0;z-index:20;background:var(--cream);
+    border-bottom:0.5px solid var(--line);}
+  .bar{display:flex;align-items:center;justify-content:space-between;
+    padding:14px 0;gap:16px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:11px}
+  .logo{width:38px;height:38px;border-radius:11px;background:var(--hot);
+    display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+  .logo svg{width:21px;height:21px}
+  .brand h1{font-size:18px;font-weight:600;letter-spacing:-0.02em;line-height:1.1}
+  .brand p{font-size:12px;color:var(--ink-3);font-family:var(--mono)}
+  .topright{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .status{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;
+    padding:6px 12px;border-radius:20px;background:var(--paper);
+    border:0.5px solid var(--line)}
+  .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .dot.live{background:var(--ok)}
+  .dot.stale{background:var(--warn)}
+  .dot.off{background:var(--bad)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .dot.live{animation:pulse 2s ease-in-out infinite}
+  .cfglink{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;
+    text-decoration:none;padding:7px 14px;border-radius:var(--radius);
+    border:0.5px solid var(--line-2);background:var(--paper);color:var(--ink)}
+  .cfglink:hover{border-color:var(--ink-3)}
+  .cfglink svg{width:15px;height:15px}
+
+  section{margin-top:26px}
+  .eyebrow{font-size:11px;font-weight:600;text-transform:uppercase;
+    letter-spacing:0.1em;color:var(--ink-3);margin-bottom:11px;
+    display:flex;align-items:center;gap:8px}
+  .eyebrow .sub{font-weight:400;letter-spacing:0.02em;text-transform:none;
+    color:var(--ink-3)}
+
+  /* ---- train frieze ---- */
+  .train{background:var(--paper);border:0.5px solid var(--line);
+    border-radius:14px;padding:18px}
+  .steps{display:flex;gap:4px;margin-bottom:12px}
+  .step{flex:1;text-align:center;padding:11px 3px 9px;border-radius:8px;
+    background:var(--cream);color:var(--ink-3);font-size:11px;font-weight:500;
+    transition:background .3s,color .3s;position:relative;min-width:0}
+  .step .code{font-size:13px;font-weight:600;font-family:var(--mono)}
+  .step .lbl{font-size:9.5px;margin-top:2px;line-height:1.15;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .step.done{background:var(--hot-bg);color:var(--hot-ink)}
+  .step.active{background:var(--hot);color:#fff}
+  .step.active.cold{background:var(--cold)}
+  .step.done.cold{background:var(--cold-bg);color:var(--cold-ink)}
+  .trackline{height:6px;background:var(--cream);border-radius:4px;overflow:hidden;
+    margin-bottom:14px}
+  .trackfill{height:100%;background:var(--hot);border-radius:4px;
+    transition:width .5s ease,background .3s;width:0}
+  .trackfill.cold{background:var(--cold)}
+  .trainmeta{display:flex;flex-wrap:wrap;gap:22px;align-items:baseline}
+  .tm{display:flex;flex-direction:column;gap:1px}
+  .tm .k{font-size:11px;color:var(--ink-3)}
+  .tm .v{font-size:15px;font-weight:600}
+  .tm .v.mono{font-family:var(--mono)}
+  .queue{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+  .qchip{font-size:11px;font-weight:500;padding:2px 9px;border-radius:20px;
+    background:var(--cream);border:0.5px solid var(--line-2);
+    font-family:var(--mono)}
+  .qempty{font-size:13px;color:var(--ink-3)}
+
+  /* ---- satellites ---- */
+  .satgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+    gap:14px}
+  .sat{background:var(--paper);border:0.5px solid var(--line);border-radius:14px;
+    padding:15px 16px}
+  .sat.active{border-color:var(--hot);border-width:1px}
+  .sat.offline{opacity:.62}
+  .sathead{display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:11px;gap:8px}
+  .satname{font-size:15px;font-weight:600;letter-spacing:-0.01em}
+  .pill{font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:20px;
+    white-space:nowrap;text-transform:uppercase;letter-spacing:0.03em}
+  .pill.fill{background:var(--hot-bg);color:var(--hot-ink)}
+  .pill.queue{background:var(--cold-bg);color:var(--cold-ink)}
+  .pill.idle{background:var(--cream);color:var(--ink-3)}
+  .pill.off{background:var(--bad-bg);color:var(--bad)}
+  .volrow{display:flex;align-items:baseline;gap:6px;margin-bottom:3px}
+  .volbig{font-size:30px;font-weight:600;letter-spacing:-0.02em;line-height:1;
+    font-family:var(--cond)}
+  .volbig.active{color:var(--hot)}
+  .voltgt{font-size:13px;color:var(--ink-3)}
+  .qual{font-size:10.5px;color:var(--ink-3);font-family:var(--mono);
+    text-transform:uppercase;letter-spacing:0.04em;margin-bottom:12px}
+  .levels{display:flex;gap:5px;margin-bottom:5px}
+  .lvl{flex:1;height:6px;border-radius:3px;background:var(--cream);
+    position:relative}
+  .lvl.on{background:var(--ok)}
+  .lvlrow{display:flex;gap:5px;font-size:10px;color:var(--ink-3);
+    margin-bottom:13px}
+  .lvlrow span{flex:1;text-align:center;font-family:var(--mono)}
+  .satfoot{display:flex;justify-content:space-between;font-size:12px;
+    color:var(--ink-2);border-top:0.5px solid var(--line);padding-top:10px}
+  .satfoot .temp{font-weight:500}
+  .satfoot .temp.hot{color:var(--hot)}
+
+  /* ---- plant metrics ---- */
+  .metgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+    gap:11px}
+  .met{background:var(--paper);border:0.5px solid var(--line);border-radius:12px;
+    padding:13px 15px}
+  .met .k{font-size:11px;color:var(--ink-3);margin-bottom:5px;
+    display:flex;align-items:center;gap:5px}
+  .met .k svg{width:13px;height:13px;opacity:.7}
+  .met .v{font-size:22px;font-weight:600;letter-spacing:-0.01em;
+    font-family:var(--cond)}
+  .met .v small{font-size:12px;font-weight:400;color:var(--ink-3)}
+  .met .v.cold{color:var(--cold)}
+  .met .v.hot{color:var(--hot)}
+
+  /* ---- chaufferie detail cards ---- */
+  .plantgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+    gap:14px}
+  .pcard{background:var(--paper);border:0.5px solid var(--line);border-radius:14px;
+    padding:15px 16px}
+  .pcard h3{font-size:13px;font-weight:600;margin-bottom:11px;
+    display:flex;align-items:center;justify-content:space-between}
+  .pcard h3 .badge{font-size:10px;font-weight:600;padding:2px 8px;
+    border-radius:20px}
+  .badge.up{background:var(--ok-bg);color:var(--ok)}
+  .badge.down{background:var(--bad-bg);color:var(--bad)}
+  .kv{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;
+    border-bottom:0.5px solid var(--line)}
+  .kv:last-child{border-bottom:none}
+  .kv .k{color:var(--ink-2)}
+  .kv .v{font-weight:500;font-family:var(--mono)}
+  .muted-note{font-size:12px;color:var(--ink-3);padding:6px 0}
+
+  /* ---- raw + footer ---- */
+  details.raw{margin-top:26px;background:var(--paper);border:0.5px solid var(--line);
+    border-radius:12px;overflow:hidden}
+  details.raw summary{cursor:pointer;padding:13px 16px;font-size:13px;
+    font-weight:500;list-style:none;display:flex;align-items:center;gap:8px}
+  details.raw summary::-webkit-details-marker{display:none}
+  details.raw summary svg{width:14px;height:14px;transition:transform .2s}
+  details.raw[open] summary svg{transform:rotate(90deg)}
+  pre{margin:0;padding:0 16px 16px;font-family:var(--mono);font-size:11.5px;
+    line-height:1.6;color:var(--ink-2);overflow-x:auto;white-space:pre-wrap;
+    word-break:break-word}
+  footer{margin-top:26px;text-align:center;font-size:12px;color:var(--ink-3)}
+  footer .sep{margin:0 8px;opacity:.5}
+
+  .banner{display:none;align-items:center;gap:10px;background:var(--bad-bg);
+    color:var(--bad);border-radius:var(--radius);padding:11px 15px;
+    font-size:13px;font-weight:500;margin-top:16px}
+  .banner.show{display:flex}
+  .banner svg{width:16px;height:16px;flex-shrink:0}
+
+  @media(max-width:560px){
+    .step .lbl{display:none}
+    .brand h1{font-size:16px}
+    .volbig{font-size:26px}
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>enova<span>Q</span> — Configuration</h1>
-  <nav><a href="index.html">← Supervision</a></nav>
+  <div class="wrap bar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2.7C12 2.7 5 10 5 14.5a7 7 0 0 0 14 0C19 10 12 2.7 12 2.7Z"/>
+        </svg>
+      </div>
+      <div>
+        <h1>enovaQ — supervision</h1>
+        <p id="devid">chaufferie-01</p>
+      </div>
+    </div>
+    <div class="topright">
+      <div class="status">
+        <span class="dot off" id="statusDot"></span>
+        <span id="statusText">connexion…</span>
+      </div>
+      <a class="cfglink" href="config.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+        </svg>
+        Réglages
+      </a>
+    </div>
+  </div>
 </header>
 
-<div class="carte">
-  <div class="etat"><span>Chaufferie</span><b><select id="sel-device" style="width:auto"></select></b></div>
-  <div class="etat"><span>Version appliquée par l'ESP32</span><b id="v-appliquee">?</b></div>
-  <div class="etat"><span>Version en attente sur l'API</span><b id="v-attente">aucune</b></div>
-  <div class="etat"><span>Dernier dépôt de mesures</span><b id="dernier">--</b></div>
-</div>
+<div class="wrap">
 
-<div class="carte">
-  <label>Intervalle d'envoi des mesures (secondes, 5–3600)</label>
-  <input type="number" id="intervalle" min="5" max="3600" value="30">
+  <div class="banner" id="banner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <span id="bannerText"></span>
+  </div>
 
-  <label>Seuil de température satellites (°C, 10–95)</label>
-  <input type="number" id="seuil" min="10" max="95" step="0.5" value="50">
+  <!-- TRAIN -->
+  <section>
+    <div class="eyebrow">Train de remplissage
+      <span class="sub" id="trainSub"></span></div>
+    <div class="train">
+      <div class="steps" id="steps"></div>
+      <div class="trackline"><div class="trackfill" id="trackfill"></div></div>
+      <div class="trainmeta">
+        <div class="tm"><span class="k">Satellite servi</span>
+          <span class="v" id="tmSat">—</span></div>
+        <div class="tm"><span class="k">Front d'ECS</span>
+          <span class="v mono" id="tmFront">—</span></div>
+        <div class="tm"><span class="k">Avancement</span>
+          <span class="v mono" id="tmAdv">—</span></div>
+        <div class="tm" style="flex:1;min-width:160px">
+          <span class="k">File d'attente</span>
+          <div class="queue" id="tmQueue"><span class="qempty">vide</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <label>Circuits actifs</label>
-  <div class="switch"><input type="checkbox" id="c1" checked><span>Circuit C1</span></div>
-  <div class="switch"><input type="checkbox" id="c2" checked><span>Circuit C2</span></div>
+  <!-- SATELLITES -->
+  <section>
+    <div class="eyebrow">Satellites <span class="sub" id="satSub"></span></div>
+    <div class="satgrid" id="satgrid"></div>
+  </section>
 
-  <label>Clé API (obligatoire pour écrire)</label>
-  <input type="password" id="clef" placeholder="clé API">
+  <!-- KEY METRICS -->
+  <section>
+    <div class="eyebrow">Chaufferie — vue rapide</div>
+    <div class="metgrid" id="metgrid"></div>
+  </section>
 
-  <button id="btn">Envoyer la configuration</button>
-  <div id="suivi"></div>
-  <pre id="apercu" style="display:none"></pre>
+  <!-- PLANT DETAIL -->
+  <section>
+    <div class="eyebrow">Instrumentation
+      <span class="sub">mesures relevées au repos (E0)</span></div>
+    <div class="plantgrid" id="plantgrid"></div>
+  </section>
+
+  <!-- RAW -->
+  <details class="raw">
+    <summary>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      Trame JSON brute
+    </summary>
+    <pre id="raw">—</pre>
+  </details>
+
+  <footer>
+    <span id="footSeq">seq —</span><span class="sep">·</span>
+    <span id="footUptime">uptime —</span><span class="sep">·</span>
+    <span id="footCfg">config v—</span><span class="sep">·</span>
+    <span id="footRssi">— dBm</span>
+  </footer>
+
 </div>
 
 <script>
-const $ = id => document.getElementById(id);
-let deviceChoisi = null, versionEnvoyee = null;
+const API = "/api/data";
+const POLL_MS = 5000;
+const STALE_MS = 20000;   // au-delà : donnée périmée
 
-/* etat courant : versions + prefill du formulaire depuis la config en attente */
-async function rafraichirEtat() {
-  try {
-    const j = await (await fetch("/api/data", { cache:"no-store" })).json();
-    const ids = Object.keys(j.devices || {});
-    const sel = $("sel-device");
-    if (ids.length && sel.options.length !== ids.length) {
-      sel.innerHTML = ids.map(i=>`<option>${i}</option>`).join("");
-      if (deviceChoisi && ids.includes(deviceChoisi)) sel.value = deviceChoisi;
-    }
-    deviceChoisi = sel.value || ids[0] || "chaufferie-01";
+const STEPS = [
+  {c:"E0", l:"repos"},      {c:"E1", l:"amorçage"},
+  {c:"E2", l:"ouverture"},  {c:"E3", l:"remplissage"},
+  {c:"E4", l:"bascule EFS"},{c:"E5", l:"bouchon"},
+  {c:"E6", l:"fermeture"},  {c:"E7", l:"récup"},
+  {c:"E8", l:"retour"}
+];
+// étapes "froides" (EFS / eau froide) → teinte bleue
+const COLD_STEPS = new Set([4,5,7]);
 
-    const d = (j.devices || {})[deviceChoisi];
-    const vApp = d ? (d.cfg_version ?? 0) : null;
-    $("v-appliquee").textContent = vApp === null ? "device jamais vu" : "v" + vApp;
-    $("dernier").textContent = d ? (d._received_at || "--") : "--";
+let lastSeq = null, lastRxAt = 0, everConnected = false;
 
-    const cfgAttente = (j.configs || {})[deviceChoisi];
-    $("v-attente").textContent = cfgAttente ? "v" + cfgAttente.cfg_version : "aucune";
-
-    /* suivi de l'accuse de reception apres un envoi */
-    if (versionEnvoyee !== null) {
-      const s = $("suivi");
-      if (vApp !== null && vApp >= versionEnvoyee) {
-        s.className = "applique";
-        s.textContent = "✓ Config v" + versionEnvoyee + " appliquée par l'ESP32 (et sauvée dans sa flash).";
-        versionEnvoyee = null;
-      } else {
-        s.className = "attente";
-        s.textContent = "⏳ Config v" + versionEnvoyee +
-          " déposée sur l'API — en attente du prochain envoi de l'ESP32 (max = son intervalle actuel)...";
-      }
-    }
-  } catch (e) { /* silencieux, retentera */ }
-}
-
-$("btn").addEventListener("click", async () => {
-  const btn = $("btn"), s = $("suivi");
-  btn.disabled = true;
-
-  /* version = max(appliquee, en attente) + 1 */
-  const vApp = parseInt(($("v-appliquee").textContent||"").replace("v",""))||0;
-  const vAtt = parseInt(($("v-attente").textContent||"").replace("v",""))||0;
-  const nouvelleVersion = Math.max(vApp, vAtt) + 1;
-
-  const config = {
-    cfg_version:  nouvelleVersion,
-    intervalle_s: Math.min(3600, Math.max(5, parseInt($("intervalle").value)||30)),
-    seuil_temp_c: Math.min(95, Math.max(10, parseFloat($("seuil").value)||50)),
-    circuits: { C1: $("c1").checked, C2: $("c2").checked }
-  };
-  $("apercu").style.display = "block";
-  $("apercu").textContent = "JSON envoyé :\n" + JSON.stringify(
-    { device_id: deviceChoisi, config }, null, 2);
-
-  try {
-    const rep = await fetch("/api/config", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": $("clef").value },
-      body: JSON.stringify({ device_id: deviceChoisi, config })
-    });
-    if (rep.status === 401) throw new Error("clé API invalide");
-    if (!rep.ok) throw new Error("HTTP " + rep.status);
-    versionEnvoyee = nouvelleVersion;
-    s.className = "attente";
-    s.textContent = "⏳ Config v" + nouvelleVersion + " déposée — en attente de l'ESP32...";
-  } catch (e) {
-    s.className = "erreur";
-    s.textContent = "✗ Échec : " + e.message;
-  }
-  btn.disabled = false;
-  rafraichirEtat();
+// build train frieze once
+const stepsEl = document.getElementById("steps");
+STEPS.forEach((s,i)=>{
+  const d = document.createElement("div");
+  d.className = "step"; d.id = "step"+i;
+  d.innerHTML = `<div class="code">${s.c}</div><div class="lbl">${s.l}</div>`;
+  stepsEl.appendChild(d);
 });
 
-$("sel-device").addEventListener("change", () => { deviceChoisi = $("sel-device").value; rafraichirEtat(); });
-rafraichirEtat();
-setInterval(rafraichirEtat, 5000);
-</script>
+function etapeIndex(nom){
+  if(!nom) return 0;
+  const m = String(nom).match(/E(\d)/);
+  return m ? parseInt(m[1],10) : 0;
+}
+function fmt(v, unit="", dec=1){
+  if(v===null||v===undefined||v==="") return "—";
+  const n = Number(v);
+  if(Number.isNaN(n)) return String(v);
+  return (Number.isInteger(n)&&dec===0?n:n.toFixed(dec))+(unit?" "+unit:"");
+}
+function uptimeStr(s){
+  s = Number(s)||0;
+  const d=Math.floor(s/86400), h=Math.floor(s%86400/3600),
+        m=Math.floor(s%3600/60);
+  if(d) return `${d}j ${h}h`;
+  if(h) return `${h}h ${m}min`;
+  return `${m}min`;
+}
 
+function setStatus(state){ // 'live' | 'stale' | 'off'
+  const dot=document.getElementById("statusDot"), t=document.getElementById("statusText");
+  dot.className = "dot "+state;
+  t.textContent = state==="live"?"en ligne":state==="stale"?"signal perdu":"hors ligne";
+}
+function banner(msg){
+  const b=document.getElementById("banner");
+  if(msg){ document.getElementById("bannerText").textContent=msg; b.classList.add("show"); }
+  else b.classList.remove("show");
+}
+
+function renderTrain(d){
+  const tr = d.train || d.cycle || {};
+  const idx = etapeIndex(tr.etape);
+  const cold = COLD_STEPS.has(idx);
+  for(let i=0;i<STEPS.length;i++){
+    const el=document.getElementById("step"+i);
+    el.className="step"+(COLD_STEPS.has(i)?" cold":"");
+    if(i<idx) el.classList.add("done");
+    else if(i===idx) el.classList.add("active");
+  }
+  // progress bar : avancement/cible de l'étape courante, sinon position brute
+  const fill=document.getElementById("trackfill");
+  fill.className="trackfill"+(cold?" cold":"");
+  let pct;
+  if(tr.cible && tr.avancement!==undefined){
+    pct = Math.max(0,Math.min(100, (tr.avancement/tr.cible)*100));
+  } else {
+    pct = (idx/(STEPS.length-1))*100;
+  }
+  fill.style.width = pct.toFixed(0)+"%";
+
+  document.getElementById("trainSub").textContent =
+    tr.cycle_actif===false ? "cycle à l'arrêt" :
+    (tr.etape||"—")+(tr.depuis_s!==undefined?` · depuis ${tr.depuis_s}s`:"");
+  document.getElementById("tmSat").textContent = tr.sat_actif || "aucun";
+  document.getElementById("tmFront").textContent = fmt(tr.front_l,"L");
+  document.getElementById("tmAdv").textContent =
+    (tr.avancement!==undefined&&tr.cible!==undefined)
+      ? `${fmt(tr.avancement)} / ${fmt(tr.cible)} ${tr.unite||""}` : "—";
+
+  const q=document.getElementById("tmQueue");
+  const file = Array.isArray(tr.file)?tr.file:[];
+  q.innerHTML = file.length
+    ? file.map(id=>`<span class="qchip">${id}</span>`).join("")
+    : `<span class="qempty">vide</span>`;
+}
+
+function statePill(s, activeId){
+  if(!s.ok) return {cls:"off", txt:"hors ligne"};
+  if(s.vanne) return {cls:"fill", txt:"remplissage"};
+  if(s.en_file) return {cls:"queue", txt:"en file"};
+  return {cls:"idle", txt:"au repos"};
+}
+
+function renderSats(d){
+  const grid=document.getElementById("satgrid");
+  const c1 = (d.circuits||[]).find(c=>c.circuit_id==="C1") || (d.circuits||[])[0] || {};
+  const sats = c1.satellites || [];
+  const activeId = (d.train&&d.train.sat_actif)||null;
+  document.getElementById("satSub").textContent =
+    `${sats.length} actif${sats.length>1?"s":""} · circuit ${c1.circuit_id||"C1"}`;
+
+  grid.innerHTML = sats.map(s=>{
+    const p = statePill(s, activeId);
+    const isActive = s.sat_id===activeId;
+    const tgt = (s.X_l!==undefined)?(s.X_l-1):null;
+    const vol = s.volume_l;
+    const lv = [s.cnb, s.cnm, s.cnh];
+    const et = s.etalonnage || {};
+    const tempTxt = (s.temp_c!==undefined&&s.temp_c!==null)
+      ? `<span class="temp${s.temp_c>=35?" hot":""}">${fmt(s.temp_c,"°C")}</span>`
+      : `<span class="temp" style="color:var(--ink-3)">temp —</span>`;
+    return `
+    <div class="sat${isActive?" active":""}${s.ok?"":" offline"}">
+      <div class="sathead">
+        <span class="satname">${s.sat_id||"?"}</span>
+        <span class="pill ${p.cls}">${p.txt}</span>
+      </div>
+      <div class="volrow">
+        <span class="volbig${isActive?" active":""}">${s.ok?fmt(vol):"—"}</span>
+        <span class="voltgt">${tgt!==null?"/ "+fmt(tgt,"L",0):""}</span>
+      </div>
+      <div class="qual">${s.ok?(s.volume_qualite||"—"):"pas de communication"}</div>
+      <div class="levels">
+        <div class="lvl${lv[0]?" on":""}" title="CNB ${fmt(et.bas,'L')}"></div>
+        <div class="lvl${lv[1]?" on":""}" title="CNM ${fmt(et.milieu,'L')}"></div>
+        <div class="lvl${lv[2]?" on":""}" title="CNH ${fmt(et.haut,'L')}"></div>
+      </div>
+      <div class="lvlrow"><span>bas</span><span>milieu</span><span>haut</span></div>
+      <div class="satfoot">
+        ${tempTxt}
+        <span>conso ${fmt(s.conso_totale_l,"L")}</span>
+      </div>
+    </div>`;
+  }).join("") || `<div class="muted-note">aucun satellite déclaré</div>`;
+}
+
+function renderMetrics(d){
+  const ch = d.chaufferie || {};
+  const eau = ch.eau || {};
+  const ma = ch.maddalena || {};
+  const pompe = ch.pompe_pct;
+  const v3 = ch.v3 || "—";
+  const items = [
+    {k:"Pompe P1", ic:"pump", v:pompe!==undefined?pompe:"—", u:"%",
+      cls:pompe>0?"hot":""},
+    {k:"Vanne V3", ic:"valve", v:v3, u:"", cls:v3==="ECS"?"hot":v3==="EFS"?"cold":""},
+    {k:"Compteur d'eau", ic:"gauge", v:eau.litres!==undefined?Math.round(eau.litres):"—", u:"L"},
+    {k:"Débit", ic:"flow", v:ma.debit_lh!==undefined?Math.round(ma.debit_lh):"—", u:"L/h"},
+    {k:"T° départ", ic:"temp", v:ma.t_depart_c!==undefined?fmt(ma.t_depart_c):"—", u:"°C", cls:"hot"},
+    {k:"T° retour", ic:"temp", v:ma.t_retour_c!==undefined?fmt(ma.t_retour_c):"—", u:"°C", cls:"cold"},
+  ];
+  document.getElementById("metgrid").innerHTML = items.map(m=>`
+    <div class="met">
+      <div class="k">${m.k}</div>
+      <div class="v ${m.cls||""}">${m.v}${m.u?` <small>${m.u}</small>`:""}</div>
+    </div>`).join("");
+}
+
+function plantCard(title, obj, rows){
+  const up = obj && obj.ok;
+  const body = up
+    ? rows.filter(r=>obj[r.f]!==undefined)
+          .map(r=>`<div class="kv"><span class="k">${r.k}</span>
+             <span class="v">${fmt(obj[r.f],r.u,r.dec!==undefined?r.dec:1)}</span></div>`).join("")
+      || `<div class="muted-note">connecté, pas de valeur</div>`
+    : `<div class="muted-note">relevé au prochain repos du train</div>`;
+  return `<div class="pcard">
+    <h3>${title}<span class="badge ${up?"up":"down"}">${up?"OK":"—"}</span></h3>
+    ${body}</div>`;
+}
+
+function renderPlant(d){
+  const ch = d.chaufferie || {};
+  const grid=document.getElementById("plantgrid");
+  grid.innerHTML =
+    plantCard("Variateur pompe (CW100)", ch.vfd, [
+      {k:"État",f:"etat",dec:0},{k:"Fréquence",f:"freq_hz",u:"Hz"},
+      {k:"Bus DC",f:"vbus_v",u:"V"},{k:"Courant",f:"courant_a",u:"A"}]) +
+    plantCard("Compteur électrique (SDM120)", ch.sdm120, [
+      {k:"Tension",f:"tension_v",u:"V"},{k:"Courant",f:"courant_a",u:"A"},
+      {k:"Puissance",f:"puissance_w",u:"W"},{k:"Énergie",f:"energie_kwh",u:"kWh"}]) +
+    plantCard("Compteur thermique (Maddalena)", ch.maddalena, [
+      {k:"Puissance",f:"puissance_w",u:"W"},{k:"T° départ",f:"t_depart_c",u:"°C"},
+      {k:"T° retour",f:"t_retour_c",u:"°C"},{k:"Débit",f:"debit_lh",u:"L/h"},
+      {k:"Énergie",f:"energie_mwh",u:"MWh",dec:2}]) +
+    plantCard("Compteur d'eau (ZLAN)", ch.eau ? {ok:ch.eau.zlan_ok, ...ch.eau}:null, [
+      {k:"Volume",f:"litres",u:"L",dec:0},{k:"Impulsions",f:"impulsions",u:"",dec:0},
+      {k:"Source",f:"source",u:""}]);
+}
+
+function renderFooter(d){
+  document.getElementById("footSeq").textContent = "seq "+(d.seq??"—");
+  document.getElementById("footUptime").textContent = "uptime "+uptimeStr(d.uptime_s);
+  document.getElementById("footCfg").textContent = "config v"+(d.cfg_version??"—");
+  document.getElementById("footRssi").textContent = (d.rssi_dbm??"—")+" dBm";
+  document.getElementById("devid").textContent = d.device_id || "chaufferie-01";
+}
+
+function render(d){
+  renderTrain(d); renderSats(d); renderMetrics(d);
+  renderPlant(d); renderFooter(d);
+  document.getElementById("raw").textContent = JSON.stringify(d,null,2);
+  // alerte simple : comm ZLAN perdue ou satellite offline
+  const ch=d.chaufferie||{};
+  const offSats=((d.circuits||[]).flatMap(c=>c.satellites||[])).filter(s=>!s.ok);
+  if(ch.eau && ch.eau.zlan_ok===false)
+    banner("Communication ZLAN interrompue — compteur d'eau et vanne V3 injoignables.");
+  else if(offSats.length)
+    banner(`${offSats.length} satellite(s) sans communication : ${offSats.map(s=>s.sat_id).join(", ")}.`);
+  else banner(null);
+}
+
+async function tick(){
+  try{
+    const r = await fetch(API, {cache:"no-store"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const d = await r.json();
+    lastRxAt = Date.now(); everConnected = true;
+    // le back renvoie _received_at ; on se base sur seq pour la fraîcheur
+    if(d.seq!==lastSeq){ lastSeq=d.seq; }
+    render(d);
+    setStatus("live");
+  }catch(e){
+    if(!everConnected) setStatus("off");
+  }
+  // vérif fraîcheur indépendamment du succès réseau
+  if(everConnected && Date.now()-lastRxAt > STALE_MS) setStatus("stale");
+}
+
+tick();
+setInterval(tick, POLL_MS);
+</script>
 </body>
 </html>
