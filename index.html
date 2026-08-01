@@ -1,558 +1,1031 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>enovaQ — Supervision</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>enovaQ · pupitre chaufferie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --cream:#F6F3EC; --paper:#FFFFFF; --ink:#1E1B16; --ink-2:#5A554C;
-    --ink-3:#8C867A; --line:#E4DFD3; --line-2:#D2CBBB;
-    --cold:#185FA5; --cold-bg:#E6F1FB; --cold-ink:#0C447C;
-    --hot:#BA7517;  --hot-bg:#FAEEDA;  --hot-ink:#854F0B;
-    --ok:#0F6E56;   --ok-bg:#E1F5EE;
-    --warn:#854F0B; --warn-bg:#FAEEDA;
-    --bad:#A32D2D;  --bad-bg:#FCEBEB;
-    --radius:10px;
-    --mono:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;
-    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    --cond:"Inter",-apple-system,sans-serif;
-  }
-  @media (prefers-color-scheme: dark){
-    :root{
-      --cream:#171512; --paper:#211E1A; --ink:#F1ECE2; --ink-2:#B6AF9F;
-      --ink-3:#847E71; --line:#332F28; --line-2:#433E35;
-      --cold-bg:#0C2942; --cold-ink:#85B7EB; --cold:#378ADD;
-      --hot-bg:#3A2606; --hot-ink:#EF9F27; --hot:#EF9F27;
-      --ok-bg:#08302A; --ok:#5DCAA5;
-      --warn-bg:#3A2606; --warn:#EF9F27;
-      --bad-bg:#3A1414; --bad:#F09595;
-    }
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--cream);color:var(--ink);font-family:var(--sans);
-    line-height:1.55;-webkit-font-smoothing:antialiased;padding:0 0 3rem;}
-  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
-  a{color:inherit}
+/* ══════════════════════════════════════════════════════════════════════════
+   enovaQ — pupitre de supervision
+   Identité : intérieur d'armoire de commande. Fond pétrole, deux circuits
+   identifiés par les deux états du cuivre de plomberie — cuivre neuf (A) et
+   vert-de-gris (B). L'ambre et le bleu ne servent QUE à l'eau : ECS / EFS.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root{
+  --ground:#0D1317; --panel:#141E24; --panel2:#1A262D; --line:#26343C;
+  --line-soft:#1E2C33;
+  --ink:#E4EDF1; --ink2:#8FA3AC; --ink3:#5A6E78;
+  --cuivre:#C9834A;      /* circuit A */
+  --verdigris:#3FA893;   /* circuit B */
+  --ecs:#E89B45;         /* eau chaude */
+  --efs:#4FA3D9;         /* eau froide */
+  --alert:#E2564A; --warn:#D9A441; --ok:#68B96F;
+  --r:10px;
+  --fs-cond:"IBM Plex Sans Condensed","Helvetica Neue",Arial,sans-serif;
+  --fs-body:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+  --fs-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:var(--fs-body); font-size:15px; line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+  padding:0 0 56px;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+h1,h2,h3{margin:0;font-weight:600}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--efs);outline-offset:2px;border-radius:4px}
 
-  /* ---- top bar ---- */
-  header{position:sticky;top:0;z-index:20;background:var(--cream);
-    border-bottom:0.5px solid var(--line);}
-  .bar{display:flex;align-items:center;justify-content:space-between;
-    padding:14px 0;gap:16px;flex-wrap:wrap}
-  .brand{display:flex;align-items:center;gap:11px}
-  .logo{width:38px;height:38px;border-radius:11px;background:var(--hot);
-    display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
-  .logo svg{width:21px;height:21px}
-  .brand h1{font-size:18px;font-weight:600;letter-spacing:-0.02em;line-height:1.1}
-  .brand p{font-size:12px;color:var(--ink-3);font-family:var(--mono)}
-  .topright{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  .status{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;
-    padding:6px 12px;border-radius:20px;background:var(--paper);
-    border:0.5px solid var(--line)}
-  .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-  .dot.live{background:var(--ok)}
-  .dot.stale{background:var(--warn)}
-  .dot.off{background:var(--bad)}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-  .dot.live{animation:pulse 2s ease-in-out infinite}
-  .cfglink{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;
-    text-decoration:none;padding:7px 14px;border-radius:var(--radius);
-    border:0.5px solid var(--line-2);background:var(--paper);color:var(--ink)}
-  .cfglink:hover{border-color:var(--ink-3)}
-  .cfglink svg{width:15px;height:15px}
+/* ── eyebrow : sert de repère de section, jamais de décor ─────────────── */
+.eyebrow{
+  font-family:var(--fs-cond); font-weight:600; font-size:12px;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink3);
+  display:flex; align-items:center; gap:10px; margin:30px 0 12px;
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--line-soft)}
 
-  section{margin-top:26px}
-  .eyebrow{font-size:11px;font-weight:600;text-transform:uppercase;
-    letter-spacing:0.1em;color:var(--ink-3);margin-bottom:11px;
-    display:flex;align-items:center;gap:8px}
-  .eyebrow .sub{font-weight:400;letter-spacing:0.02em;text-transform:none;
-    color:var(--ink-3)}
+/* ── bandeau ──────────────────────────────────────────────────────────── */
+header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#101A20,#0D1317)}
+.head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 20px;padding:18px 0 16px}
+.brand{font-family:var(--fs-cond);font-weight:700;font-size:23px;letter-spacing:.02em}
+.brand span{color:var(--ink3);font-weight:500}
+.live{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ink3);flex:none}
+.dot.on{background:var(--ok);box-shadow:0 0 0 3px rgba(104,185,111,.16)}
+.dot.stale{background:var(--warn);box-shadow:0 0 0 3px rgba(217,164,65,.16)}
+.dot.off{background:var(--alert);box-shadow:0 0 0 3px rgba(226,86,74,.16)}
+.meta{margin-left:auto;display:flex;flex-wrap:wrap;gap:6px 18px;font-family:var(--fs-mono);font-size:12px;color:var(--ink3)}
+.meta b{color:var(--ink2);font-weight:500}
 
-  /* ---- train frieze ---- */
-  .train{background:var(--paper);border:0.5px solid var(--line);
-    border-radius:14px;padding:18px}
-  .steps{display:flex;gap:4px;margin-bottom:12px}
-  .step{flex:1;text-align:center;padding:11px 3px 9px;border-radius:8px;
-    background:var(--cream);color:var(--ink-3);font-size:11px;font-weight:500;
-    transition:background .3s,color .3s;position:relative;min-width:0}
-  .step .code{font-size:13px;font-weight:600;font-family:var(--mono)}
-  .step .lbl{font-size:9.5px;margin-top:2px;line-height:1.15;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .step.done{background:var(--hot-bg);color:var(--hot-ink)}
-  .step.active{background:var(--hot);color:#fff}
-  .step.active.cold{background:var(--cold)}
-  .step.done.cold{background:var(--cold-bg);color:var(--cold-ink)}
-  .trackline{height:6px;background:var(--cream);border-radius:4px;overflow:hidden;
-    margin-bottom:14px}
-  .trackfill{height:100%;background:var(--hot);border-radius:4px;
-    transition:width .5s ease,background .3s;width:0}
-  .trackfill.cold{background:var(--cold)}
-  .trainmeta{display:flex;flex-wrap:wrap;gap:22px;align-items:baseline}
-  .tm{display:flex;flex-direction:column;gap:1px}
-  .tm .k{font-size:11px;color:var(--ink-3)}
-  .tm .v{font-size:15px;font-weight:600}
-  .tm .v.mono{font-family:var(--mono)}
-  .queue{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
-  .qchip{font-size:11px;font-weight:500;padding:2px 9px;border-radius:20px;
-    background:var(--cream);border:0.5px solid var(--line-2);
-    font-family:var(--mono)}
-  .qempty{font-size:13px;color:var(--ink-3)}
+/* ── alertes ──────────────────────────────────────────────────────────── */
+#alertes{display:grid;gap:8px;margin-top:16px}
+.alerte{
+  display:flex;gap:11px;align-items:flex-start;padding:11px 14px;border-radius:var(--r);
+  background:rgba(226,86,74,.09);border:1px solid rgba(226,86,74,.35);font-size:14px;
+}
+.alerte.warn{background:rgba(217,164,65,.09);border-color:rgba(217,164,65,.34)}
+.alerte .tag{
+  font-family:var(--fs-cond);font-weight:700;font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--alert);padding-top:2px;flex:none
+}
+.alerte.warn .tag{color:var(--warn)}
+.alerte p{margin:0;color:var(--ink)}
+.alerte em{color:var(--ink2);font-style:normal}
 
-  /* ---- satellites ---- */
-  .satgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
-    gap:14px}
-  .sat{background:var(--paper);border:0.5px solid var(--line);border-radius:14px;
-    padding:15px 16px}
-  .sat.active{border-color:var(--hot);border-width:1px}
-  .sat.offline{opacity:.62}
-  .sathead{display:flex;align-items:center;justify-content:space-between;
-    margin-bottom:11px;gap:8px}
-  .satname{font-size:15px;font-weight:600;letter-spacing:-0.01em}
-  .pill{font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:20px;
-    white-space:nowrap;text-transform:uppercase;letter-spacing:0.03em}
-  .pill.fill{background:var(--hot-bg);color:var(--hot-ink)}
-  .pill.queue{background:var(--cold-bg);color:var(--cold-ink)}
-  .pill.idle{background:var(--cream);color:var(--ink-3)}
-  .pill.off{background:var(--bad-bg);color:var(--bad)}
-  .volrow{display:flex;align-items:baseline;gap:6px;margin-bottom:3px}
-  .volbig{font-size:30px;font-weight:600;letter-spacing:-0.02em;line-height:1;
-    font-family:var(--cond)}
-  .volbig.active{color:var(--hot)}
-  .voltgt{font-size:13px;color:var(--ink-3)}
-  .qual{font-size:10.5px;color:var(--ink-3);font-family:var(--mono);
-    text-transform:uppercase;letter-spacing:0.04em;margin-bottom:12px}
-  .levels{display:flex;gap:5px;margin-bottom:5px}
-  .lvl{flex:1;height:6px;border-radius:3px;background:var(--cream);
-    position:relative}
-  .lvl.on{background:var(--ok)}
-  .lvlrow{display:flex;gap:5px;font-size:10px;color:var(--ink-3);
-    margin-bottom:13px}
-  .lvlrow span{flex:1;text-align:center;font-family:var(--mono)}
-  .satfoot{display:flex;justify-content:space-between;font-size:12px;
-    color:var(--ink-2);border-top:0.5px solid var(--line);padding-top:10px}
-  .satfoot .temp{font-weight:500}
-  .satfoot .temp.hot{color:var(--hot)}
+/* ══ LE PUPITRE : deux rails, une colonne vertébrale partagée ═══════════ */
+.pupitre{margin-top:6px;display:grid;gap:14px}
+.rail{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  border-left:3px solid var(--c);padding:14px 16px 16px;position:relative;
+}
+.rail.a{--c:var(--cuivre)} .rail.b{--c:var(--verdigris)}
+.rail-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 14px;margin-bottom:12px}
+.rail-id{font-family:var(--fs-cond);font-weight:700;font-size:17px;letter-spacing:.04em;color:var(--c)}
+.rail-bus{font-family:var(--fs-mono);font-size:11px;color:var(--ink3)}
+.rail-sat{font-family:var(--fs-cond);font-weight:600;font-size:17px;margin-left:2px}
+.rail-badges{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.badge{
+  font-family:var(--fs-cond);font-weight:600;font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;padding:2px 8px;border-radius:20px;
+  border:1px solid var(--line);color:var(--ink2);white-space:nowrap
+}
+.badge.on{border-color:var(--c);color:var(--c)}
+.badge.efs{border-color:var(--efs);color:var(--efs)}
+.badge.off{border-color:rgba(226,86,74,.5);color:var(--alert)}
 
-  /* ---- plant metrics ---- */
-  .metgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
-    gap:11px}
-  .met{background:var(--paper);border:0.5px solid var(--line);border-radius:12px;
-    padding:13px 15px}
-  .met .k{font-size:11px;color:var(--ink-3);margin-bottom:5px;
-    display:flex;align-items:center;gap:5px}
-  .met .k svg{width:13px;height:13px;opacity:.7}
-  .met .v{font-size:22px;font-weight:600;letter-spacing:-0.01em;
-    font-family:var(--cond)}
-  .met .v small{font-size:12px;font-weight:400;color:var(--ink-3)}
-  .met .v.cold{color:var(--cold)}
-  .met .v.hot{color:var(--hot)}
+/* frise : ordre du PROCESS, pas de l'énumération */
+.frise{display:flex;gap:3px;overflow-x:auto;padding-bottom:5px;scrollbar-width:thin}
+.frise::-webkit-scrollbar{height:4px}
+.frise::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
+.step{
+  flex:none;display:flex;align-items:baseline;gap:5px;padding:5px 9px;border-radius:5px;
+  background:var(--panel2);border:1px solid transparent;color:var(--ink3);
+  font-family:var(--fs-cond);font-size:12px;letter-spacing:.04em;white-space:nowrap
+}
+.step b{font-weight:700;font-size:12px}
+.step .lbl{display:none;font-weight:500}
+@media(min-width:760px){.step .lbl{display:inline}}
+.step.done{color:var(--ink2);background:#17232A}
+.step.now{
+  background:color-mix(in srgb,var(--c) 18%,var(--panel2));
+  border-color:var(--c);color:var(--ink)
+}
+.step.now .lbl{display:inline}
+.step.now b{color:var(--c)}
+@media(prefers-reduced-motion:no-preference){
+  .step.now{animation:breathe 2.6s ease-in-out infinite}
+  @keyframes breathe{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 14%,transparent)}}
+}
 
-  /* ---- chaufferie detail cards ---- */
-  .plantgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
-    gap:14px}
-  .pcard{background:var(--paper);border:0.5px solid var(--line);border-radius:14px;
-    padding:15px 16px}
-  .pcard h3{font-size:13px;font-weight:600;margin-bottom:11px;
-    display:flex;align-items:center;justify-content:space-between}
-  .pcard h3 .badge{font-size:10px;font-weight:600;padding:2px 8px;
-    border-radius:20px}
-  .badge.up{background:var(--ok-bg);color:var(--ok)}
-  .badge.down{background:var(--bad-bg);color:var(--bad)}
-  .kv{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;
-    border-bottom:0.5px solid var(--line)}
-  .kv:last-child{border-bottom:none}
-  .kv .k{color:var(--ink-2)}
-  .kv .v{font-weight:500;font-family:var(--mono)}
-  .muted-note{font-size:12px;color:var(--ink-3);padding:6px 0}
+.progress{margin-top:12px}
+.progress-top{display:flex;align-items:baseline;gap:10px;margin-bottom:5px}
+.progress-lbl{font-size:13px;color:var(--ink2)}
+.progress-val{margin-left:auto;font-family:var(--fs-cond);font-weight:600;font-size:19px}
+.progress-val small{font-family:var(--fs-body);font-weight:400;font-size:12px;color:var(--ink3)}
+.bar{height:7px;border-radius:4px;background:#101A1F;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--c);border-radius:4px;transition:width .5s ease}
+.bar.efs>i{background:var(--efs)}
 
-  /* ---- raw + footer ---- */
-  details.raw{margin-top:26px;background:var(--paper);border:0.5px solid var(--line);
-    border-radius:12px;overflow:hidden}
-  details.raw summary{cursor:pointer;padding:13px 16px;font-size:13px;
-    font-weight:500;list-style:none;display:flex;align-items:center;gap:8px}
-  details.raw summary::-webkit-details-marker{display:none}
-  details.raw summary svg{width:14px;height:14px;transition:transform .2s}
-  details.raw[open] summary svg{transform:rotate(90deg)}
-  pre{margin:0;padding:0 16px 16px;font-family:var(--mono);font-size:11.5px;
-    line-height:1.6;color:var(--ink-2);overflow-x:auto;white-space:pre-wrap;
-    word-break:break-word}
-  footer{margin-top:26px;text-align:center;font-size:12px;color:var(--ink-3)}
-  footer .sep{margin:0 8px;opacity:.5}
+.rail-foot{
+  display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:12px;padding-top:11px;
+  border-top:1px solid var(--line-soft);font-size:13px;color:var(--ink2)
+}
+.rail-foot b{color:var(--ink);font-family:var(--fs-cond);font-weight:600}
+.file-list{display:flex;gap:5px;flex-wrap:wrap}
+.file-list span{
+  font-family:var(--fs-mono);font-size:11px;padding:1px 6px;border-radius:4px;
+  background:var(--panel2);color:var(--ink2)
+}
 
-  .banner{display:none;align-items:center;gap:10px;background:var(--bad-bg);
-    color:var(--bad);border-radius:var(--radius);padding:11px 15px;
-    font-size:13px;font-weight:500;margin-top:16px}
-  .banner.show{display:flex}
-  .banner svg{width:16px;height:16px;flex-shrink:0}
+/* colonne vertébrale : les organes que les deux trains se partagent */
+.spine{position:relative;margin:0;padding:14px 16px;background:
+  linear-gradient(180deg,#111C22,#16232A);border:1px dashed var(--line);
+  border-top:none;border-bottom:none}
+.spine-lbl{
+  font-family:var(--fs-cond);font-weight:600;font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink3);margin-bottom:11px
+}
+.tie{position:absolute;left:50%;transform:translateX(-50%);width:2px;height:14px;background:var(--line)}
+.tie.up{top:-14px} .tie.down{bottom:-14px}
+.tie.live{background:var(--tc);box-shadow:0 0 7px var(--tc)}
+.organs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.organ{background:#0F181D;border:1px solid var(--line-soft);border-radius:8px;padding:10px 12px}
+.organ .k{font-family:var(--fs-cond);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+.organ .v{font-family:var(--fs-cond);font-weight:600;font-size:24px;line-height:1.15;margin-top:2px}
+.organ .v small{font-family:var(--fs-body);font-weight:400;font-size:12px;color:var(--ink3);letter-spacing:0}
+.organ .s{font-family:var(--fs-mono);font-size:11px;color:var(--ink3);margin-top:1px}
+.organ.pump.run .v{color:var(--ok)}
+.organ.v3.ecs .v{color:var(--ecs)} .organ.v3.efs .v{color:var(--efs)}
+.organ.ko .v{color:var(--ink3)}
 
-  @media(max-width:560px){
-    .step .lbl{display:none}
-    .brand h1{font-size:16px}
-    .volbig{font-size:26px}
-  }
+/* ── satellites ───────────────────────────────────────────────────────── */
+.sats{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:12px}
+.sat{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  border-top:2px solid var(--c);padding:13px 14px;display:flex;gap:13px
+}
+.sat.a{--c:var(--cuivre)} .sat.b{--c:var(--verdigris)}
+.sat.ko{opacity:.55}
+.sat.actif{border-color:var(--c);box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent)}
+.jauge{position:relative;width:34px;flex:none;height:132px;border-radius:5px;
+  background:#0C1418;border:1px solid var(--line);overflow:hidden}
+.jauge .fill{position:absolute;left:0;right:0;bottom:0;background:
+  linear-gradient(180deg,color-mix(in srgb,var(--ecs) 55%,transparent),color-mix(in srgb,var(--ecs) 22%,transparent));
+  transition:height .5s ease}
+.jauge .blind{position:absolute;left:0;right:0;background-image:repeating-linear-gradient(
+  -45deg,rgba(143,163,172,.13) 0 2px,transparent 2px 6px);pointer-events:none}
+.jauge .tick{position:absolute;left:0;right:0;height:1px;background:rgba(228,237,241,.3)}
+.jauge .tick.on{background:var(--efs);box-shadow:0 0 4px rgba(79,163,217,.7)}
+.jauge .cible{position:absolute;left:0;right:0;height:1px;background:var(--warn)}
+.sat-body{flex:1;min-width:0}
+.sat-id{font-family:var(--fs-cond);font-weight:700;font-size:16px;letter-spacing:.04em}
+.sat-vol{font-family:var(--fs-cond);font-weight:600;font-size:30px;line-height:1.05;margin-top:3px}
+.sat-vol small{font-family:var(--fs-body);font-weight:400;font-size:13px;color:var(--ink3)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.chip{font-family:var(--fs-cond);font-size:10.5px;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;padding:1px 6px;border-radius:4px;background:var(--panel2);color:var(--ink2)}
+.chip.mesure{color:var(--efs)} .chip.etal{color:var(--ok)} .chip.inconnu{color:var(--warn)}
+.chip.bad{background:rgba(226,86,74,.14);color:var(--alert)}
+.chip.open{background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c)}
+.capteurs{display:flex;gap:11px;margin-top:9px}
+.cap{display:flex;align-items:center;gap:4px;font-family:var(--fs-mono);font-size:10.5px;color:var(--ink3)}
+.cap i{width:8px;height:8px;border-radius:50%;background:#213038;border:1px solid var(--line);display:block}
+.cap.wet i{background:var(--efs);border-color:var(--efs)}
+.cap.susp i{background:var(--alert);border-color:var(--alert)}
+.sat-foot{margin-top:9px;padding-top:8px;border-top:1px solid var(--line-soft);
+  font-family:var(--fs-mono);font-size:11px;color:var(--ink3);display:flex;flex-wrap:wrap;gap:3px 12px}
+
+/* ── grille basse ─────────────────────────────────────────────────────── */
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.card h3{font-family:var(--fs-cond);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin-bottom:12px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:13.5px;border-bottom:1px solid var(--line-soft)}
+.kv:last-child{border-bottom:none}
+.kv span{color:var(--ink2)}
+.kv b{font-family:var(--fs-cond);font-weight:600;font-size:15px}
+.kv b.ko{color:var(--ink3);font-weight:500}
+
+/* réserve 300 L */
+.res{display:flex;gap:14px;align-items:stretch}
+.res-tube{width:44px;flex:none;border:1px solid var(--line);border-radius:6px;background:#0C1418;position:relative;min-height:126px}
+.res-tube .eau{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,rgba(79,163,217,.5),rgba(79,163,217,.18));transition:height .5s}
+.res-tube .air{position:absolute;left:0;right:0;top:0;height:24px;display:flex;align-items:center;
+  justify-content:center;font-family:var(--fs-cond);font-size:10px;letter-spacing:.1em;color:var(--ink3)}
+.res-floats{flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:6px}
+.flt{display:flex;align-items:center;gap:9px;font-size:13px}
+.flt i{width:11px;height:11px;border-radius:50%;flex:none;border:2px solid}
+.flt.j i{border-color:#D9B441} .flt.n i{border-color:#7C8D96} .flt.r i{border-color:#C4574C}
+.flt.wet i{background:currentColor}
+.flt.j.wet i{background:#D9B441} .flt.n.wet i{background:#7C8D96} .flt.r.wet i{background:#C4574C}
+.flt span{color:var(--ink2)} .flt b{margin-left:auto;font-family:var(--fs-mono);font-size:11px;color:var(--ink3)}
+
+/* ── réglages ─────────────────────────────────────────────────────────── */
+details.cfg{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+details.cfg>summary{
+  cursor:pointer;padding:14px 16px;font-family:var(--fs-cond);font-weight:600;font-size:14px;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);list-style:none;
+  display:flex;align-items:center;gap:10px
+}
+details.cfg>summary::-webkit-details-marker{display:none}
+details.cfg>summary::before{content:"+";font-size:17px;color:var(--ink3);width:14px}
+details.cfg[open]>summary::before{content:"–"}
+.cfg-body{padding:0 16px 16px;border-top:1px solid var(--line-soft)}
+.note{font-size:13px;color:var(--ink2);margin:12px 0 16px;padding:10px 12px;
+  background:#101A1F;border-left:2px solid var(--efs);border-radius:0 6px 6px 0}
+.note code{font-family:var(--fs-mono);font-size:12px;color:var(--ink)}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px 14px}
+.f label{display:block;font-size:12px;color:var(--ink2);margin-bottom:3px}
+.f label em{font-style:normal;color:var(--ink3);font-family:var(--fs-mono);font-size:11px}
+.f input,.f select{
+  width:100%;padding:7px 9px;border-radius:6px;background:#0C1418;color:var(--ink);
+  border:1px solid var(--line);font-family:var(--fs-mono);font-size:13px
+}
+.f input::placeholder{color:var(--ink3)}
+.f input.bad{border-color:var(--alert)}
+table.sattab{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}
+table.sattab th{font-family:var(--fs-cond);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink3);text-align:left;padding:6px 6px 6px 0;font-weight:600}
+table.sattab td{padding:3px 6px 3px 0;border-top:1px solid var(--line-soft)}
+table.sattab input{width:100%;min-width:62px;padding:5px 7px;border-radius:5px;background:#0C1418;
+  color:var(--ink);border:1px solid var(--line);font-family:var(--fs-mono);font-size:12.5px}
+table.sattab input.bad{border-color:var(--alert)}
+.tabwrap{overflow-x:auto}
+.actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:18px}
+.btn{padding:9px 16px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);
+  color:var(--ink);font-family:var(--fs-cond);font-weight:600;font-size:13.5px;letter-spacing:.05em;cursor:pointer}
+.btn:hover{border-color:var(--ink3)}
+.btn.primary{background:var(--efs);border-color:var(--efs);color:#08121A}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+#cfgOut{font-family:var(--fs-mono);font-size:12px;color:var(--ink2);white-space:pre-wrap;
+  margin-top:12px;padding:11px 12px;background:#0C1418;border:1px solid var(--line);border-radius:7px;display:none}
+#cfgOut.show{display:block}
+#cfgOut.err{border-color:var(--alert);color:var(--alert)}
+#cfgOut.ok{border-color:var(--ok);color:var(--ok)}
+
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-soft);
+  font-size:12px;color:var(--ink3);display:flex;flex-wrap:wrap;gap:6px 18px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="wrap bar">
-    <div class="brand">
-      <div class="logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2.7C12 2.7 5 10 5 14.5a7 7 0 0 0 14 0C19 10 12 2.7 12 2.7Z"/>
-        </svg>
-      </div>
-      <div>
-        <h1>enovaQ — supervision</h1>
-        <p id="devid">chaufferie-01</p>
-      </div>
-    </div>
-    <div class="topright">
-      <div class="status">
-        <span class="dot off" id="statusDot"></span>
-        <span id="statusText">connexion…</span>
-      </div>
-      <a class="cfglink" href="config.html">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
-        </svg>
-        Réglages
-      </a>
+  <div class="wrap head">
+    <div class="brand">enovaQ <span>· pupitre</span></div>
+    <div class="live"><i class="dot" id="liveDot"></i><span id="liveTxt">connexion…</span></div>
+    <div class="meta">
+      <div><b id="mDev">—</b></div>
+      <div>seq <b id="mSeq">—</b></div>
+      <div>en service <b id="mUp">—</b></div>
+      <div>wifi <b id="mRssi">—</b></div>
+      <div>config <b id="mCfg">—</b></div>
     </div>
   </div>
 </header>
 
-<div class="wrap">
+<main class="wrap">
 
-  <div class="banner" id="banner">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-      stroke-linecap="round" stroke-linejoin="round">
-      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/>
-      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-    </svg>
-    <span id="bannerText"></span>
-  </div>
+  <div id="alertes" aria-live="polite"></div>
 
-  <!-- TRAIN -->
-  <section>
-    <div class="eyebrow">Train de remplissage
-      <span class="sub" id="trainSub"></span></div>
-    <div class="train">
-      <div class="steps" id="steps"></div>
-      <div class="trackline"><div class="trackfill" id="trackfill"></div></div>
-      <div class="trainmeta">
-        <div class="tm"><span class="k">Satellite servi</span>
-          <span class="v" id="tmSat">—</span></div>
-        <div class="tm"><span class="k">Front d'ECS</span>
-          <span class="v mono" id="tmFront">—</span></div>
-        <div class="tm"><span class="k">Avancement</span>
-          <span class="v mono" id="tmAdv">—</span></div>
-        <div class="tm" style="flex:1;min-width:160px">
-          <span class="k">File d'attente</span>
-          <div class="queue" id="tmQueue"><span class="qempty">vide</span></div>
-        </div>
+  <!-- ═══ LE PUPITRE ═══════════════════════════════════════════════════ -->
+  <h2 class="eyebrow">Les deux trains</h2>
+  <section class="pupitre" id="pupitre">
+    <article class="rail a" id="railA"></article>
+    <div class="spine">
+      <div class="tie up" id="tieA"></div>
+      <div class="spine-lbl">Organes partagés · une pompe, une vanne 3 voies</div>
+      <div class="organs" id="organs"></div>
+      <div class="tie down" id="tieB"></div>
+    </div>
+    <article class="rail b" id="railB"></article>
+  </section>
+
+  <!-- ═══ SATELLITES ═══════════════════════════════════════════════════ -->
+  <h2 class="eyebrow">Satellites</h2>
+  <section class="sats" id="sats"></section>
+
+  <!-- ═══ CHAUFFERIE ═══════════════════════════════════════════════════ -->
+  <h2 class="eyebrow">Chaufferie</h2>
+  <section class="grid3">
+    <div class="card">
+      <h3>Réserve 300 L</h3>
+      <div class="res">
+        <div class="res-tube"><div class="air">air</div><div class="eau" id="resEau" style="height:60%"></div></div>
+        <div class="res-floats" id="resFloats"></div>
       </div>
+      <div class="kv" style="margin-top:12px"><span>Niveau estimé</span><b id="resBand">—</b></div>
+    </div>
+    <div class="card">
+      <h3>Compteurs d'eau</h3>
+      <div id="eauBox"></div>
+    </div>
+    <div class="card">
+      <h3>Mesures <em style="font-style:normal;color:var(--ink3);font-size:11px">— relevées au repos</em></h3>
+      <div id="mesuresBox"></div>
     </div>
   </section>
 
-  <!-- SATELLITES -->
-  <section>
-    <div class="eyebrow">Satellites <span class="sub" id="satSub"></span></div>
-    <div class="satgrid" id="satgrid"></div>
-  </section>
+  <!-- ═══ RÉGLAGES ═════════════════════════════════════════════════════ -->
+  <h2 class="eyebrow">Réglages</h2>
+  <details class="cfg">
+    <summary>Modifier la configuration de l'automate</summary>
+    <div class="cfg-body">
+      <p class="note">
+        Laissez vide tout ce que vous ne voulez pas changer : seuls les champs
+        remplis partent vers l'automate. Le numéro de version est incrémenté
+        automatiquement — sans quoi l'automate ignorerait le bloc entier.
+        Les bornes ci-dessous sont celles codées en dur dans le firmware.
+      </p>
 
-  <!-- KEY METRICS -->
-  <section>
-    <div class="eyebrow">Chaufferie — vue rapide</div>
-    <div class="metgrid" id="metgrid"></div>
-  </section>
+      <div class="fields" id="cfgFields"></div>
 
-  <!-- PLANT DETAIL -->
-  <section>
-    <div class="eyebrow">Instrumentation
-      <span class="sub">mesures relevées au repos (E0)</span></div>
-    <div class="plantgrid" id="plantgrid"></div>
-  </section>
+      <h3 style="font-family:var(--fs-cond);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin:22px 0 4px">
+        Satellites · capacité, tuyau, repères capteurs
+      </h3>
+      <p style="font-size:12.5px;color:var(--ink3);margin:0 0 6px">
+        L'automate rejette un satellite entier si l'ordre bas &lt; milieu &lt; haut &lt; X n'est pas respecté.
+      </p>
+      <div class="tabwrap"><table class="sattab" id="cfgSats"></table></div>
 
-  <!-- RAW -->
-  <details class="raw">
-    <summary>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      Trame JSON brute
-    </summary>
-    <pre id="raw">—</pre>
+      <div class="actions">
+        <button class="btn primary" id="btnSend">Envoyer à l'automate</button>
+        <button class="btn" id="btnCopy">Copier le JSON</button>
+        <button class="btn" id="btnReset">Tout effacer</button>
+      </div>
+      <div id="cfgOut"></div>
+    </div>
   </details>
 
   <footer>
-    <span id="footSeq">seq —</span><span class="sep">·</span>
-    <span id="footUptime">uptime —</span><span class="sep">·</span>
-    <span id="footCfg">config v—</span><span class="sep">·</span>
-    <span id="footRssi">— dBm</span>
+    <div>enovaQ · HWQ Concept</div>
+    <div>contrat JSON v3 — deux circuits</div>
+    <div id="footMode"></div>
   </footer>
-
-</div>
+</main>
 
 <script>
-const API = "/api/data";
-const POLL_MS = 5000;
-const STALE_MS = 20000;   // au-delà : donnée périmée
+"use strict";
+/* ══════════════════════════════════════════════════════════════════════════
+   1. LA SEULE CHOSE À ADAPTER AU BACKEND
+   ══════════════════════════════════════════════════════════════════════════ */
+const API = {
+  telemetry: '/api/data',     // GET  → dernier payload reçu de l'automate
+  config:    '/api/config',   // POST → config servie en réponse au prochain POST automate
+};
+const PERIODE_MS = 5000;      // rafraîchissement de la page
+const PERIME_MS  = 90000;     // au-delà, le payload est considéré périmé
 
-const STEPS = [
-  {c:"E0", l:"repos"},      {c:"E1", l:"amorçage"},
-  {c:"E2", l:"ouverture"},  {c:"E3", l:"remplissage"},
-  {c:"E4", l:"bascule EFS"},{c:"E5", l:"bouchon"},
-  {c:"E6", l:"fermeture"},  {c:"E7", l:"récup"},
-  {c:"E8", l:"retour"}
+const DEMO = new URLSearchParams(location.search).has('demo');
+
+/* ══════════════════════════════════════════════════════════════════════════
+   2. Outils
+   ══════════════════════════════════════════════════════════════════════════ */
+const $ = s => document.querySelector(s);
+const el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
+const has = v => v !== undefined && v !== null;
+/** nombre à la française : 38,4 */
+const n = (v, d = 1) => has(v) && isFinite(v) ? Number(v).toLocaleString('fr-FR', {minimumFractionDigits: d, maximumFractionDigits: d}) : '—';
+const i0 = v => has(v) && isFinite(v) ? Math.round(v).toLocaleString('fr-FR') : '—';
+const duree = s => {
+  if (!has(s)) return '—';
+  s = Math.floor(s);
+  const j = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  if (j) return j + ' j ' + h + ' h';
+  if (h) return h + ' h ' + String(m).padStart(2, '0');
+  if (m) return m + ' min ' + String(s % 60).padStart(2, '0');
+  return s + ' s';
+};
+const pct = (a, b) => (!b || !isFinite(b) || !isFinite(a)) ? 0 : Math.max(0, Math.min(100, a / b * 100));
+
+/* Ordre RÉEL du process (≠ ordre de l'énumération) */
+const ORDRE  = [0, 9, 1, 2, 3, 10, 4, 5, 6, 7, 8];
+const LIBEL  = {0:'repos', 9:'départ VR', 1:'amorçage', 2:'ouverture', 3:'remplissage',
+                10:'attente EFS', 4:'bascule EFS', 5:'bouchon', 6:'fermeture',
+                7:'récup', 8:'retour'};
+const EFS_ETAPES = [4, 5, 7];            // le tuyau est en EFS
+const POMPE_ETAPES = [1, 3, 5, 7];       // le circuit demande la pompe
+const codeEtape = s => { const m = /^E(\d+)/.exec(s || ''); return m ? +m[1] : 0; };
+
+/* ══════════════════════════════════════════════════════════════════════════
+   3. État
+   ══════════════════════════════════════════════════════════════════════════ */
+const state = {
+  data: null,          // dernier payload valide
+  recuAt: 0,           // horodatage local de réception
+  erreur: null,
+  mesures: {vfd: null, sdm: null, madd: null, at: 0},  // conservées entre les trains
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
+   4. Rendu — bandeau
+   ══════════════════════════════════════════════════════════════════════════ */
+function rendreBandeau(d) {
+  const age = Date.now() - state.recuAt;
+  const dot = $('#liveDot'), txt = $('#liveTxt');
+  dot.className = 'dot';
+  if (state.erreur)            { dot.classList.add('off');   txt.textContent = state.erreur; }
+  else if (!d)                 { dot.classList.add('off');   txt.textContent = 'aucune donnée'; }
+  else if (age > PERIME_MS)    { dot.classList.add('stale'); txt.textContent = 'dernier envoi il y a ' + duree(age / 1000); }
+  else                         { dot.classList.add('on');    txt.textContent = 'en ligne'; }
+  if (!d) return;
+  $('#mDev').textContent  = d.device_id || '—';
+  $('#mSeq').textContent  = i0(d.seq);
+  $('#mUp').textContent   = duree(d.uptime_s);
+  $('#mRssi').textContent = has(d.rssi_dbm) && d.rssi_dbm ? d.rssi_dbm + ' dBm' : 'hors ligne';
+  $('#mCfg').textContent  = 'v' + i0(d.cfg_version);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   5. Rendu — alertes
+   ══════════════════════════════════════════════════════════════════════════ */
+function ajouterAlerte(box, niveau, tag, texte, detail) {
+  const a = el('div', 'alerte' + (niveau === 'warn' ? ' warn' : ''));
+  a.appendChild(el('div', 'tag', tag));
+  const p = el('p'); p.appendChild(document.createTextNode(texte));
+  if (detail) { p.appendChild(document.createElement('br')); p.appendChild(el('em', null, detail)); }
+  a.appendChild(p); box.appendChild(a);
+}
+
+function rendreAlertes(d) {
+  const box = $('#alertes'); box.textContent = '';
+  if (!d) return;
+  const ch = d.chaufferie || {};
+  const rs = ch.reserve || {};
+
+  if (rs.appoint_requis)
+    ajouterAlerte(box, 'alert', 'réserve',
+      "Appoint d'air requis — le flotteur jaune est mouillé, il n'y a plus de matelas d'air.",
+      "Injecter au compresseur ou à l'azote jusqu'à ce que le flotteur rouge soit sec.");
+
+  if (ch.pompe_arret_non_confirme)
+    ajouterAlerte(box, 'alert', 'pompe',
+      "Le variateur n'a pas confirmé l'ordre d'arrêt.",
+      "L'automate réessaie toutes les 0,5 s et maintient les sécurités armées.");
+
+  (d.trains || []).forEach(t => {
+    if (t.vr_alerte)
+      ajouterAlerte(box, 'alert', 'vanne ' + t.circuit,
+        "Manœuvre de la vanne de retour " + t.circuit + " non confirmée par le ZLAN.");
+  });
+
+  (d.circuits || []).forEach(c => (c.satellites || []).forEach(s => {
+    if (!s.ok) { ajouterAlerte(box, 'warn', s.sat_id, "Ne répond plus sur son bus."); return; }
+    const df = s.defauts || {};
+    if (df.capteurs_fous)
+      ajouterAlerte(box, 'alert', s.sat_id,
+        "Plusieurs capteurs ont changé d'état en même temps — alimentation capteurs suspecte.",
+        "Satellite écarté du service jusqu'à 10 s d'état stable et cohérent.");
+    const muets = [df.cnb_muet && 'CNB', df.cnm_muet && 'CNM', df.cnh_muet && 'CNH'].filter(Boolean);
+    if (muets.length)
+      ajouterAlerte(box, 'warn', s.sat_id,
+        "Capteur muet ou défectueux : " + muets.join(', ') + ".",
+        "Le niveau a dépassé le repère sans que le capteur réagisse.");
+    else if (suspectCNH(s))
+      ajouterAlerte(box, 'warn', s.sat_id,
+        "Le CNH est sec alors que le volume dépasse son repère de plus de 2 L.",
+        "Déduit du niveau côté supervision — l'automate ne le signale pas encore dans son envoi.");
+    if (df.quarantaine_s > 0)
+      ajouterAlerte(box, 'warn', s.sat_id,
+        "Mis de côté après " + df.abandons + " abandons consécutifs.",
+        "Nouvel essai autorisé dans " + duree(df.quarantaine_s) + ". Vérifier vanne, fuite, capteurs.");
+  }));
+
+  if (ch.eau) {
+    if (ch.eau.qa && ch.eau.qa.ok === false) ajouterAlerte(box, 'alert', 'compteur A', "Le compteur QA ne répond plus.");
+    if (ch.eau.qb && ch.eau.qb.ok === false) ajouterAlerte(box, 'alert', 'compteur B', "Le compteur QB ne répond plus.");
+  }
+  (d.trains || []).forEach(t => {
+    if (t.cycle_actif === false)
+      ajouterAlerte(box, 'warn', 'circuit ' + t.circuit, "Circuit " + t.circuit + " à l'arrêt — les demandes s'accumulent sans être servies.");
+  });
+}
+
+/** Règle D24 rejouée côté navigateur, faute d'être dans le payload. */
+function suspectCNH(s) {
+  const et = s.etalonnage || {};
+  return s.ok && s.cnh === 0 && has(et.haut) && has(s.volume_l) && s.volume_l > et.haut + 2;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   6. Rendu — un rail
+   ══════════════════════════════════════════════════════════════════════════ */
+function rendreRail(node, t, lettre, bus) {
+  node.textContent = '';
+  if (!t) { node.appendChild(el('div', 'rail-id', 'CIRCUIT ' + lettre)); node.appendChild(el('p', null, 'Aucune donnée.')); return; }
+  const code = codeEtape(t.etape);
+
+  const head = el('div', 'rail-head');
+  head.appendChild(el('div', 'rail-id', 'CIRCUIT ' + lettre));
+  head.appendChild(el('div', 'rail-bus', 'bus ' + bus));
+  head.appendChild(el('div', 'rail-sat', t.sat_actif || '—'));
+  const bd = el('div', 'rail-badges');
+  const vr = t.vanne_retour || 'INCONNUE';
+  bd.appendChild(el('div', 'badge' + (vr === 'OUVERTE' ? ' on' : ''), 'retour ' + vr.toLowerCase()));
+  if (t.dernier)      bd.appendChild(el('div', 'badge on', 'dernier'));
+  if (t.attente_efs)  bd.appendChild(el('div', 'badge efs', 'attente EFS'));
+  if (t.cycle_actif === false) bd.appendChild(el('div', 'badge off', 'circuit arrêté'));
+  head.appendChild(bd);
+  node.appendChild(head);
+
+  const frise = el('div', 'frise');
+  const posCourante = ORDRE.indexOf(code);
+  ORDRE.forEach((c, i) => {
+    const s = el('div', 'step' + (c === code ? ' now' : (i < posCourante ? ' done' : '')));
+    s.appendChild(el('b', null, 'E' + c));
+    s.appendChild(el('span', 'lbl', LIBEL[c]));
+    frise.appendChild(s);
+  });
+  node.appendChild(frise);
+
+  const pr = el('div', 'progress');
+  const top = el('div', 'progress-top');
+  top.appendChild(el('div', 'progress-lbl', (t.etape || '—') + (t.sat_actif ? ' · ' + t.sat_actif : '')));
+  const val = el('div', 'progress-val');
+  if (has(t.cible) && t.cible > 0) {
+    val.appendChild(document.createTextNode(n(t.avancement, t.unite === 's' ? 0 : 1)));
+    val.appendChild(el('small', null, ' / ' + n(t.cible, t.unite === 's' ? 0 : 1) + ' ' + (t.unite || '')));
+  } else {
+    val.appendChild(el('small', null, 'depuis ' + duree(t.depuis_s)));
+  }
+  top.appendChild(val); pr.appendChild(top);
+  const bar = el('div', 'bar' + (EFS_ETAPES.includes(code) ? ' efs' : ''));
+  const fill = el('i'); fill.style.width = (has(t.cible) && t.cible > 0 ? pct(t.avancement, t.cible) : 0) + '%';
+  bar.appendChild(fill); pr.appendChild(bar); node.appendChild(pr);
+
+  const ft = el('div', 'rail-foot');
+  const f1 = el('div'); f1.appendChild(document.createTextNode('front d\'ECS ')); f1.appendChild(el('b', null, n(t.front_l) + ' L'));
+  ft.appendChild(f1);
+  const f2 = el('div'); f2.appendChild(document.createTextNode('dans l\'étape depuis ')); f2.appendChild(el('b', null, duree(t.depuis_s)));
+  ft.appendChild(f2);
+  const f3 = el('div', null); f3.appendChild(document.createTextNode('file '));
+  const fl = el('span', 'file-list');
+  if ((t.file || []).length) t.file.forEach(id => fl.appendChild(el('span', null, id)));
+  else fl.appendChild(el('span', null, 'vide'));
+  f3.appendChild(fl); f3.style.display = 'flex'; f3.style.gap = '6px'; f3.style.alignItems = 'center';
+  ft.appendChild(f3);
+  node.appendChild(ft);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   7. Rendu — organes partagés
+   ══════════════════════════════════════════════════════════════════════════ */
+function organe(cls, k, v, unite, s) {
+  const o = el('div', 'organ ' + cls);
+  o.appendChild(el('div', 'k', k));
+  const vv = el('div', 'v'); vv.appendChild(document.createTextNode(v));
+  if (unite) vv.appendChild(el('small', null, ' ' + unite));
+  o.appendChild(vv);
+  if (s) o.appendChild(el('div', 's', s));
+  return o;
+}
+
+function rendreOrganes(d) {
+  const box = $('#organs'); box.textContent = '';
+  const ch = (d && d.chaufferie) || {};
+  const trains = (d && d.trains) || [];
+
+  const pp = ch.pompe_pct || 0;
+  box.appendChild(organe('pump' + (pp > 0 ? ' run' : ' ko'), 'Pompe P1', pp > 0 ? pp : 'arrêt', pp > 0 ? '%' : '',
+    pp > 0 ? (pp >= 100 ? 'plein régime · 65 Hz' : 'régime réduit') : 'aucun circuit ne la demande'));
+
+  const v3 = ch.v3 || '—';
+  box.appendChild(organe('v3 ' + v3.toLowerCase(), 'Vanne 3 voies', v3, '',
+    v3 === 'EFS' ? 'fenêtre EFS ouverte' : 'position de repos'));
+
+  const pr = ch.pression || {};
+  box.appendChild(pr.ok
+    ? organe('', 'Pression sortie', n(pr.bar), 'bar', 'brut ' + i0(pr.brut) + ' — service ≈ 3,5 bar')
+    : organe('ko', 'Pression sortie', '—', '', 'registre AI à identifier (commande p)'));
+
+  box.appendChild(has(ch.temp_pompe_c)
+    ? organe('', 'Température P4', n(ch.temp_pompe_c), '°C', 'sortie de pompe')
+    : organe('ko', 'Température P4', '—', '', 'sonde muette'));
+
+  /* les attaches s'allument du côté du circuit qui tient la pompe */
+  [['#tieA', 0, 'var(--cuivre)'], ['#tieB', 1, 'var(--verdigris)']].forEach(([sel, idx, col]) => {
+    const t = trains[idx], tie = $(sel);
+    const live = !!t && POMPE_ETAPES.includes(codeEtape(t.etape)) && pp > 0;
+    tie.style.setProperty('--tc', col);
+    tie.classList.toggle('live', live);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   8. Rendu — satellites
+   ══════════════════════════════════════════════════════════════════════════ */
+function rendreSats(d) {
+  const box = $('#sats'); box.textContent = '';
+  const circuits = (d && d.circuits) || [];
+  const actifs = new Set(((d && d.trains) || []).map(t => t.sat_actif).filter(Boolean));
+  let total = 0;
+
+  circuits.forEach((c, ci) => (c.satellites || []).forEach(s => {
+    total++;
+    const lettre = ci === 0 ? 'a' : 'b';
+    const card = el('article', 'sat ' + lettre + (s.ok ? '' : ' ko') + (actifs.has(s.sat_id) ? ' actif' : ''));
+
+    const X = s.X_l || 40, et = s.etalonnage || {};
+    const j = el('div', 'jauge');
+    if (has(et.haut)) {
+      const blind = el('div', 'blind');
+      blind.style.bottom = pct(et.haut, X) + '%';
+      blind.style.height = Math.max(0, pct(X - 1, X) - pct(et.haut, X)) + '%';
+      blind.title = 'Zone suivie au débitmètre seul — aucun repère capteur';
+      j.appendChild(blind);
+    }
+    const fill = el('div', 'fill'); fill.style.height = (s.ok ? pct(s.volume_l, X) : 0) + '%'; j.appendChild(fill);
+    [['bas', s.cnb], ['milieu', s.cnm], ['haut', s.cnh]].forEach(([k, on]) => {
+      if (!has(et[k])) return;
+      const tk = el('div', 'tick' + (on ? ' on' : '')); tk.style.bottom = pct(et[k], X) + '%'; j.appendChild(tk);
+    });
+    const cb = el('div', 'cible'); cb.style.bottom = pct(X - 1, X) + '%';
+    cb.title = 'Cible de remplissage : ' + n(X - 1) + ' L'; j.appendChild(cb);
+    card.appendChild(j);
+
+    const b = el('div', 'sat-body');
+    b.appendChild(el('div', 'sat-id', s.sat_id));
+    const v = el('div', 'sat-vol');
+    v.appendChild(document.createTextNode(s.ok ? n(s.volume_l) : '—'));
+    v.appendChild(el('small', null, ' L / ' + i0(X)));
+    b.appendChild(v);
+
+    const chips = el('div', 'chips');
+    if (!s.ok) chips.appendChild(el('div', 'chip bad', 'sans réponse'));
+    else {
+      const q = (s.volume_qualite || '').toLowerCase();
+      chips.appendChild(el('div', 'chip ' + (q === 'etalonne' ? 'etal' : q === 'mesure' ? 'mesure' : 'inconnu'),
+        q === 'etalonne' ? 'étalonné' : q === 'mesure' ? 'au débitmètre' : 'niveau inconnu'));
+      if (s.vanne)   chips.appendChild(el('div', 'chip open', 'vanne ouverte'));
+      if (s.en_file) chips.appendChild(el('div', 'chip', 'en file'));
+      const df = s.defauts || {};
+      if (df.capteurs_fous)   chips.appendChild(el('div', 'chip bad', 'capteurs incohérents'));
+      if (df.quarantaine_s)   chips.appendChild(el('div', 'chip bad', 'mis de côté'));
+    }
+    b.appendChild(chips);
+
+    if (s.ok) {
+      const caps = el('div', 'capteurs');
+      const susp = suspectCNH(s), df = s.defauts || {};
+      [['CNB', s.cnb, et.bas, df.cnb_muet], ['CNM', s.cnm, et.milieu, df.cnm_muet],
+       ['CNH', s.cnh, et.haut, df.cnh_muet || susp]].forEach(([k, on, vol, bad]) => {
+        const c = el('div', 'cap' + (on ? ' wet' : '') + (bad ? ' susp' : ''));
+        c.appendChild(el('i'));
+        c.appendChild(el('span', null, k + ' ' + n(vol)));
+        c.title = k + ' à ' + n(vol) + ' L — ' + (on ? 'immergé' : 'sec') + (bad ? ' (suspect)' : '');
+        caps.appendChild(c);
+      });
+      b.appendChild(caps);
+
+      const ft = el('div', 'sat-foot');
+      ft.appendChild(el('div', null, 'Y ' + n(s.Y_l) + ' L'));
+      ft.appendChild(el('div', null, 'conso ' + n(s.conso_totale_l) + ' L'));
+      if (has(s.temp_c)) ft.appendChild(el('div', null, n(s.temp_c) + ' °C'));
+      b.appendChild(ft);
+    }
+    card.appendChild(b);
+    box.appendChild(card);
+  }));
+
+  if (!total) box.appendChild(el('p', null, "Aucun satellite dans le dernier envoi."));
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   9. Rendu — réserve, compteurs, mesures
+   ══════════════════════════════════════════════════════════════════════════ */
+function ligne(box, k, v, ko) {
+  const d = el('div', 'kv'); d.appendChild(el('span', null, k));
+  d.appendChild(el('b', ko ? 'ko' : null, v)); box.appendChild(d);
+}
+
+function rendreReserve(d) {
+  const rs = ((d && d.chaufferie) || {}).reserve || {};
+  const box = $('#resFloats'); box.textContent = '';
+  const lu = has(rs.haut_mouille);
+  const flotteurs = [['j', 'Jaune', 300, rs.haut_mouille], ['n', 'Noir', 252.5, rs.milieu_mouille], ['r', 'Rouge', 205, rs.bas_mouille]];
+  flotteurs.forEach(([cl, nom, vol, m]) => {
+    const f = el('div', 'flt ' + cl + (m ? ' wet' : ''));
+    f.appendChild(el('i'));
+    f.appendChild(el('span', null, nom + ' · ' + n(vol, vol % 1 ? 1 : 0) + ' L'));
+    f.appendChild(el('b', null, lu ? (m ? 'mouillé' : 'sec') : '—'));
+    box.appendChild(f);
+  });
+  const niveau = lu ? (rs.bas_mouille ? (rs.milieu_mouille ? (rs.haut_mouille ? 300 : 276) : 229) : 190) : 0;
+  $('#resEau').style.height = (lu ? Math.min(100, niveau / 300 * 100) : 0) + '%';
+  $('#resBand').textContent = !lu ? 'lecture indisponible'
+    : rs.haut_mouille ? '≥ 300 L — plus de matelas d\'air'
+    : rs.milieu_mouille ? '252,5 – 300 L'
+    : rs.bas_mouille ? '205 – 252,5 L' : '< 205 L';
+}
+
+function rendreEau(d) {
+  const eau = ((d && d.chaufferie) || {}).eau || {};
+  const box = $('#eauBox'); box.textContent = '';
+  [['QA', 'A', eau.qa], ['QB', 'B', eau.qb]].forEach(([nom, lettre, q]) => {
+    if (!q) { ligne(box, nom + ' · circuit ' + lettre, '—', true); return; }
+    ligne(box, nom + ' · circuit ' + lettre + ' (DI' + i0(q.voie) + ')',
+          q.ok ? n(q.litres) + ' L' : 'sans réponse', !q.ok);
+  });
+  ligne(box, 'Résolution', '0,5 L par impulsion');
+  ligne(box, 'Source', eau.source || '—');
+}
+
+function rendreMesures(d) {
+  const ch = (d && d.chaufferie) || {};
+  if (ch.vfd)       { state.mesures.vfd = ch.vfd; state.mesures.at = state.recuAt; }
+  if (ch.sdm120)    { state.mesures.sdm = ch.sdm120; state.mesures.at = state.recuAt; }
+  if (ch.maddalena) { state.mesures.madd = ch.maddalena; state.mesures.at = state.recuAt; }
+  const box = $('#mesuresBox'); box.textContent = '';
+  const {vfd, sdm, madd, at} = state.mesures;
+  if (!at) { box.appendChild(el('p', null, "Rien encore : ces mesures ne sont relevées que lorsque les deux trains sont au repos.")); return; }
+  if (vfd)  ligne(box, 'Variateur', vfd.ok ? n(vfd.freq_hz) + ' Hz · ' + n(vfd.courant_a, 2) + ' A' : 'sans réponse', !vfd.ok);
+  if (sdm)  ligne(box, 'Électricité', sdm.ok ? n(sdm.puissance_w, 0) + ' W · ' + n(sdm.energie_kwh) + ' kWh' : 'sans réponse', !sdm.ok);
+  if (madd) {
+    ligne(box, 'Départ / retour', madd.ok ? n(madd.t_depart_c) + ' / ' + n(madd.t_retour_c) + ' °C' : 'sans réponse', !madd.ok);
+    if (madd.ok) ligne(box, 'Énergie thermique', n(madd.energie_mwh, 3) + ' MWh');
+  }
+  ligne(box, 'Relevé', 'il y a ' + duree((Date.now() - at) / 1000));
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   10. Formulaire de réglage — n'envoie QUE ce qui a été rempli
+   ══════════════════════════════════════════════════════════════════════════ */
+const CHAMPS = [
+  {k:'intervalle_s',      t:'int',   min:5,   max:3600, l:"Période d'envoi",         u:'s'},
+  {k:'nb_sats',           t:'int',   min:1,   max:8,    l:'Satellites circuit A',    u:''},
+  {k:'nb_sats_b',         t:'int',   min:0,   max:8,    l:'Satellites circuit B',    u:''},
+  {k:'vol_pompe_amont_l', t:'float', min:0,   max:20,   l:'Tronçon commun',          u:'L'},
+  {k:'vol_recup_l',       t:'float', min:0,   max:100,  l:'Récupération A (Z)',      u:'L'},
+  {k:'vol_recup_b_l',     t:'float', min:0,   max:100,  l:'Récupération B (Z)',      u:'L'},
+  {k:'vitesse_train_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en train',  u:'%'},
+  {k:'vitesse_recup_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en récup',  u:'%'},
+  {k:'t_vanne_s',         t:'int',   min:1,   max:60,   l:'Pause de manœuvre',       u:'s'},
+  {k:'temp_addr',         t:'int',   min:1,   max:247,  l:'Adresse sondes PT100',    u:'', aide:'4 — surtout pas 3, c\'est le variateur'},
+  {k:'pres_fc',           t:'sel',   opts:[['','— inchangé —'],['3','FC03 · registres de maintien'],['4','FC04 · registres d\'entrée']], l:'Fonction Modbus pression'},
+  {k:'pres_reg_base',     t:'int',   min:0,   max:65535, l:'Registre AI de départ',  u:'', aide:'à caler sur ≈ 224 brut au repos'},
+  {k:'pres_voie',         t:'int',   min:1,   max:8,    l:'Voie AI pression',        u:''},
+  {k:'pres_bar_max',      t:'float', min:1,   max:100,  l:'Pleine échelle pression', u:'bar'},
+  {k:'pres_actif',        t:'bool',  l:'Lecture de pression'},
+  {k:'res_actif',         t:'bool',  l:'Surveillance réserve 300 L'},
+  {k:'C1',                t:'bool',  l:'Circuit A en service'},
+  {k:'C2',                t:'bool',  l:'Circuit B en service'},
 ];
-// étapes "froides" (EFS / eau froide) → teinte bleue
-const COLD_STEPS = new Set([4,5,7]);
 
-let lastSeq = null, lastRxAt = 0, everConnected = false;
+function construireFormulaire() {
+  const box = $('#cfgFields'); box.textContent = '';
+  CHAMPS.forEach(c => {
+    const f = el('div', 'f');
+    const lab = el('label'); lab.setAttribute('for', 'cf_' + c.k);
+    lab.appendChild(document.createTextNode(c.l + ' '));
+    const bornes = c.t === 'bool' ? '' : c.t === 'sel' ? '' : ' ' + c.min + '–' + c.max + (c.u ? ' ' + c.u : '');
+    if (bornes || c.aide) lab.appendChild(el('em', null, (bornes ? bornes : '') + (c.aide ? ' · ' + c.aide : '')));
+    f.appendChild(lab);
+    let inp;
+    if (c.t === 'bool' || c.t === 'sel') {
+      inp = el('select');
+      const opts = c.t === 'bool' ? [['', '— inchangé —'], ['true', 'en service'], ['false', 'à l\'arrêt']] : c.opts;
+      opts.forEach(([v, t]) => { const o = el('option', null, t); o.value = v; inp.appendChild(o); });
+    } else {
+      inp = el('input'); inp.type = 'number'; inp.placeholder = 'inchangé';
+      inp.min = c.min; inp.max = c.max; if (c.t === 'float') inp.step = '0.1';
+    }
+    inp.id = 'cf_' + c.k; inp.dataset.k = c.k; inp.dataset.t = c.t;
+    f.appendChild(inp); box.appendChild(f);
+  });
+}
 
-// build train frieze once
-const stepsEl = document.getElementById("steps");
-STEPS.forEach((s,i)=>{
-  const d = document.createElement("div");
-  d.className = "step"; d.id = "step"+i;
-  d.innerHTML = `<div class="code">${s.c}</div><div class="lbl">${s.l}</div>`;
-  stepsEl.appendChild(d);
+function construireTableSats(d) {
+  const tab = $('#cfgSats');
+  if (tab.dataset.rendu === '1') return;          // ne pas écraser une saisie en cours
+  const sats = [];
+  ((d && d.circuits) || []).forEach(c => (c.satellites || []).forEach(s => sats.push(s)));
+  if (!sats.length) return;
+  tab.dataset.rendu = '1';
+  tab.textContent = '';
+  const thead = el('thead'), trh = el('tr');
+  ['Satellite', 'X · capacité', 'Y · tuyau', 'CNB', 'CNM', 'CNH'].forEach(t => trh.appendChild(el('th', null, t)));
+  thead.appendChild(trh); tab.appendChild(thead);
+  const tb = el('tbody');
+  sats.forEach(s => {
+    const idx = s.sat_id.startsWith('SA') ? (+s.sat_id.slice(2) - 1) : (8 + (+s.sat_id.slice(2) - 1));
+    const tr = el('tr');
+    tr.appendChild(el('td', null, s.sat_id));
+    const et = s.etalonnage || {};
+    [['X_l', s.X_l], ['Y_l', s.Y_l], ['vol_bas', et.bas], ['vol_milieu', et.milieu], ['vol_haut', et.haut]].forEach(([k, cur]) => {
+      const td = el('td'), inp = el('input');
+      inp.type = 'number'; inp.step = '0.1'; inp.placeholder = has(cur) ? n(cur) : '—';
+      inp.dataset.sat = idx; inp.dataset.k = k;
+      td.appendChild(inp); tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+  tab.appendChild(tb);
+}
+
+function collecterConfig() {
+  const cfg = {}, circuits = {}, erreurs = [];
+  document.querySelectorAll('#cfgFields [data-k]').forEach(inp => {
+    inp.classList.remove('bad');
+    const v = inp.value.trim(); if (v === '') return;
+    const k = inp.dataset.k, t = inp.dataset.t;
+    if (t === 'bool') { (k === 'C1' || k === 'C2') ? circuits[k] = (v === 'true') : cfg[k] = (v === 'true'); return; }
+    const num = Number(v);
+    const spec = CHAMPS.find(c => c.k === k);
+    if (!isFinite(num) || (spec && has(spec.min) && (num < spec.min || num > spec.max))) {
+      inp.classList.add('bad'); erreurs.push(spec.l + ' : hors bornes'); return;
+    }
+    cfg[k] = t === 'int' ? Math.round(num) : num;
+  });
+  if (Object.keys(circuits).length) cfg.circuits = circuits;
+
+  /* satellites : on ne pousse un satellite que si ses 5 valeurs sont cohérentes */
+  const parSat = {};
+  document.querySelectorAll('#cfgSats input[data-sat]').forEach(inp => {
+    inp.classList.remove('bad');
+    const v = inp.value.trim(); if (v === '') return;
+    const i = +inp.dataset.sat;
+    (parSat[i] = parSat[i] || {inputs: []}).inputs.push(inp);
+    parSat[i][inp.dataset.k] = Number(v);
+  });
+  const idxs = Object.keys(parSat).map(Number);
+  if (idxs.length) {
+    const sats = [];
+    for (let i = 0; i < 16; i++) sats.push({});
+    idxs.forEach(i => {
+      const src = parSat[i], id = (i < 8 ? 'SA' : 'SB') + ((i % 8) + 1);
+      const base = satCourant(i);
+      const o = {
+        X_l:        has(src.X_l)        ? src.X_l        : base.X_l,
+        Y_l:        has(src.Y_l)        ? src.Y_l        : base.Y_l,
+        vol_bas:    has(src.vol_bas)    ? src.vol_bas    : base.vol_bas,
+        vol_milieu: has(src.vol_milieu) ? src.vol_milieu : base.vol_milieu,
+        vol_haut:   has(src.vol_haut)   ? src.vol_haut   : base.vol_haut,
+      };
+      const complet = Object.values(o).every(has);
+      if (!complet) { src.inputs.forEach(x => x.classList.add('bad')); erreurs.push(id + " : renseignez les 5 valeurs, l'automate les relit en bloc"); return; }
+      if (!(o.vol_bas < o.vol_milieu && o.vol_milieu < o.vol_haut && o.vol_haut < o.X_l)) {
+        src.inputs.forEach(x => x.classList.add('bad'));
+        erreurs.push(id + ' : il faut bas < milieu < haut < X, sinon l\'automate ignore le satellite'); return;
+      }
+      sats[i] = o;
+    });
+    if (sats.some(o => Object.keys(o).length)) cfg.sats = sats;
+  }
+  return {cfg, erreurs};
+}
+
+/** Valeurs actuelles connues d'un satellite, pour compléter une saisie partielle. */
+function satCourant(idx) {
+  const id = (idx < 8 ? 'SA' : 'SB') + ((idx % 8) + 1);
+  let out = {};
+  ((state.data && state.data.circuits) || []).forEach(c => (c.satellites || []).forEach(s => {
+    if (s.sat_id !== id || !s.ok) return;
+    const et = s.etalonnage || {};
+    out = {X_l: s.X_l, Y_l: s.Y_l, vol_bas: et.bas, vol_milieu: et.milieu, vol_haut: et.haut};
+  }));
+  return out;
+}
+
+function sortie(msg, cls) {
+  const o = $('#cfgOut'); o.textContent = msg;
+  o.className = 'show' + (cls ? ' ' + cls : '');
+}
+
+function paquetConfig() {
+  const {cfg, erreurs} = collecterConfig();
+  if (erreurs.length) { sortie('À corriger avant d\'envoyer :\n· ' + erreurs.join('\n· '), 'err'); return null; }
+  if (!Object.keys(cfg).length) { sortie("Rien à envoyer : aucun champ n'a été rempli.", 'err'); return null; }
+  const vNow = (state.data && state.data.cfg_version) || 0;
+  cfg.cfg_version = vNow + 1;
+  return cfg;
+}
+
+$('#btnSend').addEventListener('click', async () => {
+  const cfg = paquetConfig(); if (!cfg) return;
+  const btn = $('#btnSend'); btn.disabled = true;
+  sortie('Envoi en cours…');
+  try {
+    const r = await fetch(API.config, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({config: cfg}),
+    });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    sortie('Config v' + cfg.cfg_version + ' déposée. Elle sera appliquée au prochain envoi de l\'automate '
+         + '(au plus tard dans ' + duree((state.data && state.data.config_active && state.data.config_active.intervalle_s) || 30) + ').\n'
+         + 'Vérifiez que « config » passe bien à v' + cfg.cfg_version + ' en haut de page.', 'ok');
+  } catch (e) {
+    sortie("Le dépôt a échoué : " + e.message + ".\nLe JSON ci-dessous reste valide — copiez-le et déposez-le à la main :\n\n"
+         + JSON.stringify({config: cfg}, null, 2), 'err');
+  } finally { btn.disabled = false; }
 });
 
-function etapeIndex(nom){
-  if(!nom) return 0;
-  const m = String(nom).match(/E(\d)/);
-  return m ? parseInt(m[1],10) : 0;
-}
-function fmt(v, unit="", dec=1){
-  if(v===null||v===undefined||v==="") return "—";
-  const n = Number(v);
-  if(Number.isNaN(n)) return String(v);
-  return (Number.isInteger(n)&&dec===0?n:n.toFixed(dec))+(unit?" "+unit:"");
-}
-function uptimeStr(s){
-  s = Number(s)||0;
-  const d=Math.floor(s/86400), h=Math.floor(s%86400/3600),
-        m=Math.floor(s%3600/60);
-  if(d) return `${d}j ${h}h`;
-  if(h) return `${h}h ${m}min`;
-  return `${m}min`;
+$('#btnCopy').addEventListener('click', async () => {
+  const cfg = paquetConfig(); if (!cfg) return;
+  const txt = JSON.stringify({config: cfg}, null, 2);
+  try { await navigator.clipboard.writeText(txt); sortie('JSON copié :\n\n' + txt, 'ok'); }
+  catch { sortie('Copie impossible, voici le JSON :\n\n' + txt); }
+});
+
+$('#btnReset').addEventListener('click', () => {
+  document.querySelectorAll('#cfgFields [data-k], #cfgSats input[data-sat]').forEach(i => { i.value = ''; i.classList.remove('bad'); });
+  sortie('Formulaire vidé.', 'ok');
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   11. Boucle
+   ══════════════════════════════════════════════════════════════════════════ */
+function rendre() {
+  const d = state.data;
+  rendreBandeau(d);
+  rendreAlertes(d);
+  rendreRail($('#railA'), (d && d.trains && d.trains[0]) || (d && d.train), 'A', 504);
+  rendreRail($('#railB'), (d && d.trains && d.trains[1]), 'B', 505);
+  rendreOrganes(d);
+  rendreSats(d);
+  rendreReserve(d);
+  rendreEau(d);
+  rendreMesures(d);
+  construireTableSats(d);
 }
 
-function setStatus(state){ // 'live' | 'stale' | 'off'
-  const dot=document.getElementById("statusDot"), t=document.getElementById("statusText");
-  dot.className = "dot "+state;
-  t.textContent = state==="live"?"en ligne":state==="stale"?"signal perdu":"hors ligne";
-}
-function banner(msg){
-  const b=document.getElementById("banner");
-  if(msg){ document.getElementById("bannerText").textContent=msg; b.classList.add("show"); }
-  else b.classList.remove("show");
-}
-
-function renderTrain(d){
-  const tr = d.train || d.cycle || {};
-  const idx = etapeIndex(tr.etape);
-  const cold = COLD_STEPS.has(idx);
-  for(let i=0;i<STEPS.length;i++){
-    const el=document.getElementById("step"+i);
-    el.className="step"+(COLD_STEPS.has(i)?" cold":"");
-    if(i<idx) el.classList.add("done");
-    else if(i===idx) el.classList.add("active");
+async function relever() {
+  if (DEMO) { state.data = demo(); state.recuAt = Date.now(); state.erreur = null; rendre(); return; }
+  try {
+    const r = await fetch(API.telemetry, {cache: 'no-store'});
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    const j = await r.json();
+    /* le backend peut renvoyer le payload nu, ou l'emballer */
+    const d = j && (j.device_id ? j : (j.payload || j.data || j.telemetry));
+    if (!d || !d.device_id) throw new Error('payload non reconnu');
+    state.data = d; state.recuAt = Date.now(); state.erreur = null;
+  } catch (e) {
+    state.erreur = 'liaison interrompue — ' + e.message;
   }
-  // progress bar : avancement/cible de l'étape courante, sinon position brute
-  const fill=document.getElementById("trackfill");
-  fill.className="trackfill"+(cold?" cold":"");
-  let pct;
-  if(tr.cible && tr.avancement!==undefined){
-    pct = Math.max(0,Math.min(100, (tr.avancement/tr.cible)*100));
-  } else {
-    pct = (idx/(STEPS.length-1))*100;
-  }
-  fill.style.width = pct.toFixed(0)+"%";
-
-  document.getElementById("trainSub").textContent =
-    tr.cycle_actif===false ? "cycle à l'arrêt" :
-    (tr.etape||"—")+(tr.depuis_s!==undefined?` · depuis ${tr.depuis_s}s`:"");
-  document.getElementById("tmSat").textContent = tr.sat_actif || "aucun";
-  document.getElementById("tmFront").textContent = fmt(tr.front_l,"L");
-  document.getElementById("tmAdv").textContent =
-    (tr.avancement!==undefined&&tr.cible!==undefined)
-      ? `${fmt(tr.avancement)} / ${fmt(tr.cible)} ${tr.unite||""}` : "—";
-
-  const q=document.getElementById("tmQueue");
-  const file = Array.isArray(tr.file)?tr.file:[];
-  q.innerHTML = file.length
-    ? file.map(id=>`<span class="qchip">${id}</span>`).join("")
-    : `<span class="qempty">vide</span>`;
+  rendre();
 }
 
-function statePill(s, activeId){
-  if(!s.ok) return {cls:"off", txt:"hors ligne"};
-  if(s.vanne) return {cls:"fill", txt:"remplissage"};
-  if(s.en_file) return {cls:"queue", txt:"en file"};
-  return {cls:"idle", txt:"au repos"};
+/* ══════════════════════════════════════════════════════════════════════════
+   12. Mode démonstration (?demo=1) — pour valider la mise en page sans backend
+   ══════════════════════════════════════════════════════════════════════════ */
+function demo() {
+  const t = Date.now() / 1000;
+  const seqEtapes = [0, 9, 1, 2, 3, 3, 3, 4, 5, 6, 7, 8];
+  const nom = c => ({0:'E0 REPOS',1:'E1 AMORCAGE',2:'E2 OUVERTURE',3:'E3 REMPLISSAGE',4:'E4 BASCULE EFS',
+                     5:'E5 BOUCHON',6:'E6 FERMETURE',7:'E7 RECUP',8:'E8 RETOUR REPOS',
+                     9:'E9 DEPART (vanne retour)',10:'E10 ATTENTE EFS'})[c];
+  const cA = seqEtapes[Math.floor(t / 6) % seqEtapes.length];
+  const cB = seqEtapes[Math.floor((t + 26) / 6) % seqEtapes.length];
+  const av = (t % 6) / 6;
+  const train = (lettre, code, sat, X, Y, file) => ({
+    circuit: lettre, etape: nom(code), cycle_actif: true, depuis_s: Math.floor(t % 6),
+    sat_actif: code === 0 ? null : sat, front_l: code === 0 ? 0 : Y + 4,
+    dernier: [4,5,7].includes(code), attente_efs: code === 10,
+    vanne_retour: code === 0 || code === 8 ? 'FERMEE' : 'OUVERTE',
+    file: code === 0 ? [] : file,
+    avancement: code === 3 || code === 5 ? (X - 1 - Y) + av * Y : av * 10,
+    cible: code === 3 || code === 5 ? X - 1 : 10, unite: 'L',
+  });
+  const sat = (id, X, Y, vol, temp) => ({
+    sat_id: id, ok: true, cnb: vol > 8.2 ? 1 : 0, cnm: vol > 17.3 ? 1 : 0,
+    cnh: id === 'SB1' ? 0 : (vol > 26.5 ? 1 : 0),
+    niveau: vol > 26.5 ? 'HAUT' : vol > 17.3 ? 'MILIEU' : 'BAS',
+    vanne: 0, en_file: 0, volume_l: Math.round(vol * 10) / 10,
+    volume_qualite: 'MESURE', conso_totale_l: 1284.5, X_l: X, Y_l: Y, temp_c: temp,
+    etalonnage: {bas: 8.2, milieu: 17.3, haut: 26.5},
+  });
+  return {
+    device_id: 'chaufferie-01', seq: Math.floor(t / 30), uptime_s: 91_000,
+    rssi_dbm: -62, cfg_version: 7, simulation: false, nb_sats: 2, nb_sats_b: 1,
+    trains: [train('A', cA, 'SA1', 59, 5.5, ['SA2']), train('B', cB, 'SB1', 38, 5, [])],
+    chaufferie: {
+      eau: {impulsions: 84_512, litres: 42_256, zlan_ok: true, source: 'ZLAN6808',
+            qa: {voie: 1, impulsions: 84_512, litres: 42_256, ok: true},
+            qb: {voie: 2, impulsions: 21_004, litres: 10_502, ok: true}},
+      v3: [4,5,7].includes(cA) || [4,5,7].includes(cB) ? 'EFS' : 'ECS',
+      vanne_r12: 'CHAUD',
+      pompe_pct: (cA === 0 && cB === 0) ? 0 : ([7].includes(cA) && [7,0,8].includes(cB) ? 60 : 100),
+      reserve: {ok: true, haut_mouille: 0, milieu_mouille: 0, bas_mouille: 1,
+                appoint_requis: false, vol_min: 205, vol_max: 252.5},
+      pression: {ok: true, bar: (cA === 0 && cB === 0) ? 3.5 : 7.8, brut: (cA === 0 && cB === 0) ? 224 : 499},
+      temp_pompe_c: 54.2,
+    },
+    circuits: [
+      {circuit_id: 'C1', actif: true, satellites: [sat('SA1', 59, 5.5, 40 + 12 * av, 55.1), sat('SA2', 38, 6.5, 21.4, 52.8)]},
+      {circuit_id: 'C2', actif: true, satellites: [sat('SB1', 38, 5, 30.2, 51.6)]},
+    ],
+  };
 }
 
-function renderSats(d){
-  const grid=document.getElementById("satgrid");
-  const c1 = (d.circuits||[]).find(c=>c.circuit_id==="C1") || (d.circuits||[])[0] || {};
-  const sats = c1.satellites || [];
-  const activeId = (d.train&&d.train.sat_actif)||null;
-  document.getElementById("satSub").textContent =
-    `${sats.length} actif${sats.length>1?"s":""} · circuit ${c1.circuit_id||"C1"}`;
-
-  grid.innerHTML = sats.map(s=>{
-    const p = statePill(s, activeId);
-    const isActive = s.sat_id===activeId;
-    const tgt = (s.X_l!==undefined)?(s.X_l-1):null;
-    const vol = s.volume_l;
-    const lv = [s.cnb, s.cnm, s.cnh];
-    const et = s.etalonnage || {};
-    const tempTxt = (s.temp_c!==undefined&&s.temp_c!==null)
-      ? `<span class="temp${s.temp_c>=35?" hot":""}">${fmt(s.temp_c,"°C")}</span>`
-      : `<span class="temp" style="color:var(--ink-3)">temp —</span>`;
-    return `
-    <div class="sat${isActive?" active":""}${s.ok?"":" offline"}">
-      <div class="sathead">
-        <span class="satname">${s.sat_id||"?"}</span>
-        <span class="pill ${p.cls}">${p.txt}</span>
-      </div>
-      <div class="volrow">
-        <span class="volbig${isActive?" active":""}">${s.ok?fmt(vol):"—"}</span>
-        <span class="voltgt">${tgt!==null?"/ "+fmt(tgt,"L",0):""}</span>
-      </div>
-      <div class="qual">${s.ok?(s.volume_qualite||"—"):"pas de communication"}</div>
-      <div class="levels">
-        <div class="lvl${lv[0]?" on":""}" title="CNB ${fmt(et.bas,'L')}"></div>
-        <div class="lvl${lv[1]?" on":""}" title="CNM ${fmt(et.milieu,'L')}"></div>
-        <div class="lvl${lv[2]?" on":""}" title="CNH ${fmt(et.haut,'L')}"></div>
-      </div>
-      <div class="lvlrow"><span>bas</span><span>milieu</span><span>haut</span></div>
-      <div class="satfoot">
-        ${tempTxt}
-        <span>conso ${fmt(s.conso_totale_l,"L")}</span>
-      </div>
-    </div>`;
-  }).join("") || `<div class="muted-note">aucun satellite déclaré</div>`;
-}
-
-function renderMetrics(d){
-  const ch = d.chaufferie || {};
-  const eau = ch.eau || {};
-  const ma = ch.maddalena || {};
-  const pompe = ch.pompe_pct;
-  const v3 = ch.v3 || "—";
-  const items = [
-    {k:"Pompe P1", ic:"pump", v:pompe!==undefined?pompe:"—", u:"%",
-      cls:pompe>0?"hot":""},
-    {k:"Vanne V3", ic:"valve", v:v3, u:"", cls:v3==="ECS"?"hot":v3==="EFS"?"cold":""},
-    {k:"Compteur d'eau", ic:"gauge", v:eau.litres!==undefined?Math.round(eau.litres):"—", u:"L"},
-    {k:"Débit", ic:"flow", v:ma.debit_lh!==undefined?Math.round(ma.debit_lh):"—", u:"L/h"},
-    {k:"T° départ", ic:"temp", v:ma.t_depart_c!==undefined?fmt(ma.t_depart_c):"—", u:"°C", cls:"hot"},
-    {k:"T° retour", ic:"temp", v:ma.t_retour_c!==undefined?fmt(ma.t_retour_c):"—", u:"°C", cls:"cold"},
-  ];
-  document.getElementById("metgrid").innerHTML = items.map(m=>`
-    <div class="met">
-      <div class="k">${m.k}</div>
-      <div class="v ${m.cls||""}">${m.v}${m.u?` <small>${m.u}</small>`:""}</div>
-    </div>`).join("");
-}
-
-function plantCard(title, obj, rows){
-  const up = obj && obj.ok;
-  const body = up
-    ? rows.filter(r=>obj[r.f]!==undefined)
-          .map(r=>`<div class="kv"><span class="k">${r.k}</span>
-             <span class="v">${fmt(obj[r.f],r.u,r.dec!==undefined?r.dec:1)}</span></div>`).join("")
-      || `<div class="muted-note">connecté, pas de valeur</div>`
-    : `<div class="muted-note">relevé au prochain repos du train</div>`;
-  return `<div class="pcard">
-    <h3>${title}<span class="badge ${up?"up":"down"}">${up?"OK":"—"}</span></h3>
-    ${body}</div>`;
-}
-
-function renderPlant(d){
-  const ch = d.chaufferie || {};
-  const grid=document.getElementById("plantgrid");
-  grid.innerHTML =
-    plantCard("Variateur pompe (CW100)", ch.vfd, [
-      {k:"État",f:"etat",dec:0},{k:"Fréquence",f:"freq_hz",u:"Hz"},
-      {k:"Bus DC",f:"vbus_v",u:"V"},{k:"Courant",f:"courant_a",u:"A"}]) +
-    plantCard("Compteur électrique (SDM120)", ch.sdm120, [
-      {k:"Tension",f:"tension_v",u:"V"},{k:"Courant",f:"courant_a",u:"A"},
-      {k:"Puissance",f:"puissance_w",u:"W"},{k:"Énergie",f:"energie_kwh",u:"kWh"}]) +
-    plantCard("Compteur thermique (Maddalena)", ch.maddalena, [
-      {k:"Puissance",f:"puissance_w",u:"W"},{k:"T° départ",f:"t_depart_c",u:"°C"},
-      {k:"T° retour",f:"t_retour_c",u:"°C"},{k:"Débit",f:"debit_lh",u:"L/h"},
-      {k:"Énergie",f:"energie_mwh",u:"MWh",dec:2}]) +
-    plantCard("Compteur d'eau (ZLAN)", ch.eau ? {ok:ch.eau.zlan_ok, ...ch.eau}:null, [
-      {k:"Volume",f:"litres",u:"L",dec:0},{k:"Impulsions",f:"impulsions",u:"",dec:0},
-      {k:"Source",f:"source",u:""}]);
-}
-
-function renderFooter(d){
-  document.getElementById("footSeq").textContent = "seq "+(d.seq??"—");
-  document.getElementById("footUptime").textContent = "uptime "+uptimeStr(d.uptime_s);
-  document.getElementById("footCfg").textContent = "config v"+(d.cfg_version??"—");
-  document.getElementById("footRssi").textContent = (d.rssi_dbm??"—")+" dBm";
-  document.getElementById("devid").textContent = d.device_id || "chaufferie-01";
-}
-
-function render(d){
-  renderTrain(d); renderSats(d); renderMetrics(d);
-  renderPlant(d); renderFooter(d);
-  document.getElementById("raw").textContent = JSON.stringify(d,null,2);
-  // alerte simple : comm ZLAN perdue ou satellite offline
-  const ch=d.chaufferie||{};
-  const offSats=((d.circuits||[]).flatMap(c=>c.satellites||[])).filter(s=>!s.ok);
-  if(ch.eau && ch.eau.zlan_ok===false)
-    banner("Communication ZLAN interrompue — compteur d'eau et vanne V3 injoignables.");
-  else if(offSats.length)
-    banner(`${offSats.length} satellite(s) sans communication : ${offSats.map(s=>s.sat_id).join(", ")}.`);
-  else banner(null);
-}
-
-// L'API enveloppe la trame : { devices: { "chaufferie-01": {...} }, configs:{} }.
-// On déballe le device voulu (DEVICE_ID) ; repli sur le 1er device, puis sur
-// la racine si jamais l'API renvoyait déjà du plat.
-const DEVICE_ID = "chaufferie-01";
-function unwrap(payload){
-  if(payload && payload.devices && typeof payload.devices==="object"){
-    if(payload.devices[DEVICE_ID]) return payload.devices[DEVICE_ID];
-    const first = Object.values(payload.devices)[0];
-    if(first) return first;
-  }
-  return payload;
-}
-
-async function tick(){
-  try{
-    const r = await fetch(API, {cache:"no-store"});
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    const raw = await r.json();
-    const d = unwrap(raw);
-    if(!d || d.seq===undefined){ // device pas encore vu
-      if(!everConnected) setStatus("off");
-      return;
-    }
-    lastRxAt = Date.now(); everConnected = true;
-    if(d.seq!==lastSeq){ lastSeq=d.seq; }
-    render(d);
-    setStatus("live");
-  }catch(e){
-    if(!everConnected) setStatus("off");
-  }
-  // vérif fraîcheur indépendamment du succès réseau
-  if(everConnected && Date.now()-lastRxAt > STALE_MS) setStatus("stale");
-}
-
-tick();
-setInterval(tick, POLL_MS);
+/* ══════════════════════════════════════════════════════════════════════════ */
+construireFormulaire();
+$('#footMode').textContent = DEMO ? 'mode démonstration — données simulées' : 'source : ' + API.telemetry;
+relever();
+setInterval(relever, DEMO ? 1000 : PERIODE_MS);
 </script>
 </body>
 </html>
