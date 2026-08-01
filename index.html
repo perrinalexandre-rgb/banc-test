@@ -955,12 +955,49 @@ function expliquerRefus(status, texte) {
   return 'réponse ' + status + (texte ? '\n' + texte : '');
 }
 
-$('#btnSend').addEventListener('click', async () => {
-  const cfg = paquetConfig(); if (!cfg) return;
-  const cle = $('#cfgKey').value.trim();
-  if (!cle) { sortie("Renseignez la clé d'accès : sans elle, la fonction refuse le dépôt.", 'err'); return; }
-  const btn = $('#btnSend'); btn.disabled = true;
-  sortie('Envoi en cours…');
+/** Met le bloc en français, et signale ce qui a des conséquences sur le service. */
+function resumerConfig(cfg) {
+  const lignes = [], alertes = [];
+  Object.keys(cfg).forEach(k => {
+    if (k === 'cfg_version') return;
+    if (k === 'circuits') {
+      Object.keys(cfg.circuits).forEach(c => {
+        const nom = c === 'C1' ? 'Circuit A' : 'Circuit B', v = cfg.circuits[c];
+        lignes.push(nom + ' : ' + (v ? 'en service' : "à l'arrêt"));
+        if (!v) alertes.push(nom + " passe à l'arrêt : ses demandes ne seront plus servies.");
+      });
+      return;
+    }
+    if (k === 'sats') {
+      cfg.sats.forEach((o, i) => {
+        if (!Object.keys(o).length) return;
+        lignes.push((i < 8 ? 'SA' : 'SB') + ((i % 8) + 1) + ' : X ' + n(o.X_l) + ' L, Y ' + n(o.Y_l)
+                  + ' L, repères ' + n(o.vol_bas) + ' / ' + n(o.vol_milieu) + ' / ' + n(o.vol_haut));
+      });
+      return;
+    }
+    const spec = CHAMPS.find(c => c.k === k);
+    const v = typeof cfg[k] === 'boolean' ? (cfg[k] ? 'activé' : 'désactivé') : cfg[k];
+    lignes.push((spec ? spec.l : k) + ' : ' + v + (spec && spec.u ? ' ' + spec.u : ''));
+  });
+  if (cfg.nb_sats_b === 0)
+    alertes.push("Satellites circuit B à 0 : SB1 sort du service, plus aucun train ne partira sur le bus B.");
+  if (has(cfg.intervalle_s) && cfg.intervalle_s <= 10)
+    alertes.push("Envoi toutes les " + cfg.intervalle_s + " s : la fenêtre aveugle du POST tombera "
+               + "souvent pendant un remplissage, au risque de dépasser la cible.");
+  if (has(cfg.pres_bar_max) && Math.abs(cfg.pres_bar_max - 16) > 0.01)
+    alertes.push("Pleine échelle pression à " + cfg.pres_bar_max + " bar — D26 donne 16 bar après le pont diviseur.");
+  return {lignes: lignes, alertes: alertes};
+}
+
+let depotEnAttente = null;
+function annulerDepot() {
+  if (!depotEnAttente) return;
+  depotEnAttente = null;
+  $('#btnSend').textContent = "Envoyer à l'automate";
+}
+
+async function deposer(cfg, cle) {
   const corps = corpsDepot(cfg);
   try {
     const r = await fetch(API.config, {
@@ -973,15 +1010,46 @@ $('#btnSend').addEventListener('click', async () => {
       try { texte = (await r.text()).trim().slice(0, 500); } catch (_) {}
       throw new Error(expliquerRefus(r.status, texte));
     }
-    const attente = state.periodeObs ? Math.round(state.periodeObs) + ' s' : 'un cycle d\'envoi';
-    sortie('Config v' + cfg.cfg_version + ' déposée. Elle sera appliquée au prochain envoi de '
-         + 'l\'automate, sous ' + attente + '.\n'
+    const attente = state.periodeObs ? Math.round(state.periodeObs) + ' s' : "un cycle d'envoi";
+    sortie('Config v' + cfg.cfg_version + " déposée. Elle sera appliquée au prochain envoi de "
+         + "l'automate, sous " + attente + ".\n"
          + 'Vérifiez que « config » passe bien à v' + cfg.cfg_version + ' en haut de page.', 'ok');
   } catch (e) {
-    sortie("Le dépôt a échoué.\n\n" + e.message + "\n\n"
-         + "Le bloc ci-dessous reste valide :\n\n" + JSON.stringify(corps, null, 2), 'err');
-  } finally { btn.disabled = false; }
+    sortie("Le dépôt a échoué.\n\n" + e.message + "\n\nLe bloc reste valide :\n\n"
+         + JSON.stringify(corps, null, 2), 'err');
+  }
+}
+
+$('#btnSend').addEventListener('click', async () => {
+  const btn = $('#btnSend');
+  /* 2e clic : on envoie ce qui a été montré */
+  if (depotEnAttente) {
+    const cfg = depotEnAttente;
+    depotEnAttente = null;
+    btn.textContent = "Envoyer à l'automate";
+    btn.disabled = true;
+    sortie('Envoi en cours…');
+    await deposer(cfg, $('#cfgKey').value.trim());
+    btn.disabled = false;
+    return;
+  }
+  /* 1er clic : bilan de ce qui va changer */
+  const cfg = paquetConfig(); if (!cfg) return;
+  if (!$('#cfgKey').value.trim()) {
+    sortie("Renseignez la clé d'accès : sans elle, la fonction refuse le dépôt.", 'err');
+    return;
+  }
+  const r = resumerConfig(cfg);
+  depotEnAttente = cfg;
+  btn.textContent = "Confirmer l'envoi";
+  sortie("Voici ce qui va changer sur l'automate :\n\n· " + r.lignes.join('\n· ')
+       + (r.alertes.length ? "\n\nÀ noter :\n! " + r.alertes.join('\n! ') : '')
+       + "\n\nCliquez de nouveau pour confirmer, ou modifiez un champ pour annuler.",
+       r.alertes.length ? 'err' : '');
 });
+
+const panneauCfg = document.querySelector('details.cfg');
+if (panneauCfg) panneauCfg.addEventListener('input', annulerDepot);
 
 $('#btnCopy').addEventListener('click', async () => {
   const cfg = paquetConfig(); if (!cfg) return;
