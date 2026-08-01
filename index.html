@@ -355,7 +355,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-soft);
       <div class="tabwrap"><table class="sattab" id="cfgSats"></table></div>
 
       <div class="f" style="margin-top:20px;max-width:360px">
-        <label for="cfgKey">Clé d'accès <em>— gardée en mémoire seulement, à retaper après chaque rechargement</em></label>
+        <label for="cfgKey">Clé d'accès <em>— facultative tant que CONFIG_API_KEY n'est pas définie dans Azure ; gardée en mémoire seulement</em></label>
         <input id="cfgKey" type="password" autocomplete="off" placeholder="votre CONFIG_API_KEY">
       </div>
 
@@ -999,10 +999,12 @@ function annulerDepot() {
 
 async function deposer(cfg, cle) {
   const corps = corpsDepot(cfg);
+  const entetes = {'Content-Type': 'application/json'};
+  if (cle) entetes['x-api-key'] = cle;
   try {
     const r = await fetch(API.config, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'x-api-key': cle},
+      headers: entetes,
       body: JSON.stringify(corps),
     });
     if (!r.ok) {
@@ -1035,11 +1037,10 @@ $('#btnSend').addEventListener('click', async () => {
   }
   /* 1er clic : bilan de ce qui va changer */
   const cfg = paquetConfig(); if (!cfg) return;
-  if (!$('#cfgKey').value.trim()) {
-    sortie("Renseignez la clé d'accès : sans elle, la fonction refuse le dépôt.", 'err');
-    return;
-  }
   const r = resumerConfig(cfg);
+  if (!$('#cfgKey').value.trim())
+    r.alertes.push("Dépôt sans clé : accepté tant que CONFIG_API_KEY n'est pas définie dans Azure. "
+                 + "Le jour où elle le sera, ce champ redeviendra obligatoire.");
   depotEnAttente = cfg;
   btn.textContent = "Confirmer l'envoi";
   sortie("Voici ce qui va changer sur l'automate :\n\n· " + r.lignes.join('\n· ')
