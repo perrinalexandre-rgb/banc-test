@@ -927,30 +927,43 @@ function paquetConfig() {
   return cfg;
 }
 
+/** Corps du dépôt. Sans device_id, la fonction Azure n'a pas de casier où ranger
+ *  le bloc dans "configs" — c'est la cause la plus probable d'un 500. */
+function corpsDepot(cfg) {
+  return {device_id: (state.data && state.data.device_id) || DEVICE, config: cfg};
+}
+
 $('#btnSend').addEventListener('click', async () => {
   const cfg = paquetConfig(); if (!cfg) return;
   const btn = $('#btnSend'); btn.disabled = true;
   sortie('Envoi en cours…');
+  const corps = corpsDepot(cfg);
   try {
     const r = await fetch(API.config, {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({config: cfg}),
+      body: JSON.stringify(corps),
     });
-    if (!r.ok) throw new Error('réponse ' + r.status);
-    sortie('Config v' + cfg.cfg_version + ' déposée. Elle sera appliquée au prochain envoi de l\'automate '
-         + '(au plus tard dans ' + duree((state.data && state.data.config_active && state.data.config_active.intervalle_s) || 30) + ').\n'
+    if (!r.ok) {
+      let detail = '';
+      try { detail = (await r.text()).trim().slice(0, 500); } catch (_) {}
+      throw new Error('réponse ' + r.status + (detail ? '\n' + detail : ''));
+    }
+    const attente = state.periodeObs ? Math.round(state.periodeObs) + ' s' : 'un cycle d\'envoi';
+    sortie('Config v' + cfg.cfg_version + ' déposée. Elle sera appliquée au prochain envoi de '
+         + 'l\'automate, sous ' + attente + '.\n'
          + 'Vérifiez que « config » passe bien à v' + cfg.cfg_version + ' en haut de page.', 'ok');
   } catch (e) {
-    sortie("Le dépôt a échoué : " + e.message + ".\nLe JSON ci-dessous reste valide — copiez-le et déposez-le à la main :\n\n"
-         + JSON.stringify({config: cfg}, null, 2), 'err');
+    sortie("Le dépôt a échoué : " + e.message + "\n\n"
+         + "Le bloc ci-dessous reste valide. L'automate le lira s'il apparaît dans la réponse "
+         + "à son propre POST :\n\n" + JSON.stringify(corps, null, 2), 'err');
   } finally { btn.disabled = false; }
 });
 
 $('#btnCopy').addEventListener('click', async () => {
   const cfg = paquetConfig(); if (!cfg) return;
-  const txt = JSON.stringify({config: cfg}, null, 2);
+  const txt = JSON.stringify(corpsDepot(cfg), null, 2);
   try { await navigator.clipboard.writeText(txt); sortie('JSON copié :\n\n' + txt, 'ok'); }
-  catch { sortie('Copie impossible, voici le JSON :\n\n' + txt); }
+  catch (_) { sortie('Copie impossible, voici le JSON :\n\n' + txt); }
 });
 
 $('#btnReset').addEventListener('click', () => {
