@@ -375,10 +375,12 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-soft);
    1. LA SEULE CHOSE À ADAPTER AU BACKEND
    ══════════════════════════════════════════════════════════════════════════ */
 const API = {
-  telemetry: '/api/data',     // GET  → dernier payload reçu de l'automate
+  telemetry: '/api/data',     // GET  → { devices: { "<id>": {payload} }, configs: {} }
   config:    '/api/config',   // POST → config servie en réponse au prochain POST automate
 };
-const PERIODE_MS = 5000;      // rafraîchissement de la page
+const DEVICE     = 'chaufferie-01';   // laisser vide pour prendre le premier appareil trouvé
+const PERIODE_MS = 3000;      // rafraîchissement de la page
+const PERIODE_AGE_MS = 1000;  // le compteur d'âge, lui, avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le payload est considéré périmé
 
 const DEMO = new URLSearchParams(location.search).has('demo');
@@ -402,6 +404,9 @@ const duree = s => {
   return s + ' s';
 };
 const pct = (a, b) => (!b || !isFinite(b) || !isFinite(a)) ? 0 : Math.max(0, Math.min(100, a / b * 100));
+/** Une PT100 en circuit ouvert renvoie une valeur très négative qui passe le filtre
+ *  du firmware (-200 à +550 °C). Hors de cette plage-ci, la sonde n'est pas là. */
+const tempValide = v => has(v) && isFinite(v) && v > -20 && v < 150;
 
 /* Ordre RÉEL du process (≠ ordre de l'énumération) */
 const ORDRE  = [0, 9, 1, 2, 3, 10, 4, 5, 6, 7, 8];
@@ -417,7 +422,10 @@ const codeEtape = s => { const m = /^E(\d+)/.exec(s || ''); return m ? +m[1] : 0
    ══════════════════════════════════════════════════════════════════════════ */
 const state = {
   data: null,          // dernier payload valide
-  recuAt: 0,           // horodatage local de réception
+  recuAt: 0,           // horodatage local de la requête
+  emisAt: 0,           // horodatage serveur du dernier envoi automate (_received_at)
+  sig: null,           // signature du payload : évite de reconstruire le DOM pour rien
+  periodeObs: 0,       // cadence d'envoi réellement observée, en secondes
   erreur: null,
   mesures: {vfd: null, sdm: null, madd: null, at: 0},  // conservées entre les trains
 };
@@ -425,14 +433,22 @@ const state = {
 /* ══════════════════════════════════════════════════════════════════════════
    4. Rendu — bandeau
    ══════════════════════════════════════════════════════════════════════════ */
-function rendreBandeau(d) {
-  const age = Date.now() - state.recuAt;
+/** Ce bloc seul avance toutes les secondes : l'âge du dernier envoi. */
+function rendreFraicheur() {
+  const d = state.data;
+  const age = Date.now() - (state.emisAt || state.recuAt);
   const dot = $('#liveDot'), txt = $('#liveTxt');
   dot.className = 'dot';
   if (state.erreur)            { dot.classList.add('off');   txt.textContent = state.erreur; }
   else if (!d)                 { dot.classList.add('off');   txt.textContent = 'aucune donnée'; }
   else if (age > PERIME_MS)    { dot.classList.add('stale'); txt.textContent = 'dernier envoi il y a ' + duree(age / 1000); }
   else                         { dot.classList.add('on');    txt.textContent = 'en ligne'; }
+  $('#mAge').textContent = !d ? '—'
+    : duree(Math.max(0, age) / 1000) + (state.periodeObs ? ' · toutes les ~' + Math.round(state.periodeObs) + ' s' : '');
+}
+
+function rendreBandeau(d) {
+  rendreFraicheur();
   if (!d) return;
   $('#mDev').textContent  = d.device_id || '—';
   $('#mSeq').textContent  = i0(d.seq);
@@ -599,13 +615,17 @@ function rendreOrganes(d) {
     v3 === 'EFS' ? 'fenêtre EFS ouverte' : 'position de repos'));
 
   const pr = ch.pression || {};
-  box.appendChild(pr.ok
-    ? organe('', 'Pression sortie', n(pr.bar), 'bar', 'brut ' + i0(pr.brut) + ' — service ≈ 3,5 bar')
-    : organe('ko', 'Pression sortie', '—', '', 'registre AI à identifier (commande p)'));
+  const presLue = pr.ok && !pr.defaut && pr.brut > 0;
+  box.appendChild(presLue
+    ? organe(pr.sature ? 'ko' : '', 'Pression sortie', n(pr.bar), 'bar',
+             'brut ' + i0(pr.brut) + (pr.sature ? ' — capteur saturé' : ' — service ≈ 3,5 bar'))
+    : organe('ko', 'Pression sortie', '—', '',
+             pr.ok === false ? 'pas de réponse du ZLAN' : 'registre AI à identifier (commande p)'));
 
-  box.appendChild(has(ch.temp_pompe_c)
+  box.appendChild(tempValide(ch.temp_pompe_c)
     ? organe('', 'Température P4', n(ch.temp_pompe_c), '°C', 'sortie de pompe')
-    : organe('ko', 'Température P4', '—', '', 'sonde muette'));
+    : organe('ko', 'Température P4', '—', '',
+             has(ch.temp_pompe_c) ? 'valeur hors plage — sonde débranchée ?' : 'sonde muette'));
 
   /* les attaches s'allument du côté du circuit qui tient la pompe */
   [['#tieA', 0, 'var(--cuivre)'], ['#tieB', 1, 'var(--verdigris)']].forEach(([sel, idx, col]) => {
@@ -685,7 +705,8 @@ function rendreSats(d) {
       const ft = el('div', 'sat-foot');
       ft.appendChild(el('div', null, 'Y ' + n(s.Y_l) + ' L'));
       ft.appendChild(el('div', null, 'conso ' + n(s.conso_totale_l) + ' L'));
-      if (has(s.temp_c)) ft.appendChild(el('div', null, n(s.temp_c) + ' °C'));
+      if (tempValide(s.temp_c))   ft.appendChild(el('div', null, n(s.temp_c) + ' °C'));
+      else if (has(s.temp_c))     ft.appendChild(el('div', null, 'sonde hors plage'));
       b.appendChild(ft);
     }
     card.appendChild(b);
@@ -939,8 +960,16 @@ $('#btnReset').addEventListener('click', () => {
 /* ══════════════════════════════════════════════════════════════════════════
    11. Boucle
    ══════════════════════════════════════════════════════════════════════════ */
-function rendre() {
+function rendre(force) {
   const d = state.data;
+  /* Sonder toutes les 3 s ne veut pas dire redessiner toutes les 3 s : l'automate
+   * n'envoie que toutes les ~30 s. On ne reconstruit que sur un vrai changement,
+   * sinon la page clignote et la sélection de texte saute pour rien. */
+  const sig = d ? (d._received_at || '') + '|' + d.seq + '|' + (state.erreur || '') : 'vide|' + (state.erreur || '');
+  const change = force || sig !== state.sig;
+  state.sig = sig;
+  rendreFraicheur();
+  if (!change) return;
   rendreBandeau(d);
   rendreAlertes(d);
   rendreRail($('#railA'), (d && d.trains && d.trains[0]) || (d && d.train), 'A', 504);
@@ -954,19 +983,35 @@ function rendre() {
 }
 
 async function relever() {
-  if (DEMO) { state.data = demo(); state.recuAt = Date.now(); state.erreur = null; rendre(); return; }
+  if (DEMO) { state.data = demo(); state.recuAt = Date.now(); state.emisAt = 0; state.erreur = null; rendre(); return; }
   try {
     const r = await fetch(API.telemetry, {cache: 'no-store'});
     if (!r.ok) throw new Error('réponse ' + r.status);
     const j = await r.json();
-    /* le backend peut renvoyer le payload nu, ou l'emballer */
-    const d = j && (j.device_id ? j : (j.payload || j.data || j.telemetry));
+    const d = extraire(j);
     if (!d || !d.device_id) throw new Error('payload non reconnu');
-    state.data = d; state.recuAt = Date.now(); state.erreur = null;
+    state.data = d;
+    state.recuAt = Date.now();
+    const t = Date.parse(d._received_at || '');
+    const age = Date.now() - t;
+    state.emisAt = (isFinite(t) && age > -60000 && age < 2.6e9) ? t : 0;   /* garde-fou horloge */
+    state.erreur = null;
   } catch (e) {
     state.erreur = 'liaison interrompue — ' + e.message;
   }
   rendre();
+}
+
+/** L'API peut renvoyer le payload nu ou emballé. Aujourd'hui : { devices: { "<id>": … } } */
+function extraire(j) {
+  if (!j || typeof j !== 'object') return null;
+  if (j.device_id) return j;
+  if (j.devices && typeof j.devices === 'object') {
+    if (DEVICE && j.devices[DEVICE]) return j.devices[DEVICE];
+    const premier = Object.values(j.devices)[0];
+    if (premier) return premier;
+  }
+  return j.payload || j.data || j.telemetry || null;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
