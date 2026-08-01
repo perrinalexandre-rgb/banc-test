@@ -354,6 +354,11 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-soft);
       </p>
       <div class="tabwrap"><table class="sattab" id="cfgSats"></table></div>
 
+      <div class="f" style="margin-top:20px;max-width:360px">
+        <label for="cfgKey">Clé d'accès <em>— gardée en mémoire seulement, à retaper après chaque rechargement</em></label>
+        <input id="cfgKey" type="password" autocomplete="off" placeholder="votre CONFIG_API_KEY">
+      </div>
+
       <div class="actions">
         <button class="btn primary" id="btnSend">Envoyer à l'automate</button>
         <button class="btn" id="btnCopy">Copier le JSON</button>
@@ -927,35 +932,54 @@ function paquetConfig() {
   return cfg;
 }
 
-/** Corps du dépôt. Sans device_id, la fonction Azure n'a pas de casier où ranger
- *  le bloc dans "configs" — c'est la cause la plus probable d'un 500. */
+/** Corps du dépôt. La fonction fait `const cfg = req.body` puis lit `cfg.device_id`
+ *  et `cfg.cfg_version` : le bloc est donc PLAT, pas emballé dans "config".
+ *  Il est stocké tel quel, et /api/data le renvoie à l'automate sous la clé
+ *  "config" dans la réponse à son propre POST. */
 function corpsDepot(cfg) {
-  return {device_id: (state.data && state.data.device_id) || DEVICE, config: cfg};
+  return Object.assign({device_id: (state.data && state.data.device_id) || DEVICE}, cfg);
+}
+
+/** Traduit les refus connus de la fonction en quelque chose d'actionnable. */
+function expliquerRefus(status, texte) {
+  if (/CONFIG_API_KEY/i.test(texte || ''))
+    return "La variable CONFIG_API_KEY n'existe pas côté Azure.\n"
+         + "Portail Azure → votre Static Web App → Paramètres → Variables d'environnement → "
+         + "ajouter CONFIG_API_KEY, puis Enregistrer. La même valeur se tape ici.";
+  if (status === 401)
+    return "Clé refusée. Elle doit être identique, au caractère près, à la variable "
+         + "CONFIG_API_KEY définie dans Azure.";
+  if (status === 404)
+    return "Endpoint introuvable : vérifiez qu'un dossier api/config existe bien dans le dépôt "
+         + "et que le dernier déploiement GitHub Actions a réussi.";
+  return 'réponse ' + status + (texte ? '\n' + texte : '');
 }
 
 $('#btnSend').addEventListener('click', async () => {
   const cfg = paquetConfig(); if (!cfg) return;
+  const cle = $('#cfgKey').value.trim();
+  if (!cle) { sortie("Renseignez la clé d'accès : sans elle, la fonction refuse le dépôt.", 'err'); return; }
   const btn = $('#btnSend'); btn.disabled = true;
   sortie('Envoi en cours…');
   const corps = corpsDepot(cfg);
   try {
     const r = await fetch(API.config, {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-api-key': cle},
       body: JSON.stringify(corps),
     });
     if (!r.ok) {
-      let detail = '';
-      try { detail = (await r.text()).trim().slice(0, 500); } catch (_) {}
-      throw new Error('réponse ' + r.status + (detail ? '\n' + detail : ''));
+      let texte = '';
+      try { texte = (await r.text()).trim().slice(0, 500); } catch (_) {}
+      throw new Error(expliquerRefus(r.status, texte));
     }
     const attente = state.periodeObs ? Math.round(state.periodeObs) + ' s' : 'un cycle d\'envoi';
     sortie('Config v' + cfg.cfg_version + ' déposée. Elle sera appliquée au prochain envoi de '
          + 'l\'automate, sous ' + attente + '.\n'
          + 'Vérifiez que « config » passe bien à v' + cfg.cfg_version + ' en haut de page.', 'ok');
   } catch (e) {
-    sortie("Le dépôt a échoué : " + e.message + "\n\n"
-         + "Le bloc ci-dessous reste valide. L'automate le lira s'il apparaît dans la réponse "
-         + "à son propre POST :\n\n" + JSON.stringify(corps, null, 2), 'err');
+    sortie("Le dépôt a échoué.\n\n" + e.message + "\n\n"
+         + "Le bloc ci-dessous reste valide :\n\n" + JSON.stringify(corps, null, 2), 'err');
   } finally { btn.disabled = false; }
 });
 
