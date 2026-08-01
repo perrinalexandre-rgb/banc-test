@@ -283,6 +283,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-soft);
       <div><b id="mDev">—</b></div>
       <div>seq <b id="mSeq">—</b></div>
       <div>en service <b id="mUp">—</b></div>
+      <div>dernier envoi <b id="mAge">—</b></div>
       <div>wifi <b id="mRssi">—</b></div>
       <div>config <b id="mCfg">—</b></div>
     </div>
@@ -983,7 +984,7 @@ function rendre(force) {
 }
 
 async function relever() {
-  if (DEMO) { state.data = demo(); state.recuAt = Date.now(); state.emisAt = 0; state.erreur = null; rendre(); return; }
+  if (DEMO) { state.data = demo(); state.recuAt = Date.now(); state.emisAt = 0; state.erreur = null; rendre(true); return; }
   try {
     const r = await fetch(API.telemetry, {cache: 'no-store'});
     if (!r.ok) throw new Error('réponse ' + r.status);
@@ -994,7 +995,13 @@ async function relever() {
     state.recuAt = Date.now();
     const t = Date.parse(d._received_at || '');
     const age = Date.now() - t;
-    state.emisAt = (isFinite(t) && age > -60000 && age < 2.6e9) ? t : 0;   /* garde-fou horloge */
+    const emis = (isFinite(t) && age > -60000 && age < 2.6e9) ? t : 0;
+    /* cadence réellement observée entre deux envois de l'automate */
+    if (emis && state.emisAt && emis > state.emisAt) {
+      const dt = (emis - state.emisAt) / 1000;
+      if (dt > 1 && dt < 3600) state.periodeObs = state.periodeObs ? state.periodeObs * 0.7 + dt * 0.3 : dt;
+    }
+    if (emis) state.emisAt = emis;
     state.erreur = null;
   } catch (e) {
     state.erreur = 'liaison interrompue — ' + e.message;
@@ -1071,6 +1078,9 @@ construireFormulaire();
 $('#footMode').textContent = DEMO ? 'mode démonstration — données simulées' : 'source : ' + API.telemetry;
 relever();
 setInterval(relever, DEMO ? 1000 : PERIODE_MS);
+setInterval(rendreFraicheur, PERIODE_AGE_MS);
+/* onglet remis au premier plan : on ne fait pas attendre 3 s */
+document.addEventListener('visibilitychange', () => { if (!document.hidden) relever(); });
 </script>
 </body>
 </html>
