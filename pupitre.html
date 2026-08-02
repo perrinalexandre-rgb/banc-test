@@ -128,8 +128,29 @@ header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#10
 .progress-val{margin-left:auto;font-family:var(--fs-cond);font-weight:600;font-size:19px}
 .progress-val small{font-family:var(--fs-body);font-weight:400;font-size:12px;color:var(--ink3)}
 .bar{height:7px;border-radius:4px;background:#101A1F;overflow:hidden}
-.bar>i{display:block;height:100%;background:var(--c);border-radius:4px;transition:width .5s ease}
+.bar>i{display:block;height:100%;background:var(--c);border-radius:4px;transition:width .5s linear}
 .bar.efs>i{background:var(--efs)}
+/* eau qui coule : n'apparait QUE quand la pompe tourne reellement */
+@media(prefers-reduced-motion:no-preference){
+  .bar.coule>i{background-image:repeating-linear-gradient(115deg,
+    rgba(255,255,255,.20) 0 8px, rgba(255,255,255,0) 8px 22px);
+    background-size:200% 100%;animation:courant 1.5s linear infinite}
+  @keyframes courant{from{background-position:0 0}to{background-position:-44px 0}}
+  .jauge.coule .fill::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;
+    background:rgba(255,255,255,.35);animation:clapot 1.9s ease-in-out infinite}
+  @keyframes clapot{0%,100%{opacity:.25}50%{opacity:.75}}
+}
+/* valeur poursuivie entre deux envois : on ne l'affiche jamais comme une mesure */
+.estime{border-bottom:1px dotted var(--ink3)}
+
+/* mode presentation (?show=1) : on enleve tout ce qui n'est pas la machine */
+body.presentation .eyebrow.reglages,
+body.presentation details.cfg,
+body.presentation footer{display:none}
+body.presentation .wrap{max-width:1320px}
+body.presentation .sat-vol{font-size:36px}
+body.presentation .organ .v{font-size:29px}
+body.presentation .brand{font-size:27px}
 
 .rail-foot{
   display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:12px;padding-top:11px;
@@ -333,7 +354,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-soft);
   </section>
 
   <!-- ═══ RÉGLAGES ═════════════════════════════════════════════════════ -->
-  <h2 class="eyebrow">Réglages</h2>
+  <h2 class="eyebrow reglages">Réglages</h2>
   <details class="cfg">
     <summary>Modifier la configuration de l'automate</summary>
     <div class="cfg-body">
@@ -434,6 +455,7 @@ const state = {
   periodeObs: 0,       // cadence d'envoi réellement observée, en secondes
   erreur: null,
   mesures: {vfd: null, sdm: null, madd: null, at: 0},  // conservées entre les trains
+  interp: [null, null],  // poursuite d'affichage entre deux envois, par circuit
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -570,7 +592,9 @@ function rendreRail(node, t, lettre, bus) {
   top.appendChild(el('div', 'progress-lbl', (t.etape || '—') + (t.sat_actif ? ' · ' + t.sat_actif : '')));
   const val = el('div', 'progress-val');
   if (has(t.cible) && t.cible > 0) {
-    val.appendChild(document.createTextNode(n(t.avancement, t.unite === 's' ? 0 : 1)));
+    const num = el('span', null, n(t.avancement, t.unite === 's' ? 0 : 1));
+    num.id = 'progNum-' + lettre;
+    val.appendChild(num);
     val.appendChild(el('small', null, ' / ' + n(t.cible, t.unite === 's' ? 0 : 1) + ' ' + (t.unite || '')));
   } else {
     val.appendChild(el('small', null, 'depuis ' + duree(t.depuis_s)));
@@ -578,6 +602,9 @@ function rendreRail(node, t, lettre, bus) {
   top.appendChild(val); pr.appendChild(top);
   const bar = el('div', 'bar' + (EFS_ETAPES.includes(code) ? ' efs' : ''));
   const fill = el('i'); fill.style.width = (has(t.cible) && t.cible > 0 ? pct(t.avancement, t.cible) : 0) + '%';
+  val.id  = 'progVal-' + lettre;
+  bar.id  = 'progBar-' + lettre;
+  fill.id = 'progFill-' + lettre;
   bar.appendChild(fill); pr.appendChild(bar); node.appendChild(pr);
 
   const ft = el('div', 'rail-foot');
@@ -665,7 +692,10 @@ function rendreSats(d) {
       blind.title = 'Zone suivie au débitmètre seul — aucun repère capteur';
       j.appendChild(blind);
     }
-    const fill = el('div', 'fill'); fill.style.height = (s.ok ? pct(s.volume_l, X) : 0) + '%'; j.appendChild(fill);
+    const fill = el('div', 'fill'); fill.style.height = (s.ok ? pct(s.volume_l, X) : 0) + '%';
+    fill.id = 'satFill-' + s.sat_id;
+    j.id = 'satJauge-' + s.sat_id;
+    j.appendChild(fill);
     [['bas', s.cnb], ['milieu', s.cnm], ['haut', s.cnh]].forEach(([k, on]) => {
       if (!has(et[k])) return;
       const tk = el('div', 'tick' + (on ? ' on' : '')); tk.style.bottom = pct(et[k], X) + '%'; j.appendChild(tk);
@@ -677,7 +707,11 @@ function rendreSats(d) {
     const b = el('div', 'sat-body');
     b.appendChild(el('div', 'sat-id', s.sat_id));
     const v = el('div', 'sat-vol');
-    v.appendChild(document.createTextNode(s.ok ? n(s.volume_l) : '—'));
+    v.id = 'satVol-' + s.sat_id;
+    v.dataset.x = X;
+    const vNum = el('span', null, s.ok ? n(s.volume_l) : '—');
+    vNum.id = 'satNum-' + s.sat_id;
+    v.appendChild(vNum);
     v.appendChild(el('small', null, ' L / ' + i0(X)));
     b.appendChild(v);
 
@@ -1087,6 +1121,75 @@ function rendre(force) {
   rendreEau(d);
   rendreMesures(d);
   construireTableSats(d);
+  poserReperesInterpolation(d);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Poursuite d'affichage entre deux envois.
+
+   L'automate ne parle que toutes les ~30 s. Entre deux paquets, un
+   remplissage continue pourtant d'avancer dans la vraie cuve. Plutôt que de
+   laisser l'écran figé, on poursuit la progression au RYTHME MESURÉ entre
+   les deux derniers paquets — jamais un rythme inventé, jamais au-delà de la
+   cible, et uniquement quand la pompe tourne. La valeur poursuivie est
+   soulignée en pointillés : on ne la fait jamais passer pour une mesure.
+   ══════════════════════════════════════════════════════════════════════════ */
+const TAUX_MAX_LS = 2.0;          // 120 L/min : au-delà, c'est une aberration
+
+function poserReperesInterpolation(d) {
+  const now = Date.now();
+  const pompeOn = !!(d && d.chaufferie && d.chaufferie.pompe_pct > 0);
+  for (let c = 0; c < 2; c++) {
+    const t = d && d.trains && d.trains[c];
+    if (!t || !has(t.cible) || t.cible <= 0 || t.unite !== 'L' || !has(t.avancement)) {
+      state.interp[c] = null; continue;
+    }
+    const prec = state.interp[c];
+    let taux = 0;
+    if (prec && prec.etape === t.etape && prec.sat === t.sat_actif && now > prec.baseAt) {
+      const dt = (now - prec.baseAt) / 1000;
+      const dv = t.avancement - prec.base;
+      if (dt >= 2 && dv > 0) taux = Math.min(dv / dt, TAUX_MAX_LS);
+    }
+    state.interp[c] = {etape: t.etape, sat: t.sat_actif, cible: t.cible,
+                       base: t.avancement, baseAt: now, taux, pompe: pompeOn};
+  }
+}
+
+function majInterpolation() {
+  const now = Date.now();
+  for (let c = 0; c < 2; c++) {
+    const lettre = c === 0 ? 'A' : 'B';
+    const it = state.interp[c];
+    const num = document.getElementById('progNum-' + lettre);
+    const bar = document.getElementById('progBar-' + lettre);
+    const fill = document.getElementById('progFill-' + lettre);
+    if (!num || !bar || !fill) continue;
+    const coule = !!(it && it.pompe && it.taux > 0);
+    bar.classList.toggle('coule', coule);
+    if (!coule) { num.classList.remove('estime'); continue; }
+    const v = Math.min(it.cible, it.base + it.taux * (now - it.baseAt) / 1000);
+    num.textContent = n(v);
+    num.classList.add('estime');
+    num.title = 'Poursuivi à ' + n(it.taux * 60) + ' L/min, rythme mesuré entre les deux derniers envois';
+    fill.style.width = pct(v, it.cible) + '%';
+    /* pendant un remplissage ou un bouchon, cette valeur EST le volume de la
+       cuve : on fait avancer la jauge du satellite avec. */
+    const codeE = codeEtape(it.etape);
+    if (it.sat && (codeE === 3 || codeE === 5)) {
+      const sNum = document.getElementById('satNum-' + it.sat);
+      const sFill = document.getElementById('satFill-' + it.sat);
+      const sBoite = document.getElementById('satVol-' + it.sat);
+      const sJauge = document.getElementById('satJauge-' + it.sat);
+      if (sNum && sFill && sBoite) {
+        const X = parseFloat(sBoite.dataset.x) || 40;
+        sNum.textContent = n(v);
+        sNum.classList.add('estime');
+        sFill.style.height = pct(v, X) + '%';
+        if (sJauge) sJauge.classList.add('coule');
+      }
+    }
+  }
 }
 
 async function relever() {
@@ -1180,11 +1283,14 @@ function demo() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════ */
+const SHOW = new URLSearchParams(location.search).has('show');
+if (SHOW) document.body.classList.add('presentation');
 construireFormulaire();
 $('#footMode').textContent = DEMO ? 'mode démonstration — données simulées' : 'source : ' + API.telemetry;
 relever();
 setInterval(relever, DEMO ? 1000 : PERIODE_MS);
 setInterval(rendreFraicheur, PERIODE_AGE_MS);
+setInterval(majInterpolation, 120);   /* poursuite d'affichage entre deux envois */
 /* onglet remis au premier plan : on ne fait pas attendre 3 s */
 document.addEventListener('visibilitychange', () => { if (!document.hidden) relever(); });
 </script>
