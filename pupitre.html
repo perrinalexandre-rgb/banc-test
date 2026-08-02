@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>enovaQ · pupitre chaufferie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   enovaQ — pupitre de supervision
+   Identité : intérieur d'armoire de commande. Fond pétrole, deux circuits
+   identifiés par les deux états du cuivre de plomberie — cuivre neuf (A) et
+   vert-de-gris (B). L'ambre et le bleu ne servent QUE à l'eau : ECS / EFS.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root{
+  --ground:#0D1317; --panel:#141E24; --panel2:#1A262D; --line:#26343C;
+  --line-soft:#1E2C33;
+  --ink:#E4EDF1; --ink2:#8FA3AC; --ink3:#5A6E78;
+  --cuivre:#C9834A;      /* circuit A */
+  --verdigris:#3FA893;   /* circuit B */
+  --ecs:#E89B45;         /* eau chaude */
+  --efs:#4FA3D9;         /* eau froide */
+  --alert:#E2564A; --warn:#D9A441; --ok:#68B96F;
+  --r:10px;
+  --fs-cond:"IBM Plex Sans Condensed","Helvetica Neue",Arial,sans-serif;
+  --fs-body:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+  --fs-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:var(--fs-body); font-size:15px; line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+  padding:0 0 56px;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+h1,h2,h3{margin:0;font-weight:600}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--efs);outline-offset:2px;border-radius:4px}
+
+/* ── eyebrow : sert de repère de section, jamais de décor ─────────────── */
+.eyebrow{
+  font-family:var(--fs-cond); font-weight:600; font-size:12px;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink3);
+  display:flex; align-items:center; gap:10px; margin:30px 0 12px;
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--line-soft)}
+
+/* ── bandeau ──────────────────────────────────────────────────────────── */
+header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#101A20,#0D1317)}
+.head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 20px;padding:18px 0 16px}
+.brand{font-family:var(--fs-cond);font-weight:700;font-size:23px;letter-spacing:.02em}
+.brand span{color:var(--ink3);font-weight:500}
+.live{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ink3);flex:none}
+.dot.on{background:var(--ok);box-shadow:0 0 0 3px rgba(104,185,111,.16)}
+.dot.stale{background:var(--warn);box-shadow:0 0 0 3px rgba(217,164,65,.16)}
+.dot.off{background:var(--alert);box-shadow:0 0 0 3px rgba(226,86,74,.16)}
+.meta{margin-left:auto;display:flex;flex-wrap:wrap;gap:6px 18px;font-family:var(--fs-mono);font-size:12px;color:var(--ink3)}
+.meta b{color:var(--ink2);font-weight:500}
+
+/* ── alertes ──────────────────────────────────────────────────────────── */
+#alertes{display:grid;gap:8px;margin-top:16px}
+.alerte{
+  display:flex;gap:11px;align-items:flex-start;padding:11px 14px;border-radius:var(--r);
+  background:rgba(226,86,74,.09);border:1px solid rgba(226,86,74,.35);font-size:14px;
+}
+.alerte.warn{background:rgba(217,164,65,.09);border-color:rgba(217,164,65,.34)}
+.alerte .tag{
+  font-family:var(--fs-cond);font-weight:700;font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--alert);padding-top:2px;flex:none
+}
+.alerte.warn .tag{color:var(--warn)}
+.alerte p{margin:0;color:var(--ink)}
+.alerte em{color:var(--ink2);font-style:normal}
+
+/* ══ LE PUPITRE : deux rails, une colonne vertébrale partagée ═══════════ */
+.pupitre{margin-top:6px;display:grid;gap:14px}
+.rail{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  border-left:3px solid var(--c);padding:14px 16px 16px;position:relative;
+}
+.rail.a{--c:var(--cuivre)} .rail.b{--c:var(--verdigris)}
+.rail-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 14px;margin-bottom:12px}
+.rail-id{font-family:var(--fs-cond);font-weight:700;font-size:17px;letter-spacing:.04em;color:var(--c)}
+.rail-bus{font-family:var(--fs-mono);font-size:11px;color:var(--ink3)}
+.rail-sat{font-family:var(--fs-cond);font-weight:600;font-size:17px;margin-left:2px}
+.rail-badges{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.badge{
+  font-family:var(--fs-cond);font-weight:600;font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;padding:2px 8px;border-radius:20px;
+  border:1px solid var(--line);color:var(--ink2);white-space:nowrap
+}
+.badge.on{border-color:var(--c);color:var(--c)}
+.badge.efs{border-color:var(--efs);color:var(--efs)}
+.badge.off{border-color:rgba(226,86,74,.5);color:var(--alert)}
+
+/* frise : ordre du PROCESS, pas de l'énumération */
+.frise{display:flex;gap:3px;overflow-x:auto;padding-bottom:5px;scrollbar-width:thin}
+.frise::-webkit-scrollbar{height:4px}
+.frise::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
+.step{
+  flex:none;display:flex;align-items:baseline;gap:5px;padding:5px 9px;border-radius:5px;
+  background:var(--panel2);border:1px solid transparent;color:var(--ink3);
+  font-family:var(--fs-cond);font-size:12px;letter-spacing:.04em;white-space:nowrap
+}
+.step b{font-weight:700;font-size:12px}
+.step .lbl{display:none;font-weight:500}
+@media(min-width:760px){.step .lbl{display:inline}}
+.step.done{color:var(--ink2);background:#17232A}
+.step.now{
+  background:color-mix(in srgb,var(--c) 18%,var(--panel2));
+  border-color:var(--c);color:var(--ink)
+}
+.step.now .lbl{display:inline}
+.step.now b{color:var(--c)}
+@media(prefers-reduced-motion:no-preference){
+  .step.now{animation:breathe 2.6s ease-in-out infinite}
+  @keyframes breathe{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 14%,transparent)}}
+}
+
+.progress{margin-top:12px}
+.progress-top{display:flex;align-items:baseline;gap:10px;margin-bottom:5px}
+.progress-lbl{font-size:13px;color:var(--ink2)}
+.progress-val{margin-left:auto;font-family:var(--fs-cond);font-weight:600;font-size:19px}
+.progress-val small{font-family:var(--fs-body);font-weight:400;font-size:12px;color:var(--ink3)}
+.bar{height:7px;border-radius:4px;background:#101A1F;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--c);border-radius:4px;transition:width .5s ease}
+.bar.efs>i{background:var(--efs)}
+
+.rail-foot{
+  display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:12px;padding-top:11px;
+  border-top:1px solid var(--line-soft);font-size:13px;color:var(--ink2)
+}
+.rail-foot b{color:var(--ink);font-family:var(--fs-cond);font-weight:600}
+.file-list{display:flex;gap:5px;flex-wrap:wrap}
+.file-list span{
+  font-family:var(--fs-mono);font-size:11px;padding:1px 6px;border-radius:4px;
+  background:var(--panel2);color:var(--ink2)
+}
+
+/* colonne vertébrale : les organes que les deux trains se partagent */
+.spine{position:relative;margin:0;padding:14px 16px;background:
+  linear-gradient(180deg,#111C22,#16232A);border:1px dashed var(--line);
+  border-top:none;border-bottom:none}
+.spine-lbl{
+  font-family:var(--fs-cond);font-weight:600;font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink3);margin-bottom:11px
+}
+.tie{position:absolute;left:50%;transform:translateX(-50%);width:2px;height:14px;background:var(--line)}
+.tie.up{top:-14px} .tie.down{bottom:-14px}
+.tie.live{background:var(--tc);box-shadow:0 0 7px var(--tc)}
+.organs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.organ{background:#0F181D;border:1px solid var(--line-soft);border-radius:8px;padding:10px 12px}
+.organ .k{font-family:var(--fs-cond);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+.organ .v{font-family:var(--fs-cond);font-weight:600;font-size:24px;line-height:1.15;margin-top:2px}
+.organ .v small{font-family:var(--fs-body);font-weight:400;font-size:12px;color:var(--ink3);letter-spacing:0}
+.organ .s{font-family:var(--fs-mono);font-size:11px;color:var(--ink3);margin-top:1px}
+.organ.pump.run .v{color:var(--ok)}
+.organ.v3.ecs .v{color:var(--ecs)} .organ.v3.efs .v{color:var(--efs)}
+.organ.ko .v{color:var(--ink3)}
+
+/* ── satellites ───────────────────────────────────────────────────────── */
+.sats{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:12px}
+.sat{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  border-top:2px solid var(--c);padding:13px 14px;display:flex;gap:13px
+}
+.sat.a{--c:var(--cuivre)} .sat.b{--c:var(--verdigris)}
+.sat.ko{opacity:.55}
+.sat.actif{border-color:var(--c);box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent)}
+.jauge{position:relative;width:34px;flex:none;height:132px;border-radius:5px;
+  background:#0C1418;border:1px solid var(--line);overflow:hidden}
+.jauge .fill{position:absolute;left:0;right:0;bottom:0;background:
+  linear-gradient(180deg,color-mix(in srgb,var(--ecs) 55%,transparent),color-mix(in srgb,var(--ecs) 22%,transparent));
+  transition:height .5s ease}
+.jauge .blind{position:absolute;left:0;right:0;background-image:repeating-linear-gradient(
+  -45deg,rgba(143,163,172,.13) 0 2px,transparent 2px 6px);pointer-events:none}
+.jauge .tick{position:absolute;left:0;right:0;height:1px;background:rgba(228,237,241,.3)}
+.jauge .tick.on{background:var(--efs);box-shadow:0 0 4px rgba(79,163,217,.7)}
+.jauge .cible{position:absolute;left:0;right:0;height:1px;background:var(--warn)}
+.sat-body{flex:1;min-width:0}
+.sat-id{font-family:var(--fs-cond);font-weight:700;font-size:16px;letter-spacing:.04em}
+.sat-vol{font-family:var(--fs-cond);font-weight:600;font-size:30px;line-height:1.05;margin-top:3px}
+.sat-vol small{font-family:var(--fs-body);font-weight:400;font-size:13px;color:var(--ink3)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.chip{font-family:var(--fs-cond);font-size:10.5px;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;padding:1px 6px;border-radius:4px;background:var(--panel2);color:var(--ink2)}
+.chip.mesure{color:var(--efs)} .chip.etal{color:var(--ok)} .chip.inconnu{color:var(--warn)}
+.chip.bad{background:rgba(226,86,74,.14);color:var(--alert)}
+.chip.open{background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c)}
+.capteurs{display:flex;gap:11px;margin-top:9px}
+.cap{display:flex;align-items:center;gap:4px;font-family:var(--fs-mono);font-size:10.5px;color:var(--ink3)}
+.cap i{width:8px;height:8px;border-radius:50%;background:#213038;border:1px solid var(--line);display:block}
+.cap.wet i{background:var(--efs);border-color:var(--efs)}
+.cap.susp i{background:var(--alert);border-color:var(--alert)}
+.sat-foot{margin-top:9px;padding-top:8px;border-top:1px solid var(--line-soft);
+  font-family:var(--fs-mono);font-size:11px;color:var(--ink3);display:flex;flex-wrap:wrap;gap:3px 12px}
+
+/* ── grille basse ─────────────────────────────────────────────────────── */
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.card h3{font-family:var(--fs-cond);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin-bottom:12px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:13.5px;border-bottom:1px solid var(--line-soft)}
+.kv:last-child{border-bottom:none}
+.kv span{color:var(--ink2)}
+.kv b{font-family:var(--fs-cond);font-weight:600;font-size:15px}
+.kv b.ko{color:var(--ink3);font-weight:500}
+
+/* réserve 300 L */
+.res{display:flex;gap:14px;align-items:stretch}
+.res-tube{width:44px;flex:none;border:1px solid var(--line);border-radius:6px;background:#0C1418;position:relative;min-height:126px}
+.res-tube .eau{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,rgba(79,163,217,.5),rgba(79,163,217,.18));transition:height .5s}
+.res-tube .air{position:absolute;left:0;right:0;top:0;height:24px;display:flex;align-items:center;
+  justify-content:center;font-family:var(--fs-cond);font-size:10px;letter-spacing:.1em;color:var(--ink3)}
+.res-floats{flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:6px}
+.flt{display:flex;align-items:center;gap:9px;font-size:13px}
+.flt i{width:11px;height:11px;border-radius:50%;flex:none;border:2px solid}
+.flt.j i{border-color:#D9B441} .flt.n i{border-color:#7C8D96} .flt.r i{border-color:#C4574C}
+.flt.wet i{background:currentColor}
+.flt.j.wet i{background:#D9B441} .flt.n.wet i{background:#7C8D96} .flt.r.wet i{background:#C4574C}
+.flt span{color:var(--ink2)} .flt b{margin-left:auto;font-family:var(--fs-mono);font-size:11px;color:var(--ink3)}
+
+/* ── réglages ─────────────────────────────────────────────────────────── */
+details.cfg{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+details.cfg>summary{
+  cursor:pointer;padding:14px 16px;font-family:var(--fs-cond);font-weight:600;font-size:14px;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);list-style:none;
+  display:flex;align-items:center;gap:10px
+}
+details.cfg>summary::-webkit-details-marker{display:none}
+details.cfg>summary::before{content:"+";font-size:17px;color:var(--ink3);width:14px}
+details.cfg[open]>summary::before{content:"–"}
+.cfg-body{padding:0 16px 16px;border-top:1px solid var(--line-soft)}
+.note{font-size:13px;color:var(--ink2);margin:12px 0 16px;padding:10px 12px;
+  background:#101A1F;border-left:2px solid var(--efs);border-radius:0 6px 6px 0}
+.note code{font-family:var(--fs-mono);font-size:12px;color:var(--ink)}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px 14px}
+.f label{display:block;font-size:12px;color:var(--ink2);margin-bottom:3px}
+.f label em{font-style:normal;color:var(--ink3);font-family:var(--fs-mono);font-size:11px}
+.f input,.f select{
+  width:100%;padding:7px 9px;border-radius:6px;background:#0C1418;color:var(--ink);
+  border:1px solid var(--line);font-family:var(--fs-mono);font-size:13px
+}
+.f input::placeholder{color:var(--ink3)}
+.f input.bad{border-color:var(--alert)}
+table.sattab{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}
+table.sattab th{font-family:var(--fs-cond);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink3);text-align:left;padding:6px 6px 6px 0;font-weight:600}
+table.sattab td{padding:3px 6px 3px 0;border-top:1px solid var(--line-soft)}
+table.sattab input{width:100%;min-width:62px;padding:5px 7px;border-radius:5px;background:#0C1418;
+  color:var(--ink);border:1px solid var(--line);font-family:var(--fs-mono);font-size:12.5px}
+table.sattab input.bad{border-color:var(--alert)}
+.tabwrap{overflow-x:auto}
+.actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:18px}
+.btn{padding:9px 16px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);
+  color:var(--ink);font-family:var(--fs-cond);font-weight:600;font-size:13.5px;letter-spacing:.05em;cursor:pointer}
+.btn:hover{border-color:var(--ink3)}
+.btn.primary{background:var(--efs);border-color:var(--efs);color:#08121A}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+#cfgOut{font-family:var(--fs-mono);font-size:12px;color:var(--ink2);white-space:pre-wrap;
+  margin-top:12px;padding:11px 12px;background:#0C1418;border:1px solid var(--line);border-radius:7px;display:none}
+#cfgOut.show{display:block}
+#cfgOut.err{border-color:var(--alert);color:var(--alert)}
+#cfgOut.ok{border-color:var(--ok);color:var(--ok)}
+
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-soft);
+  font-size:12px;color:var(--ink3);display:flex;flex-wrap:wrap;gap:6px 18px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap head">
+    <div class="brand">enovaQ <span>· pupitre</span></div>
+    <div class="live"><i class="dot" id="liveDot"></i><span id="liveTxt">connexion…</span></div>
+    <div class="meta">
+      <div><b id="mDev">—</b></div>
+      <div>seq <b id="mSeq">—</b></div>
+      <div>en service <b id="mUp">—</b></div>
+      <div>dernier envoi <b id="mAge">—</b></div>
+      <div>wifi <b id="mRssi">—</b></div>
+      <div>config <b id="mCfg">—</b></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div id="alertes" aria-live="polite"></div>
+
+  <!-- ═══ LE PUPITRE ═══════════════════════════════════════════════════ -->
+  <h2 class="eyebrow">Les deux trains</h2>
+  <section class="pupitre" id="pupitre">
+    <article class="rail a" id="railA"></article>
+    <div class="spine">
+      <div class="tie up" id="tieA"></div>
+      <div class="spine-lbl">Organes partagés · une pompe, une vanne 3 voies</div>
+      <div class="organs" id="organs"></div>
+      <div class="tie down" id="tieB"></div>
+    </div>
+    <article class="rail b" id="railB"></article>
+  </section>
+
+  <!-- ═══ SATELLITES ═══════════════════════════════════════════════════ -->
+  <h2 class="eyebrow">Satellites</h2>
+  <section class="sats" id="sats"></section>
+
+  <!-- ═══ CHAUFFERIE ═══════════════════════════════════════════════════ -->
+  <h2 class="eyebrow">Chaufferie</h2>
+  <section class="grid3">
+    <div class="card">
+      <h3>Réserve 300 L</h3>
+      <div class="res">
+        <div class="res-tube"><div class="air">air</div><div class="eau" id="resEau" style="height:60%"></div></div>
+        <div class="res-floats" id="resFloats"></div>
+      </div>
+      <div class="kv" style="margin-top:12px"><span>Niveau estimé</span><b id="resBand">—</b></div>
+    </div>
+    <div class="card">
+      <h3>Compteurs d'eau</h3>
+      <div id="eauBox"></div>
+    </div>
+    <div class="card">
+      <h3>Mesures <em style="font-style:normal;color:var(--ink3);font-size:11px">— relevées au repos</em></h3>
+      <div id="mesuresBox"></div>
+    </div>
+  </section>
+
+  <!-- ═══ RÉGLAGES ═════════════════════════════════════════════════════ -->
+  <h2 class="eyebrow">Réglages</h2>
+  <details class="cfg">
+    <summary>Modifier la configuration de l'automate</summary>
+    <div class="cfg-body">
+      <p class="note">
+        Laissez vide tout ce que vous ne voulez pas changer : seuls les champs
+        remplis partent vers l'automate. Le numéro de version est incrémenté
+        automatiquement — sans quoi l'automate ignorerait le bloc entier.
+        Les bornes ci-dessous sont celles codées en dur dans le firmware.
+      </p>
+
+      <div class="fields" id="cfgFields"></div>
+
+      <h3 style="font-family:var(--fs-cond);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin:22px 0 4px">
+        Satellites · capacité, tuyau, repères capteurs
+      </h3>
+      <p style="font-size:12.5px;color:var(--ink3);margin:0 0 6px">
+        L'automate rejette un satellite entier si l'ordre bas &lt; milieu &lt; haut &lt; X n'est pas respecté.
+      </p>
+      <div class="tabwrap"><table class="sattab" id="cfgSats"></table></div>
+
+      <div class="f" style="margin-top:20px;max-width:360px">
+        <label for="cfgKey">Clé d'accès <em>— facultative tant que CONFIG_API_KEY n'est pas définie dans Azure ; gardée en mémoire seulement</em></label>
+        <input id="cfgKey" type="password" autocomplete="off" placeholder="votre CONFIG_API_KEY">
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="btnSend">Envoyer à l'automate</button>
+        <button class="btn" id="btnCopy">Copier le JSON</button>
+        <button class="btn" id="btnReset">Tout effacer</button>
+      </div>
+      <div id="cfgOut"></div>
+    </div>
+  </details>
+
+  <footer>
+    <div>enovaQ · HWQ Concept</div>
+    <div>contrat JSON v3 — deux circuits</div>
+    <div id="footMode"></div>
+  </footer>
+</main>
+
+<script>
+"use strict";
+/* ══════════════════════════════════════════════════════════════════════════
+   1. LA SEULE CHOSE À ADAPTER AU BACKEND
+   ══════════════════════════════════════════════════════════════════════════ */
+const API = {
+  telemetry: '/api/data',     // GET  → { devices: { "<id>": {payload} }, configs: {} }
+  config:    '/api/config',   // POST → config servie en réponse au prochain POST automate
+};
+const DEVICE     = 'chaufferie-01';   // laisser vide pour prendre le premier appareil trouvé
+const PERIODE_MS = 3000;      // rafraîchissement de la page
+const PERIODE_AGE_MS = 1000;  // le compteur d'âge, lui, avance chaque seconde
+const PERIME_MS  = 90000;     // au-delà, le payload est considéré périmé
+
+const DEMO = new URLSearchParams(location.search).has('demo');
+
+/* ══════════════════════════════════════════════════════════════════════════
+   2. Outils
+   ══════════════════════════════════════════════════════════════════════════ */
+const $ = s => document.querySelector(s);
+const el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
+const has = v => v !== undefined && v !== null;
+/** nombre à la française : 38,4 */
+const n = (v, d = 1) => has(v) && isFinite(v) ? Number(v).toLocaleString('fr-FR', {minimumFractionDigits: d, maximumFractionDigits: d}) : '—';
+const i0 = v => has(v) && isFinite(v) ? Math.round(v).toLocaleString('fr-FR') : '—';
+const duree = s => {
+  if (!has(s)) return '—';
+  s = Math.floor(s);
+  const j = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  if (j) return j + ' j ' + h + ' h';
+  if (h) return h + ' h ' + String(m).padStart(2, '0');
+  if (m) return m + ' min ' + String(s % 60).padStart(2, '0');
+  return s + ' s';
+};
+const pct = (a, b) => (!b || !isFinite(b) || !isFinite(a)) ? 0 : Math.max(0, Math.min(100, a / b * 100));
+/** Une PT100 en circuit ouvert renvoie une valeur très négative qui passe le filtre
+ *  du firmware (-200 à +550 °C). Hors de cette plage-ci, la sonde n'est pas là. */
+const tempValide = v => has(v) && isFinite(v) && v > -20 && v < 150;
+
+/* Ordre RÉEL du process (≠ ordre de l'énumération) */
+const ORDRE  = [0, 9, 1, 2, 3, 10, 4, 5, 6, 7, 8];
+const LIBEL  = {0:'repos', 9:'départ VR', 1:'amorçage', 2:'ouverture', 3:'remplissage',
+                10:'attente EFS', 4:'bascule EFS', 5:'bouchon', 6:'fermeture',
+                7:'récup', 8:'retour'};
+const EFS_ETAPES = [4, 5, 7];            // le tuyau est en EFS
+const POMPE_ETAPES = [1, 3, 5, 7];       // le circuit demande la pompe
+const codeEtape = s => { const m = /^E(\d+)/.exec(s || ''); return m ? +m[1] : 0; };
+
+/* ══════════════════════════════════════════════════════════════════════════
+   3. État
+   ══════════════════════════════════════════════════════════════════════════ */
+const state = {
+  data: null,          // dernier payload valide
+  recuAt: 0,           // horodatage local de la requête
+  emisAt: 0,           // horodatage serveur du dernier envoi automate (_received_at)
+  sig: null,           // signature du payload : évite de reconstruire le DOM pour rien
+  periodeObs: 0,       // cadence d'envoi réellement observée, en secondes
+  erreur: null,
+  mesures: {vfd: null, sdm: null, madd: null, at: 0},  // conservées entre les trains
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
+   4. Rendu — bandeau
+   ══════════════════════════════════════════════════════════════════════════ */
+/** Ce bloc seul avance toutes les secondes : l'âge du dernier envoi. */
+function rendreFraicheur() {
+  const d = state.data;
+  const age = Date.now() - (state.emisAt || state.recuAt);
+  const dot = $('#liveDot'), txt = $('#liveTxt');
+  dot.className = 'dot';
+  if (state.erreur)            { dot.classList.add('off');   txt.textContent = state.erreur; }
+  else if (!d)                 { dot.classList.add('off');   txt.textContent = 'aucune donnée'; }
+  else if (age > PERIME_MS)    { dot.classList.add('stale'); txt.textContent = 'dernier envoi il y a ' + duree(age / 1000); }
+  else                         { dot.classList.add('on');    txt.textContent = 'en ligne'; }
+  $('#mAge').textContent = !d ? '—'
+    : duree(Math.max(0, age) / 1000) + (state.periodeObs ? ' · toutes les ~' + Math.round(state.periodeObs) + ' s' : '');
+}
+
+function rendreBandeau(d) {
+  rendreFraicheur();
+  if (!d) return;
+  $('#mDev').textContent  = d.device_id || '—';
+  $('#mSeq').textContent  = i0(d.seq);
+  $('#mUp').textContent   = duree(d.uptime_s);
+  $('#mRssi').textContent = has(d.rssi_dbm) && d.rssi_dbm ? d.rssi_dbm + ' dBm' : 'hors ligne';
+  $('#mCfg').textContent  = 'v' + i0(d.cfg_version);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   5. Rendu — alertes
+   ══════════════════════════════════════════════════════════════════════════ */
+function ajouterAlerte(box, niveau, tag, texte, detail) {
+  const a = el('div', 'alerte' + (niveau === 'warn' ? ' warn' : ''));
+  a.appendChild(el('div', 'tag', tag));
+  const p = el('p'); p.appendChild(document.createTextNode(texte));
+  if (detail) { p.appendChild(document.createElement('br')); p.appendChild(el('em', null, detail)); }
+  a.appendChild(p); box.appendChild(a);
+}
+
+function rendreAlertes(d) {
+  const box = $('#alertes'); box.textContent = '';
+  if (!d) return;
+  const ch = d.chaufferie || {};
+  const rs = ch.reserve || {};
+
+  if (rs.appoint_requis)
+    ajouterAlerte(box, 'alert', 'réserve',
+      "Appoint d'air requis — le flotteur jaune est mouillé, il n'y a plus de matelas d'air.",
+      "Injecter au compresseur ou à l'azote jusqu'à ce que le flotteur rouge soit sec.");
+
+  if (ch.pompe_arret_non_confirme)
+    ajouterAlerte(box, 'alert', 'pompe',
+      "Le variateur n'a pas confirmé l'ordre d'arrêt.",
+      "L'automate réessaie toutes les 0,5 s et maintient les sécurités armées.");
+
+  (d.trains || []).forEach(t => {
+    if (t.vr_alerte)
+      ajouterAlerte(box, 'alert', 'vanne ' + t.circuit,
+        "Manœuvre de la vanne de retour " + t.circuit + " non confirmée par le ZLAN.");
+  });
+
+  (d.circuits || []).forEach(c => (c.satellites || []).forEach(s => {
+    if (!s.ok) { ajouterAlerte(box, 'warn', s.sat_id, "Ne répond plus sur son bus."); return; }
+    const df = s.defauts || {};
+    if (df.capteurs_fous)
+      ajouterAlerte(box, 'alert', s.sat_id,
+        "Plusieurs capteurs ont changé d'état en même temps — alimentation capteurs suspecte.",
+        "Satellite écarté du service jusqu'à 10 s d'état stable et cohérent.");
+    const muets = [df.cnb_muet && 'CNB', df.cnm_muet && 'CNM', df.cnh_muet && 'CNH'].filter(Boolean);
+    if (muets.length)
+      ajouterAlerte(box, 'warn', s.sat_id,
+        "Capteur muet ou défectueux : " + muets.join(', ') + ".",
+        "Le niveau a dépassé le repère sans que le capteur réagisse.");
+    else if (suspectCNH(s))
+      ajouterAlerte(box, 'warn', s.sat_id,
+        "Le CNH est sec alors que le volume dépasse son repère de plus de 2 L.",
+        "Déduit du niveau côté supervision — l'automate ne le signale pas encore dans son envoi.");
+    if (df.quarantaine_s > 0)
+      ajouterAlerte(box, 'warn', s.sat_id,
+        "Mis de côté après " + df.abandons + " abandons consécutifs.",
+        "Nouvel essai autorisé dans " + duree(df.quarantaine_s) + ". Vérifier vanne, fuite, capteurs.");
+  }));
+
+  if (ch.eau) {
+    if (ch.eau.qa && ch.eau.qa.ok === false) ajouterAlerte(box, 'alert', 'compteur A', "Le compteur QA ne répond plus.");
+    if (ch.eau.qb && ch.eau.qb.ok === false) ajouterAlerte(box, 'alert', 'compteur B', "Le compteur QB ne répond plus.");
+  }
+  (d.trains || []).forEach(t => {
+    if (t.cycle_actif === false)
+      ajouterAlerte(box, 'warn', 'circuit ' + t.circuit, "Circuit " + t.circuit + " à l'arrêt — les demandes s'accumulent sans être servies.");
+  });
+}
+
+/** Règle D24 rejouée côté navigateur, faute d'être dans le payload. */
+function suspectCNH(s) {
+  const et = s.etalonnage || {};
+  return s.ok && s.cnh === 0 && has(et.haut) && has(s.volume_l) && s.volume_l > et.haut + 2;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   6. Rendu — un rail
+   ══════════════════════════════════════════════════════════════════════════ */
+function rendreRail(node, t, lettre, bus) {
+  node.textContent = '';
+  if (!t) { node.appendChild(el('div', 'rail-id', 'CIRCUIT ' + lettre)); node.appendChild(el('p', null, 'Aucune donnée.')); return; }
+  const code = codeEtape(t.etape);
+
+  const head = el('div', 'rail-head');
+  head.appendChild(el('div', 'rail-id', 'CIRCUIT ' + lettre));
+  head.appendChild(el('div', 'rail-bus', 'bus ' + bus));
+  head.appendChild(el('div', 'rail-sat', t.sat_actif || '—'));
+  const bd = el('div', 'rail-badges');
+  const vr = t.vanne_retour || 'INCONNUE';
+  bd.appendChild(el('div', 'badge' + (vr === 'OUVERTE' ? ' on' : ''), 'retour ' + vr.toLowerCase()));
+  if (t.dernier)      bd.appendChild(el('div', 'badge on', 'dernier'));
+  if (t.attente_efs)  bd.appendChild(el('div', 'badge efs', 'attente EFS'));
+  if (t.cycle_actif === false) bd.appendChild(el('div', 'badge off', 'circuit arrêté'));
+  head.appendChild(bd);
+  node.appendChild(head);
+
+  const frise = el('div', 'frise');
+  const posCourante = ORDRE.indexOf(code);
+  ORDRE.forEach((c, i) => {
+    const s = el('div', 'step' + (c === code ? ' now' : (i < posCourante ? ' done' : '')));
+    s.appendChild(el('b', null, 'E' + c));
+    s.appendChild(el('span', 'lbl', LIBEL[c]));
+    frise.appendChild(s);
+  });
+  node.appendChild(frise);
+
+  const pr = el('div', 'progress');
+  const top = el('div', 'progress-top');
+  top.appendChild(el('div', 'progress-lbl', (t.etape || '—') + (t.sat_actif ? ' · ' + t.sat_actif : '')));
+  const val = el('div', 'progress-val');
+  if (has(t.cible) && t.cible > 0) {
+    val.appendChild(document.createTextNode(n(t.avancement, t.unite === 's' ? 0 : 1)));
+    val.appendChild(el('small', null, ' / ' + n(t.cible, t.unite === 's' ? 0 : 1) + ' ' + (t.unite || '')));
+  } else {
+    val.appendChild(el('small', null, 'depuis ' + duree(t.depuis_s)));
+  }
+  top.appendChild(val); pr.appendChild(top);
+  const bar = el('div', 'bar' + (EFS_ETAPES.includes(code) ? ' efs' : ''));
+  const fill = el('i'); fill.style.width = (has(t.cible) && t.cible > 0 ? pct(t.avancement, t.cible) : 0) + '%';
+  bar.appendChild(fill); pr.appendChild(bar); node.appendChild(pr);
+
+  const ft = el('div', 'rail-foot');
+  const f1 = el('div'); f1.appendChild(document.createTextNode('front d\'ECS ')); f1.appendChild(el('b', null, n(t.front_l) + ' L'));
+  ft.appendChild(f1);
+  const f2 = el('div'); f2.appendChild(document.createTextNode('dans l\'étape depuis ')); f2.appendChild(el('b', null, duree(t.depuis_s)));
+  ft.appendChild(f2);
+  const f3 = el('div', null); f3.appendChild(document.createTextNode('file '));
+  const fl = el('span', 'file-list');
+  if ((t.file || []).length) t.file.forEach(id => fl.appendChild(el('span', null, id)));
+  else fl.appendChild(el('span', null, 'vide'));
+  f3.appendChild(fl); f3.style.display = 'flex'; f3.style.gap = '6px'; f3.style.alignItems = 'center';
+  ft.appendChild(f3);
+  node.appendChild(ft);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   7. Rendu — organes partagés
+   ══════════════════════════════════════════════════════════════════════════ */
+function organe(cls, k, v, unite, s) {
+  const o = el('div', 'organ ' + cls);
+  o.appendChild(el('div', 'k', k));
+  const vv = el('div', 'v'); vv.appendChild(document.createTextNode(v));
+  if (unite) vv.appendChild(el('small', null, ' ' + unite));
+  o.appendChild(vv);
+  if (s) o.appendChild(el('div', 's', s));
+  return o;
+}
+
+function rendreOrganes(d) {
+  const box = $('#organs'); box.textContent = '';
+  const ch = (d && d.chaufferie) || {};
+  const trains = (d && d.trains) || [];
+
+  const pp = ch.pompe_pct || 0;
+  box.appendChild(organe('pump' + (pp > 0 ? ' run' : ' ko'), 'Pompe P1', pp > 0 ? pp : 'arrêt', pp > 0 ? '%' : '',
+    pp > 0 ? (pp >= 100 ? 'plein régime · 65 Hz' : 'régime réduit') : 'aucun circuit ne la demande'));
+
+  const v3 = ch.v3 || '—';
+  box.appendChild(organe('v3 ' + v3.toLowerCase(), 'Vanne 3 voies', v3, '',
+    v3 === 'EFS' ? 'fenêtre EFS ouverte' : 'position de repos'));
+
+  const pr = ch.pression || {};
+  const presLue = pr.ok && !pr.defaut && pr.brut > 0;
+  box.appendChild(presLue
+    ? organe(pr.sature ? 'ko' : '', 'Pression sortie', n(pr.bar), 'bar',
+             'brut ' + i0(pr.brut) + (pr.sature ? ' — capteur saturé' : ' — service ≈ 3,5 bar'))
+    : organe('ko', 'Pression sortie', '—', '',
+             pr.ok === false ? 'pas de réponse du ZLAN' : 'registre AI à identifier (commande p)'));
+
+  box.appendChild(tempValide(ch.temp_pompe_c)
+    ? organe('', 'Température P4', n(ch.temp_pompe_c), '°C', 'sortie de pompe')
+    : organe('ko', 'Température P4', '—', '',
+             has(ch.temp_pompe_c) ? 'valeur hors plage — sonde débranchée ?' : 'sonde muette'));
+
+  /* les attaches s'allument du côté du circuit qui tient la pompe */
+  [['#tieA', 0, 'var(--cuivre)'], ['#tieB', 1, 'var(--verdigris)']].forEach(([sel, idx, col]) => {
+    const t = trains[idx], tie = $(sel);
+    const live = !!t && POMPE_ETAPES.includes(codeEtape(t.etape)) && pp > 0;
+    tie.style.setProperty('--tc', col);
+    tie.classList.toggle('live', live);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   8. Rendu — satellites
+   ══════════════════════════════════════════════════════════════════════════ */
+function rendreSats(d) {
+  const box = $('#sats'); box.textContent = '';
+  const circuits = (d && d.circuits) || [];
+  const actifs = new Set(((d && d.trains) || []).map(t => t.sat_actif).filter(Boolean));
+  let total = 0;
+
+  circuits.forEach((c, ci) => (c.satellites || []).forEach(s => {
+    total++;
+    const lettre = ci === 0 ? 'a' : 'b';
+    const card = el('article', 'sat ' + lettre + (s.ok ? '' : ' ko') + (actifs.has(s.sat_id) ? ' actif' : ''));
+
+    const X = s.X_l || 40, et = s.etalonnage || {};
+    const j = el('div', 'jauge');
+    if (has(et.haut)) {
+      const blind = el('div', 'blind');
+      blind.style.bottom = pct(et.haut, X) + '%';
+      blind.style.height = Math.max(0, pct(X - 1, X) - pct(et.haut, X)) + '%';
+      blind.title = 'Zone suivie au débitmètre seul — aucun repère capteur';
+      j.appendChild(blind);
+    }
+    const fill = el('div', 'fill'); fill.style.height = (s.ok ? pct(s.volume_l, X) : 0) + '%'; j.appendChild(fill);
+    [['bas', s.cnb], ['milieu', s.cnm], ['haut', s.cnh]].forEach(([k, on]) => {
+      if (!has(et[k])) return;
+      const tk = el('div', 'tick' + (on ? ' on' : '')); tk.style.bottom = pct(et[k], X) + '%'; j.appendChild(tk);
+    });
+    const cb = el('div', 'cible'); cb.style.bottom = pct(X - 1, X) + '%';
+    cb.title = 'Cible de remplissage : ' + n(X - 1) + ' L'; j.appendChild(cb);
+    card.appendChild(j);
+
+    const b = el('div', 'sat-body');
+    b.appendChild(el('div', 'sat-id', s.sat_id));
+    const v = el('div', 'sat-vol');
+    v.appendChild(document.createTextNode(s.ok ? n(s.volume_l) : '—'));
+    v.appendChild(el('small', null, ' L / ' + i0(X)));
+    b.appendChild(v);
+
+    const chips = el('div', 'chips');
+    if (!s.ok) chips.appendChild(el('div', 'chip bad', 'sans réponse'));
+    else {
+      const q = (s.volume_qualite || '').toLowerCase();
+      chips.appendChild(el('div', 'chip ' + (q === 'etalonne' ? 'etal' : q === 'mesure' ? 'mesure' : 'inconnu'),
+        q === 'etalonne' ? 'étalonné' : q === 'mesure' ? 'au débitmètre' : 'niveau inconnu'));
+      if (s.vanne)   chips.appendChild(el('div', 'chip open', 'vanne ouverte'));
+      if (s.en_file) chips.appendChild(el('div', 'chip', 'en file'));
+      const df = s.defauts || {};
+      if (df.capteurs_fous)   chips.appendChild(el('div', 'chip bad', 'capteurs incohérents'));
+      if (df.quarantaine_s)   chips.appendChild(el('div', 'chip bad', 'mis de côté'));
+    }
+    b.appendChild(chips);
+
+    if (s.ok) {
+      const caps = el('div', 'capteurs');
+      const susp = suspectCNH(s), df = s.defauts || {};
+      [['CNB', s.cnb, et.bas, df.cnb_muet], ['CNM', s.cnm, et.milieu, df.cnm_muet],
+       ['CNH', s.cnh, et.haut, df.cnh_muet || susp]].forEach(([k, on, vol, bad]) => {
+        const c = el('div', 'cap' + (on ? ' wet' : '') + (bad ? ' susp' : ''));
+        c.appendChild(el('i'));
+        c.appendChild(el('span', null, k + ' ' + n(vol)));
+        c.title = k + ' à ' + n(vol) + ' L — ' + (on ? 'immergé' : 'sec') + (bad ? ' (suspect)' : '');
+        caps.appendChild(c);
+      });
+      b.appendChild(caps);
+
+      const ft = el('div', 'sat-foot');
+      ft.appendChild(el('div', null, 'Y ' + n(s.Y_l) + ' L'));
+      ft.appendChild(el('div', null, 'conso ' + n(s.conso_totale_l) + ' L'));
+      if (tempValide(s.temp_c))   ft.appendChild(el('div', null, n(s.temp_c) + ' °C'));
+      else if (has(s.temp_c))     ft.appendChild(el('div', null, 'sonde hors plage'));
+      b.appendChild(ft);
+    }
+    card.appendChild(b);
+    box.appendChild(card);
+  }));
+
+  if (!total) box.appendChild(el('p', null, "Aucun satellite dans le dernier envoi."));
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   9. Rendu — réserve, compteurs, mesures
+   ══════════════════════════════════════════════════════════════════════════ */
+function ligne(box, k, v, ko) {
+  const d = el('div', 'kv'); d.appendChild(el('span', null, k));
+  d.appendChild(el('b', ko ? 'ko' : null, v)); box.appendChild(d);
+}
+
+function rendreReserve(d) {
+  const rs = ((d && d.chaufferie) || {}).reserve || {};
+  const box = $('#resFloats'); box.textContent = '';
+  const lu = has(rs.haut_mouille);
+  const flotteurs = [['j', 'Jaune', 300, rs.haut_mouille], ['n', 'Noir', 252.5, rs.milieu_mouille], ['r', 'Rouge', 205, rs.bas_mouille]];
+  flotteurs.forEach(([cl, nom, vol, m]) => {
+    const f = el('div', 'flt ' + cl + (m ? ' wet' : ''));
+    f.appendChild(el('i'));
+    f.appendChild(el('span', null, nom + ' · ' + n(vol, vol % 1 ? 1 : 0) + ' L'));
+    f.appendChild(el('b', null, lu ? (m ? 'mouillé' : 'sec') : '—'));
+    box.appendChild(f);
+  });
+  const niveau = lu ? (rs.bas_mouille ? (rs.milieu_mouille ? (rs.haut_mouille ? 300 : 276) : 229) : 190) : 0;
+  $('#resEau').style.height = (lu ? Math.min(100, niveau / 300 * 100) : 0) + '%';
+  $('#resBand').textContent = !lu ? 'lecture indisponible'
+    : rs.haut_mouille ? '≥ 300 L — plus de matelas d\'air'
+    : rs.milieu_mouille ? '252,5 – 300 L'
+    : rs.bas_mouille ? '205 – 252,5 L' : '< 205 L';
+}
+
+function rendreEau(d) {
+  const eau = ((d && d.chaufferie) || {}).eau || {};
+  const box = $('#eauBox'); box.textContent = '';
+  [['QA', 'A', eau.qa], ['QB', 'B', eau.qb]].forEach(([nom, lettre, q]) => {
+    if (!q) { ligne(box, nom + ' · circuit ' + lettre, '—', true); return; }
+    ligne(box, nom + ' · circuit ' + lettre + ' (DI' + i0(q.voie) + ')',
+          q.ok ? n(q.litres) + ' L' : 'sans réponse', !q.ok);
+  });
+  ligne(box, 'Résolution', '0,5 L par impulsion');
+  ligne(box, 'Source', eau.source || '—');
+}
+
+function rendreMesures(d) {
+  const ch = (d && d.chaufferie) || {};
+  if (ch.vfd)       { state.mesures.vfd = ch.vfd; state.mesures.at = state.recuAt; }
+  if (ch.sdm120)    { state.mesures.sdm = ch.sdm120; state.mesures.at = state.recuAt; }
+  if (ch.maddalena) { state.mesures.madd = ch.maddalena; state.mesures.at = state.recuAt; }
+  const box = $('#mesuresBox'); box.textContent = '';
+  const {vfd, sdm, madd, at} = state.mesures;
+  if (!at) { box.appendChild(el('p', null, "Rien encore : ces mesures ne sont relevées que lorsque les deux trains sont au repos.")); return; }
+  if (vfd)  ligne(box, 'Variateur', vfd.ok ? n(vfd.freq_hz) + ' Hz · ' + n(vfd.courant_a, 2) + ' A' : 'sans réponse', !vfd.ok);
+  if (sdm)  ligne(box, 'Électricité', sdm.ok ? n(sdm.puissance_w, 0) + ' W · ' + n(sdm.energie_kwh) + ' kWh' : 'sans réponse', !sdm.ok);
+  if (madd) {
+    ligne(box, 'Départ / retour', madd.ok ? n(madd.t_depart_c) + ' / ' + n(madd.t_retour_c) + ' °C' : 'sans réponse', !madd.ok);
+    if (madd.ok) ligne(box, 'Énergie thermique', n(madd.energie_mwh, 3) + ' MWh');
+  }
+  ligne(box, 'Relevé', 'il y a ' + duree((Date.now() - at) / 1000));
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   10. Formulaire de réglage — n'envoie QUE ce qui a été rempli
+   ══════════════════════════════════════════════════════════════════════════ */
+const CHAMPS = [
+  {k:'intervalle_s',      t:'int',   min:5,   max:3600, l:"Période d'envoi",         u:'s'},
+  {k:'nb_sats',           t:'int',   min:1,   max:8,    l:'Satellites circuit A',    u:''},
+  {k:'nb_sats_b',         t:'int',   min:0,   max:8,    l:'Satellites circuit B',    u:''},
+  {k:'vol_pompe_amont_l', t:'float', min:0,   max:20,   l:'Tronçon commun',          u:'L'},
+  {k:'vol_recup_l',       t:'float', min:0,   max:100,  l:'Récupération A (Z)',      u:'L'},
+  {k:'vol_recup_b_l',     t:'float', min:0,   max:100,  l:'Récupération B (Z)',      u:'L'},
+  {k:'vitesse_train_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en train',  u:'%'},
+  {k:'vitesse_recup_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en récup',  u:'%'},
+  {k:'t_vanne_s',         t:'int',   min:1,   max:60,   l:'Pause de manœuvre',       u:'s'},
+  {k:'temp_addr',         t:'int',   min:1,   max:247,  l:'Adresse sondes PT100',    u:'', aide:'4 — surtout pas 3, c\'est le variateur'},
+  {k:'pres_fc',           t:'sel',   opts:[['','— inchangé —'],['3','FC03 · registres de maintien'],['4','FC04 · registres d\'entrée']], l:'Fonction Modbus pression'},
+  {k:'pres_reg_base',     t:'int',   min:0,   max:65535, l:'Registre AI de départ',  u:'', aide:'à caler sur ≈ 224 brut au repos'},
+  {k:'pres_voie',         t:'int',   min:1,   max:8,    l:'Voie AI pression',        u:''},
+  {k:'pres_bar_max',      t:'float', min:1,   max:100,  l:'Pleine échelle pression', u:'bar'},
+  {k:'pres_actif',        t:'bool',  l:'Lecture de pression'},
+  {k:'res_actif',         t:'bool',  l:'Surveillance réserve 300 L'},
+  {k:'C1',                t:'bool',  l:'Circuit A en service'},
+  {k:'C2',                t:'bool',  l:'Circuit B en service'},
+];
+
+function construireFormulaire() {
+  const box = $('#cfgFields'); box.textContent = '';
+  CHAMPS.forEach(c => {
+    const f = el('div', 'f');
+    const lab = el('label'); lab.setAttribute('for', 'cf_' + c.k);
+    lab.appendChild(document.createTextNode(c.l + ' '));
+    const bornes = c.t === 'bool' ? '' : c.t === 'sel' ? '' : ' ' + c.min + '–' + c.max + (c.u ? ' ' + c.u : '');
+    if (bornes || c.aide) lab.appendChild(el('em', null, (bornes ? bornes : '') + (c.aide ? ' · ' + c.aide : '')));
+    f.appendChild(lab);
+    let inp;
+    if (c.t === 'bool' || c.t === 'sel') {
+      inp = el('select');
+      const opts = c.t === 'bool' ? [['', '— inchangé —'], ['true', 'en service'], ['false', 'à l\'arrêt']] : c.opts;
+      opts.forEach(([v, t]) => { const o = el('option', null, t); o.value = v; inp.appendChild(o); });
+    } else {
+      inp = el('input'); inp.type = 'number'; inp.placeholder = 'inchangé';
+      inp.min = c.min; inp.max = c.max; if (c.t === 'float') inp.step = '0.1';
+    }
+    inp.id = 'cf_' + c.k; inp.dataset.k = c.k; inp.dataset.t = c.t;
+    f.appendChild(inp); box.appendChild(f);
+  });
+}
+
+function construireTableSats(d) {
+  const tab = $('#cfgSats');
+  if (tab.dataset.rendu === '1') return;          // ne pas écraser une saisie en cours
+  const sats = [];
+  ((d && d.circuits) || []).forEach(c => (c.satellites || []).forEach(s => sats.push(s)));
+  if (!sats.length) return;
+  tab.dataset.rendu = '1';
+  tab.textContent = '';
+  const thead = el('thead'), trh = el('tr');
+  ['Satellite', 'X · capacité', 'Y · tuyau', 'CNB', 'CNM', 'CNH'].forEach(t => trh.appendChild(el('th', null, t)));
+  thead.appendChild(trh); tab.appendChild(thead);
+  const tb = el('tbody');
+  sats.forEach(s => {
+    const idx = s.sat_id.startsWith('SA') ? (+s.sat_id.slice(2) - 1) : (8 + (+s.sat_id.slice(2) - 1));
+    const tr = el('tr');
+    tr.appendChild(el('td', null, s.sat_id));
+    const et = s.etalonnage || {};
+    [['X_l', s.X_l], ['Y_l', s.Y_l], ['vol_bas', et.bas], ['vol_milieu', et.milieu], ['vol_haut', et.haut]].forEach(([k, cur]) => {
+      const td = el('td'), inp = el('input');
+      inp.type = 'number'; inp.step = '0.1'; inp.placeholder = has(cur) ? n(cur) : '—';
+      inp.dataset.sat = idx; inp.dataset.k = k;
+      td.appendChild(inp); tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+  tab.appendChild(tb);
+}
+
+function collecterConfig() {
+  const cfg = {}, circuits = {}, erreurs = [];
+  document.querySelectorAll('#cfgFields [data-k]').forEach(inp => {
+    inp.classList.remove('bad');
+    const v = inp.value.trim(); if (v === '') return;
+    const k = inp.dataset.k, t = inp.dataset.t;
+    if (t === 'bool') { (k === 'C1' || k === 'C2') ? circuits[k] = (v === 'true') : cfg[k] = (v === 'true'); return; }
+    const num = Number(v);
+    const spec = CHAMPS.find(c => c.k === k);
+    if (!isFinite(num) || (spec && has(spec.min) && (num < spec.min || num > spec.max))) {
+      inp.classList.add('bad'); erreurs.push(spec.l + ' : hors bornes'); return;
+    }
+    cfg[k] = t === 'int' ? Math.round(num) : num;
+  });
+  if (Object.keys(circuits).length) cfg.circuits = circuits;
+
+  /* satellites : on ne pousse un satellite que si ses 5 valeurs sont cohérentes */
+  const parSat = {};
+  document.querySelectorAll('#cfgSats input[data-sat]').forEach(inp => {
+    inp.classList.remove('bad');
+    const v = inp.value.trim(); if (v === '') return;
+    const i = +inp.dataset.sat;
+    (parSat[i] = parSat[i] || {inputs: []}).inputs.push(inp);
+    parSat[i][inp.dataset.k] = Number(v);
+  });
+  const idxs = Object.keys(parSat).map(Number);
+  if (idxs.length) {
+    const sats = [];
+    for (let i = 0; i < 16; i++) sats.push({});
+    idxs.forEach(i => {
+      const src = parSat[i], id = (i < 8 ? 'SA' : 'SB') + ((i % 8) + 1);
+      const base = satCourant(i);
+      const o = {
+        X_l:        has(src.X_l)        ? src.X_l        : base.X_l,
+        Y_l:        has(src.Y_l)        ? src.Y_l        : base.Y_l,
+        vol_bas:    has(src.vol_bas)    ? src.vol_bas    : base.vol_bas,
+        vol_milieu: has(src.vol_milieu) ? src.vol_milieu : base.vol_milieu,
+        vol_haut:   has(src.vol_haut)   ? src.vol_haut   : base.vol_haut,
+      };
+      const complet = Object.values(o).every(has);
+      if (!complet) { src.inputs.forEach(x => x.classList.add('bad')); erreurs.push(id + " : renseignez les 5 valeurs, l'automate les relit en bloc"); return; }
+      if (!(o.vol_bas < o.vol_milieu && o.vol_milieu < o.vol_haut && o.vol_haut < o.X_l)) {
+        src.inputs.forEach(x => x.classList.add('bad'));
+        erreurs.push(id + ' : il faut bas < milieu < haut < X, sinon l\'automate ignore le satellite'); return;
+      }
+      sats[i] = o;
+    });
+    if (sats.some(o => Object.keys(o).length)) cfg.sats = sats;
+  }
+  return {cfg, erreurs};
+}
+
+/** Valeurs actuelles connues d'un satellite, pour compléter une saisie partielle. */
+function satCourant(idx) {
+  const id = (idx < 8 ? 'SA' : 'SB') + ((idx % 8) + 1);
+  let out = {};
+  ((state.data && state.data.circuits) || []).forEach(c => (c.satellites || []).forEach(s => {
+    if (s.sat_id !== id || !s.ok) return;
+    const et = s.etalonnage || {};
+    out = {X_l: s.X_l, Y_l: s.Y_l, vol_bas: et.bas, vol_milieu: et.milieu, vol_haut: et.haut};
+  }));
+  return out;
+}
+
+function sortie(msg, cls) {
+  const o = $('#cfgOut'); o.textContent = msg;
+  o.className = 'show' + (cls ? ' ' + cls : '');
+}
+
+function paquetConfig() {
+  const {cfg, erreurs} = collecterConfig();
+  if (erreurs.length) { sortie('À corriger avant d\'envoyer :\n· ' + erreurs.join('\n· '), 'err'); return null; }
+  if (!Object.keys(cfg).length) { sortie("Rien à envoyer : aucun champ n'a été rempli.", 'err'); return null; }
+  const vNow = (state.data && state.data.cfg_version) || 0;
+  cfg.cfg_version = vNow + 1;
+  return cfg;
+}
+
+/** Corps du dépôt. La fonction fait `const cfg = req.body` puis lit `cfg.device_id`
+ *  et `cfg.cfg_version` : le bloc est donc PLAT, pas emballé dans "config".
+ *  Il est stocké tel quel, et /api/data le renvoie à l'automate sous la clé
+ *  "config" dans la réponse à son propre POST. */
+function corpsDepot(cfg) {
+  return Object.assign({device_id: (state.data && state.data.device_id) || DEVICE}, cfg);
+}
+
+/** Traduit les refus connus de la fonction en quelque chose d'actionnable. */
+function expliquerRefus(status, texte) {
+  if (/CONFIG_API_KEY/i.test(texte || ''))
+    return "La variable CONFIG_API_KEY n'existe pas côté Azure.\n"
+         + "Portail Azure → votre Static Web App → Paramètres → Variables d'environnement → "
+         + "ajouter CONFIG_API_KEY, puis Enregistrer. La même valeur se tape ici.";
+  if (status === 401)
+    return "Clé refusée. Elle doit être identique, au caractère près, à la variable "
+         + "CONFIG_API_KEY définie dans Azure.";
+  if (status === 404)
+    return "Endpoint introuvable : vérifiez qu'un dossier api/config existe bien dans le dépôt "
+         + "et que le dernier déploiement GitHub Actions a réussi.";
+  return 'réponse ' + status + (texte ? '\n' + texte : '');
+}
+
+/** Met le bloc en français, et signale ce qui a des conséquences sur le service. */
+function resumerConfig(cfg) {
+  const lignes = [], alertes = [];
+  Object.keys(cfg).forEach(k => {
+    if (k === 'cfg_version') return;
+    if (k === 'circuits') {
+      Object.keys(cfg.circuits).forEach(c => {
+        const nom = c === 'C1' ? 'Circuit A' : 'Circuit B', v = cfg.circuits[c];
+        lignes.push(nom + ' : ' + (v ? 'en service' : "à l'arrêt"));
+        if (!v) alertes.push(nom + " passe à l'arrêt : ses demandes ne seront plus servies.");
+      });
+      return;
+    }
+    if (k === 'sats') {
+      cfg.sats.forEach((o, i) => {
+        if (!Object.keys(o).length) return;
+        lignes.push((i < 8 ? 'SA' : 'SB') + ((i % 8) + 1) + ' : X ' + n(o.X_l) + ' L, Y ' + n(o.Y_l)
+                  + ' L, repères ' + n(o.vol_bas) + ' / ' + n(o.vol_milieu) + ' / ' + n(o.vol_haut));
+      });
+      return;
+    }
+    const spec = CHAMPS.find(c => c.k === k);
+    const v = typeof cfg[k] === 'boolean' ? (cfg[k] ? 'activé' : 'désactivé') : cfg[k];
+    lignes.push((spec ? spec.l : k) + ' : ' + v + (spec && spec.u ? ' ' + spec.u : ''));
+  });
+  if (cfg.nb_sats_b === 0)
+    alertes.push("Satellites circuit B à 0 : SB1 sort du service, plus aucun train ne partira sur le bus B.");
+  if (has(cfg.intervalle_s) && cfg.intervalle_s <= 10)
+    alertes.push("Envoi toutes les " + cfg.intervalle_s + " s : la fenêtre aveugle du POST tombera "
+               + "souvent pendant un remplissage, au risque de dépasser la cible.");
+  if (has(cfg.pres_bar_max) && Math.abs(cfg.pres_bar_max - 16) > 0.01)
+    alertes.push("Pleine échelle pression à " + cfg.pres_bar_max + " bar — D26 donne 16 bar après le pont diviseur.");
+  return {lignes: lignes, alertes: alertes};
+}
+
+let depotEnAttente = null;
+function annulerDepot() {
+  if (!depotEnAttente) return;
+  depotEnAttente = null;
+  $('#btnSend').textContent = "Envoyer à l'automate";
+}
+
+async function deposer(cfg, cle) {
+  const corps = corpsDepot(cfg);
+  const entetes = {'Content-Type': 'application/json'};
+  if (cle) entetes['x-api-key'] = cle;
+  try {
+    const r = await fetch(API.config, {
+      method: 'POST',
+      headers: entetes,
+      body: JSON.stringify(corps),
+    });
+    if (!r.ok) {
+      let texte = '';
+      try { texte = (await r.text()).trim().slice(0, 500); } catch (_) {}
+      throw new Error(expliquerRefus(r.status, texte));
+    }
+    const attente = state.periodeObs ? Math.round(state.periodeObs) + ' s' : "un cycle d'envoi";
+    sortie('Config v' + cfg.cfg_version + " déposée. Elle sera appliquée au prochain envoi de "
+         + "l'automate, sous " + attente + ".\n"
+         + 'Vérifiez que « config » passe bien à v' + cfg.cfg_version + ' en haut de page.', 'ok');
+  } catch (e) {
+    sortie("Le dépôt a échoué.\n\n" + e.message + "\n\nLe bloc reste valide :\n\n"
+         + JSON.stringify(corps, null, 2), 'err');
+  }
+}
+
+$('#btnSend').addEventListener('click', async () => {
+  const btn = $('#btnSend');
+  /* 2e clic : on envoie ce qui a été montré */
+  if (depotEnAttente) {
+    const cfg = depotEnAttente;
+    depotEnAttente = null;
+    btn.textContent = "Envoyer à l'automate";
+    btn.disabled = true;
+    sortie('Envoi en cours…');
+    await deposer(cfg, $('#cfgKey').value.trim());
+    btn.disabled = false;
+    return;
+  }
+  /* 1er clic : bilan de ce qui va changer */
+  const cfg = paquetConfig(); if (!cfg) return;
+  const r = resumerConfig(cfg);
+  if (!$('#cfgKey').value.trim())
+    r.alertes.push("Dépôt sans clé : accepté tant que CONFIG_API_KEY n'est pas définie dans Azure. "
+                 + "Le jour où elle le sera, ce champ redeviendra obligatoire.");
+  depotEnAttente = cfg;
+  btn.textContent = "Confirmer l'envoi";
+  sortie("Voici ce qui va changer sur l'automate :\n\n· " + r.lignes.join('\n· ')
+       + (r.alertes.length ? "\n\nÀ noter :\n! " + r.alertes.join('\n! ') : '')
+       + "\n\nCliquez de nouveau pour confirmer, ou modifiez un champ pour annuler.",
+       r.alertes.length ? 'err' : '');
+});
+
+const panneauCfg = document.querySelector('details.cfg');
+if (panneauCfg) panneauCfg.addEventListener('input', annulerDepot);
+
+$('#btnCopy').addEventListener('click', async () => {
+  const cfg = paquetConfig(); if (!cfg) return;
+  const txt = JSON.stringify(corpsDepot(cfg), null, 2);
+  try { await navigator.clipboard.writeText(txt); sortie('JSON copié :\n\n' + txt, 'ok'); }
+  catch (_) { sortie('Copie impossible, voici le JSON :\n\n' + txt); }
+});
+
+$('#btnReset').addEventListener('click', () => {
+  document.querySelectorAll('#cfgFields [data-k], #cfgSats input[data-sat]').forEach(i => { i.value = ''; i.classList.remove('bad'); });
+  sortie('Formulaire vidé.', 'ok');
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   11. Boucle
+   ══════════════════════════════════════════════════════════════════════════ */
+function rendre(force) {
+  const d = state.data;
+  /* Sonder toutes les 3 s ne veut pas dire redessiner toutes les 3 s : l'automate
+   * n'envoie que toutes les ~30 s. On ne reconstruit que sur un vrai changement,
+   * sinon la page clignote et la sélection de texte saute pour rien. */
+  const sig = d ? (d._received_at || '') + '|' + d.seq + '|' + (state.erreur || '') : 'vide|' + (state.erreur || '');
+  const change = force || sig !== state.sig;
+  state.sig = sig;
+  rendreFraicheur();
+  if (!change) return;
+  rendreBandeau(d);
+  rendreAlertes(d);
+  rendreRail($('#railA'), (d && d.trains && d.trains[0]) || (d && d.train), 'A', 504);
+  rendreRail($('#railB'), (d && d.trains && d.trains[1]), 'B', 505);
+  rendreOrganes(d);
+  rendreSats(d);
+  rendreReserve(d);
+  rendreEau(d);
+  rendreMesures(d);
+  construireTableSats(d);
+}
+
+async function relever() {
+  if (DEMO) { state.data = demo(); state.recuAt = Date.now(); state.emisAt = 0; state.erreur = null; rendre(true); return; }
+  try {
+    const r = await fetch(API.telemetry, {cache: 'no-store'});
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    const j = await r.json();
+    const d = extraire(j);
+    if (!d || !d.device_id) throw new Error('payload non reconnu');
+    state.data = d;
+    state.recuAt = Date.now();
+    const t = Date.parse(d._received_at || '');
+    const age = Date.now() - t;
+    const emis = (isFinite(t) && age > -60000 && age < 2.6e9) ? t : 0;
+    /* cadence réellement observée entre deux envois de l'automate */
+    if (emis && state.emisAt && emis > state.emisAt) {
+      const dt = (emis - state.emisAt) / 1000;
+      if (dt > 1 && dt < 3600) state.periodeObs = state.periodeObs ? state.periodeObs * 0.7 + dt * 0.3 : dt;
+    }
+    if (emis) state.emisAt = emis;
+    state.erreur = null;
+  } catch (e) {
+    state.erreur = 'liaison interrompue — ' + e.message;
+  }
+  rendre();
+}
+
+/** L'API peut renvoyer le payload nu ou emballé. Aujourd'hui : { devices: { "<id>": … } } */
+function extraire(j) {
+  if (!j || typeof j !== 'object') return null;
+  if (j.device_id) return j;
+  if (j.devices && typeof j.devices === 'object') {
+    if (DEVICE && j.devices[DEVICE]) return j.devices[DEVICE];
+    const premier = Object.values(j.devices)[0];
+    if (premier) return premier;
+  }
+  return j.payload || j.data || j.telemetry || null;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   12. Mode démonstration (?demo=1) — pour valider la mise en page sans backend
+   ══════════════════════════════════════════════════════════════════════════ */
+function demo() {
+  const t = Date.now() / 1000;
+  const seqEtapes = [0, 9, 1, 2, 3, 3, 3, 4, 5, 6, 7, 8];
+  const nom = c => ({0:'E0 REPOS',1:'E1 AMORCAGE',2:'E2 OUVERTURE',3:'E3 REMPLISSAGE',4:'E4 BASCULE EFS',
+                     5:'E5 BOUCHON',6:'E6 FERMETURE',7:'E7 RECUP',8:'E8 RETOUR REPOS',
+                     9:'E9 DEPART (vanne retour)',10:'E10 ATTENTE EFS'})[c];
+  const cA = seqEtapes[Math.floor(t / 6) % seqEtapes.length];
+  const cB = seqEtapes[Math.floor((t + 26) / 6) % seqEtapes.length];
+  const av = (t % 6) / 6;
+  const train = (lettre, code, sat, X, Y, file) => ({
+    circuit: lettre, etape: nom(code), cycle_actif: true, depuis_s: Math.floor(t % 6),
+    sat_actif: code === 0 ? null : sat, front_l: code === 0 ? 0 : Y + 4,
+    dernier: [4,5,7].includes(code), attente_efs: code === 10,
+    vanne_retour: code === 0 || code === 8 ? 'FERMEE' : 'OUVERTE',
+    file: code === 0 ? [] : file,
+    avancement: code === 3 || code === 5 ? (X - 1 - Y) + av * Y : av * 10,
+    cible: code === 3 || code === 5 ? X - 1 : 10, unite: 'L',
+  });
+  const sat = (id, X, Y, vol, temp) => ({
+    sat_id: id, ok: true, cnb: vol > 8.2 ? 1 : 0, cnm: vol > 17.3 ? 1 : 0,
+    cnh: id === 'SB1' ? 0 : (vol > 26.5 ? 1 : 0),
+    niveau: vol > 26.5 ? 'HAUT' : vol > 17.3 ? 'MILIEU' : 'BAS',
+    vanne: 0, en_file: 0, volume_l: Math.round(vol * 10) / 10,
+    volume_qualite: 'MESURE', conso_totale_l: 1284.5, X_l: X, Y_l: Y, temp_c: temp,
+    etalonnage: {bas: 8.2, milieu: 17.3, haut: 26.5},
+  });
+  return {
+    device_id: 'chaufferie-01', seq: Math.floor(t / 30), uptime_s: 91_000,
+    rssi_dbm: -62, cfg_version: 7, simulation: false, nb_sats: 2, nb_sats_b: 1,
+    trains: [train('A', cA, 'SA1', 59, 5.5, ['SA2']), train('B', cB, 'SB1', 38, 5, [])],
+    chaufferie: {
+      eau: {impulsions: 84_512, litres: 42_256, zlan_ok: true, source: 'ZLAN6808',
+            qa: {voie: 1, impulsions: 84_512, litres: 42_256, ok: true},
+            qb: {voie: 2, impulsions: 21_004, litres: 10_502, ok: true}},
+      v3: [4,5,7].includes(cA) || [4,5,7].includes(cB) ? 'EFS' : 'ECS',
+      vanne_r12: 'CHAUD',
+      pompe_pct: (cA === 0 && cB === 0) ? 0 : ([7].includes(cA) && [7,0,8].includes(cB) ? 60 : 100),
+      reserve: {ok: true, haut_mouille: 0, milieu_mouille: 0, bas_mouille: 1,
+                appoint_requis: false, vol_min: 205, vol_max: 252.5},
+      pression: {ok: true, bar: (cA === 0 && cB === 0) ? 3.5 : 7.8, brut: (cA === 0 && cB === 0) ? 224 : 499},
+      temp_pompe_c: 54.2,
+    },
+    circuits: [
+      {circuit_id: 'C1', actif: true, satellites: [sat('SA1', 59, 5.5, 40 + 12 * av, 55.1), sat('SA2', 38, 6.5, 21.4, 52.8)]},
+      {circuit_id: 'C2', actif: true, satellites: [sat('SB1', 38, 5, 30.2, 51.6)]},
+    ],
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+construireFormulaire();
+$('#footMode').textContent = DEMO ? 'mode démonstration — données simulées' : 'source : ' + API.telemetry;
+relever();
+setInterval(relever, DEMO ? 1000 : PERIODE_MS);
+setInterval(rendreFraicheur, PERIODE_AGE_MS);
+/* onglet remis au premier plan : on ne fait pas attendre 3 s */
+document.addEventListener('visibilitychange', () => { if (!document.hidden) relever(); });
+</script>
+</body>
+</html>
