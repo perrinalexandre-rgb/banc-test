@@ -9,20 +9,21 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision
-   Identité : intérieur d'armoire de commande. Fond pétrole, deux circuits
-   identifiés par les deux états du cuivre de plomberie — cuivre neuf (A) et
-   vert-de-gris (B). L'ambre et le bleu ne servent QUE à l'eau : ECS / EFS.
+   enovaQ — pupitre de supervision · v4 (17/08/2026)
+   Fond blanc (décision client B.1). Papier technique plutôt qu'écran :
+   blanc cassé, filets fins, encre presque noire. Les deux circuits gardent
+   leurs couleurs de plomberie — cuivre (A) et vert-de-gris (B). L'ambre et
+   le bleu ne servent QU'À l'eau : ECS / EFS.
    ══════════════════════════════════════════════════════════════════════════ */
 :root{
-  --ground:#0D1317; --panel:#141E24; --panel2:#1A262D; --line:#26343C;
-  --line-soft:#1E2C33;
-  --ink:#E4EDF1; --ink2:#8FA3AC; --ink3:#5A6E78;
-  --cuivre:#C9834A;      /* circuit A */
-  --verdigris:#3FA893;   /* circuit B */
-  --ecs:#E89B45;         /* eau chaude */
-  --efs:#4FA3D9;         /* eau froide */
-  --alert:#E2564A; --warn:#D9A441; --ok:#68B96F;
+  --ground:#F4F5F3; --panel:#FFFFFF; --panel2:#F2F4F2; --panel3:#FAFBFA;
+  --line:#DCE1DE; --line-soft:#EAEEEB;
+  --ink:#15201E; --ink2:#5B6A66; --ink3:#93A09C;
+  --cuivre:#A25B2C;      /* circuit A */
+  --verdigris:#1C7767;   /* circuit B */
+  --ecs:#C06712;         /* eau chaude sanitaire */
+  --efs:#1B6CA6;         /* eau froide sanitaire */
+  --alert:#BC3626; --warn:#A9760A; --ok:#2A7A4B;
   --r:10px;
   --fs-cond:"IBM Plex Sans Condensed","Helvetica Neue",Arial,sans-serif;
   --fs-body:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -33,93 +34,83 @@ html,body{margin:0;padding:0}
 body{
   background:var(--ground); color:var(--ink);
   font-family:var(--fs-body); font-size:15px; line-height:1.45;
-  -webkit-font-smoothing:antialiased;
-  padding:0 0 56px;
+  -webkit-font-smoothing:antialiased; padding:0 0 56px;
 }
-.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.wrap{max-width:1220px;margin:0 auto;padding:0 16px}
 h1,h2,h3{margin:0;font-weight:600}
 button{font-family:inherit}
 :focus-visible{outline:2px solid var(--efs);outline-offset:2px;border-radius:4px}
 
-/* ── eyebrow : sert de repère de section, jamais de décor ─────────────── */
 .eyebrow{
   font-family:var(--fs-cond); font-weight:600; font-size:12px;
   letter-spacing:.14em; text-transform:uppercase; color:var(--ink3);
   display:flex; align-items:center; gap:10px; margin:30px 0 12px;
 }
-.eyebrow::after{content:"";flex:1;height:1px;background:var(--line-soft)}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
 
 /* ── bandeau ──────────────────────────────────────────────────────────── */
-header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#101A20,#0D1317)}
-.head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 20px;padding:18px 0 16px}
+header{border-bottom:1px solid var(--line);background:var(--panel)}
+.head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 20px;padding:16px 0 14px}
 .brand{font-family:var(--fs-cond);font-weight:700;font-size:23px;letter-spacing:.02em}
 .brand span{color:var(--ink3);font-weight:500}
 .live{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2)}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--ink3);flex:none}
-.dot.on{background:var(--ok);box-shadow:0 0 0 3px rgba(104,185,111,.16)}
-.dot.stale{background:var(--warn);box-shadow:0 0 0 3px rgba(217,164,65,.16)}
-.dot.off{background:var(--alert);box-shadow:0 0 0 3px rgba(226,86,74,.16)}
+.dot.on{background:var(--ok);box-shadow:0 0 0 3px rgba(42,122,75,.15)}
+.dot.stale{background:var(--warn);box-shadow:0 0 0 3px rgba(169,118,10,.15)}
+.dot.off{background:var(--alert);box-shadow:0 0 0 3px rgba(188,54,38,.15)}
 .meta{margin-left:auto;display:flex;flex-wrap:wrap;gap:6px 18px;font-family:var(--fs-mono);font-size:12px;color:var(--ink3)}
 .meta b{color:var(--ink2);font-weight:500}
 
+/* ── bandeau de fraîcheur (défaut serveur connu) ──────────────────────── */
+#fige{display:none;margin-top:14px;padding:10px 14px;border-radius:var(--r);
+  background:#FDF6E6;border:1px solid rgba(169,118,10,.4);font-size:14px;color:var(--ink)}
+#fige.on{display:block}
+#fige b{font-family:var(--fs-cond)}
+
 /* ── alertes ──────────────────────────────────────────────────────────── */
-#alertes{display:grid;gap:8px;margin-top:16px}
-.alerte{
-  display:flex;gap:11px;align-items:flex-start;padding:11px 14px;border-radius:var(--r);
-  background:rgba(226,86,74,.09);border:1px solid rgba(226,86,74,.35);font-size:14px;
-}
-.alerte.warn{background:rgba(217,164,65,.09);border-color:rgba(217,164,65,.34)}
-.alerte .tag{
-  font-family:var(--fs-cond);font-weight:700;font-size:11px;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--alert);padding-top:2px;flex:none
-}
+#alertes{display:grid;gap:8px;margin-top:14px}
+.alerte{display:flex;gap:11px;align-items:flex-start;padding:11px 14px;border-radius:var(--r);
+  background:#FCEDEB;border:1px solid rgba(188,54,38,.32);font-size:14px}
+.alerte.warn{background:#FDF6E6;border-color:rgba(169,118,10,.36)}
+.alerte .tag{font-family:var(--fs-cond);font-weight:700;font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--alert);padding-top:2px;flex:none}
 .alerte.warn .tag{color:var(--warn)}
 .alerte p{margin:0;color:var(--ink)}
 .alerte em{color:var(--ink2);font-style:normal}
 
-/* ══ LE PUPITRE : deux rails, une colonne vertébrale partagée ═══════════ */
+/* ══ LE PUPITRE ════════════════════════════════════════════════════════ */
 .pupitre{margin-top:6px;display:grid;gap:14px}
-.rail{
-  background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-  border-left:3px solid var(--c);padding:14px 16px 16px;position:relative;
-}
+.rail{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  border-left:3px solid var(--c);padding:14px 16px 16px;position:relative}
 .rail.a{--c:var(--cuivre)} .rail.b{--c:var(--verdigris)}
 .rail-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 14px;margin-bottom:12px}
 .rail-id{font-family:var(--fs-cond);font-weight:700;font-size:17px;letter-spacing:.04em;color:var(--c)}
 .rail-bus{font-family:var(--fs-mono);font-size:11px;color:var(--ink3)}
 .rail-sat{font-family:var(--fs-cond);font-weight:600;font-size:17px;margin-left:2px}
 .rail-badges{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
-.badge{
-  font-family:var(--fs-cond);font-weight:600;font-size:11px;letter-spacing:.08em;
+.badge{font-family:var(--fs-cond);font-weight:600;font-size:11px;letter-spacing:.08em;
   text-transform:uppercase;padding:2px 8px;border-radius:20px;
-  border:1px solid var(--line);color:var(--ink2);white-space:nowrap
-}
+  border:1px solid var(--line);color:var(--ink2);white-space:nowrap;background:var(--panel3)}
 .badge.on{border-color:var(--c);color:var(--c)}
 .badge.efs{border-color:var(--efs);color:var(--efs)}
-.badge.off{border-color:rgba(226,86,74,.5);color:var(--alert)}
+.badge.off{border-color:rgba(188,54,38,.45);color:var(--alert)}
 
-/* frise : ordre du PROCESS, pas de l'énumération */
 .frise{display:flex;gap:3px;overflow-x:auto;padding-bottom:5px;scrollbar-width:thin}
 .frise::-webkit-scrollbar{height:4px}
 .frise::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
-.step{
-  flex:none;display:flex;align-items:baseline;gap:5px;padding:5px 9px;border-radius:5px;
+.step{flex:none;display:flex;align-items:baseline;gap:5px;padding:5px 9px;border-radius:5px;
   background:var(--panel2);border:1px solid transparent;color:var(--ink3);
-  font-family:var(--fs-cond);font-size:12px;letter-spacing:.04em;white-space:nowrap
-}
+  font-family:var(--fs-cond);font-size:12px;letter-spacing:.04em;white-space:nowrap}
 .step b{font-weight:700;font-size:12px}
 .step .lbl{display:none;font-weight:500}
 @media(min-width:760px){.step .lbl{display:inline}}
-.step.done{color:var(--ink2);background:#17232A}
-.step.now{
-  background:color-mix(in srgb,var(--c) 18%,var(--panel2));
-  border-color:var(--c);color:var(--ink)
-}
+.step.done{color:var(--ink2);background:#E7EBE8}
+.step.now{background:color-mix(in srgb,var(--c) 12%,var(--panel));border-color:var(--c);color:var(--ink)}
 .step.now .lbl{display:inline}
 .step.now b{color:var(--c)}
 @media(prefers-reduced-motion:no-preference){
   .step.now{animation:breathe 2.6s ease-in-out infinite}
-  @keyframes breathe{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 14%,transparent)}}
+  @keyframes breathe{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 12%,transparent)}}
 }
 
 .progress{margin-top:12px}
@@ -127,34 +118,36 @@ header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#10
 .progress-lbl{font-size:13px;color:var(--ink2)}
 .progress-val{margin-left:auto;font-family:var(--fs-cond);font-weight:600;font-size:19px}
 .progress-val small{font-family:var(--fs-body);font-weight:400;font-size:12px;color:var(--ink3)}
-.bar{height:7px;border-radius:4px;background:#101A1F;overflow:hidden}
-.bar>i{display:block;height:100%;background:var(--c);border-radius:4px;transition:width .5s ease}
+.bar{height:7px;border-radius:4px;background:#E7EBE8;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--c);border-radius:4px;transition:width .5s linear}
 .bar.efs>i{background:var(--efs)}
-
-.rail-foot{
-  display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:12px;padding-top:11px;
-  border-top:1px solid var(--line-soft);font-size:13px;color:var(--ink2)
+@media(prefers-reduced-motion:no-preference){
+  .bar.coule>i{background-image:repeating-linear-gradient(115deg,
+    rgba(255,255,255,.30) 0 8px, rgba(255,255,255,0) 8px 22px);
+    background-size:200% 100%;animation:courant 1.5s linear infinite}
+  @keyframes courant{from{background-position:0 0}to{background-position:-44px 0}}
+  .jauge.coule .fill::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;
+    background:rgba(255,255,255,.55);animation:clapot 1.9s ease-in-out infinite}
+  @keyframes clapot{0%,100%{opacity:.3}50%{opacity:.85}}
 }
+.estime{border-bottom:1px dotted var(--ink3)}
+
+.rail-foot{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:12px;padding-top:11px;
+  border-top:1px solid var(--line-soft);font-size:13px;color:var(--ink2)}
 .rail-foot b{color:var(--ink);font-family:var(--fs-cond);font-weight:600}
 .file-list{display:flex;gap:5px;flex-wrap:wrap}
-.file-list span{
-  font-family:var(--fs-mono);font-size:11px;padding:1px 6px;border-radius:4px;
-  background:var(--panel2);color:var(--ink2)
-}
+.file-list span{font-family:var(--fs-mono);font-size:11px;padding:1px 6px;border-radius:4px;
+  background:var(--panel2);color:var(--ink2)}
 
-/* colonne vertébrale : les organes que les deux trains se partagent */
-.spine{position:relative;margin:0;padding:14px 16px;background:
-  linear-gradient(180deg,#111C22,#16232A);border:1px dashed var(--line);
-  border-top:none;border-bottom:none}
-.spine-lbl{
-  font-family:var(--fs-cond);font-weight:600;font-size:11px;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--ink3);margin-bottom:11px
-}
+.spine{position:relative;margin:0;padding:14px 16px;background:var(--panel3);
+  border:1px dashed var(--line);border-top:none;border-bottom:none}
+.spine-lbl{font-family:var(--fs-cond);font-weight:600;font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink3);margin-bottom:11px}
 .tie{position:absolute;left:50%;transform:translateX(-50%);width:2px;height:14px;background:var(--line)}
 .tie.up{top:-14px} .tie.down{bottom:-14px}
-.tie.live{background:var(--tc);box-shadow:0 0 7px var(--tc)}
-.organs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
-.organ{background:#0F181D;border:1px solid var(--line-soft);border-radius:8px;padding:10px 12px}
+.tie.live{background:var(--tc)}
+.organs{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px}
+.organ{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
 .organ .k{font-family:var(--fs-cond);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
 .organ .v{font-family:var(--fs-cond);font-weight:600;font-size:24px;line-height:1.15;margin-top:2px}
 .organ .v small{font-family:var(--fs-body);font-weight:400;font-size:12px;color:var(--ink3);letter-spacing:0}
@@ -164,23 +157,21 @@ header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#10
 .organ.ko .v{color:var(--ink3)}
 
 /* ── satellites ───────────────────────────────────────────────────────── */
-.sats{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:12px}
-.sat{
-  background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-  border-top:2px solid var(--c);padding:13px 14px;display:flex;gap:13px
-}
+.sats{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.sat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  border-top:2px solid var(--c);padding:13px 14px;display:flex;gap:13px}
 .sat.a{--c:var(--cuivre)} .sat.b{--c:var(--verdigris)}
-.sat.ko{opacity:.55}
-.sat.actif{border-color:var(--c);box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent)}
-.jauge{position:relative;width:34px;flex:none;height:132px;border-radius:5px;
-  background:#0C1418;border:1px solid var(--line);overflow:hidden}
+.sat.ko{background:var(--panel2)}
+.sat.actif{border-color:var(--c);box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 35%,transparent)}
+.jauge{position:relative;width:34px;flex:none;height:150px;border-radius:5px;
+  background:#EDF0EE;border:1px solid var(--line);overflow:hidden}
 .jauge .fill{position:absolute;left:0;right:0;bottom:0;background:
-  linear-gradient(180deg,color-mix(in srgb,var(--ecs) 55%,transparent),color-mix(in srgb,var(--ecs) 22%,transparent));
+  linear-gradient(180deg,color-mix(in srgb,var(--ecs) 72%,white),color-mix(in srgb,var(--ecs) 34%,white));
   transition:height .5s ease}
 .jauge .blind{position:absolute;left:0;right:0;background-image:repeating-linear-gradient(
-  -45deg,rgba(143,163,172,.13) 0 2px,transparent 2px 6px);pointer-events:none}
-.jauge .tick{position:absolute;left:0;right:0;height:1px;background:rgba(228,237,241,.3)}
-.jauge .tick.on{background:var(--efs);box-shadow:0 0 4px rgba(79,163,217,.7)}
+  -45deg,rgba(91,106,102,.16) 0 2px,transparent 2px 6px);pointer-events:none}
+.jauge .tick{position:absolute;left:0;right:0;height:1px;background:rgba(21,32,30,.22)}
+.jauge .tick.on{background:var(--efs);box-shadow:0 0 3px rgba(27,108,166,.6)}
 .jauge .cible{position:absolute;left:0;right:0;height:1px;background:var(--warn)}
 .sat-body{flex:1;min-width:0}
 .sat-id{font-family:var(--fs-cond);font-weight:700;font-size:16px;letter-spacing:.04em}
@@ -190,68 +181,105 @@ header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#10
 .chip{font-family:var(--fs-cond);font-size:10.5px;font-weight:600;letter-spacing:.07em;
   text-transform:uppercase;padding:1px 6px;border-radius:4px;background:var(--panel2);color:var(--ink2)}
 .chip.mesure{color:var(--efs)} .chip.etal{color:var(--ok)} .chip.inconnu{color:var(--warn)}
-.chip.bad{background:rgba(226,86,74,.14);color:var(--alert)}
-.chip.open{background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c)}
+.chip.bad{background:#FBE7E4;color:var(--alert)}
+.chip.open{background:color-mix(in srgb,var(--c) 14%,white);color:var(--c)}
 .capteurs{display:flex;gap:11px;margin-top:9px}
 .cap{display:flex;align-items:center;gap:4px;font-family:var(--fs-mono);font-size:10.5px;color:var(--ink3)}
-.cap i{width:8px;height:8px;border-radius:50%;background:#213038;border:1px solid var(--line);display:block}
+.cap i{width:8px;height:8px;border-radius:50%;background:#E2E6E3;border:1px solid var(--line);display:block}
 .cap.wet i{background:var(--efs);border-color:var(--efs)}
 .cap.susp i{background:var(--alert);border-color:var(--alert)}
 .sat-foot{margin-top:9px;padding-top:8px;border-top:1px solid var(--line-soft);
   font-family:var(--fs-mono);font-size:11px;color:var(--ink3);display:flex;flex-wrap:wrap;gap:3px 12px}
 
-/* ── grille basse ─────────────────────────────────────────────────────── */
-.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:12px}
+/* ── grille de statistiques (le mécanisme central du tableau cible) ───── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(136px,1fr));gap:9px}
+.stat{background:var(--panel3);border:1px solid var(--line-soft);border-radius:7px;padding:8px 10px;min-width:0}
+.stat .k{font-family:var(--fs-cond);font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink3);line-height:1.25}
+.stat .v{font-family:var(--fs-cond);font-weight:600;font-size:19px;line-height:1.2;margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat .v small{font-family:var(--fs-body);font-weight:400;font-size:11px;color:var(--ink3)}
+.stat.attente{border-style:dashed;background:transparent}
+.stat.attente .v{color:var(--ink3);font-weight:500;font-size:17px}
+.sous-titre{font-family:var(--fs-cond);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);margin:14px 0 7px}
+.sous-titre:first-child{margin-top:0}
+
+/* bilan d'eau : livrée / tirée / écart */
+.bilan{margin-top:9px;padding-top:8px;border-top:1px solid var(--line-soft);
+  display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.bilan .c{min-width:0}
+.bilan .k{font-family:var(--fs-cond);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);white-space:nowrap}
+.bilan .v{font-family:var(--fs-cond);font-weight:600;font-size:15px;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bilan .v small{font-family:var(--fs-body);font-weight:400;font-size:10px;color:var(--ink3)}
+.bilan .v.vide{color:var(--ink3);font-weight:500}
+.bilan .c.ecart .v{color:var(--ink2)}
+.bilan-note{grid-column:1/-1;font-size:11px;color:var(--ink3);margin-top:1px}
+
+/* ── cartes ───────────────────────────────────────────────────────────── */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:12px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
-.card h3{font-family:var(--fs-cond);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin-bottom:12px}
+.card h3{font-family:var(--fs-cond);font-size:13px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink2);margin-bottom:12px;display:flex;align-items:baseline;gap:8px}
+.card h3 em{font-style:normal;font-size:11px;letter-spacing:0;text-transform:none;color:var(--ink3)}
 .kv{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:13.5px;border-bottom:1px solid var(--line-soft)}
 .kv:last-child{border-bottom:none}
 .kv span{color:var(--ink2)}
-.kv b{font-family:var(--fs-cond);font-weight:600;font-size:15px}
+.kv b{font-family:var(--fs-cond);font-weight:600;font-size:15px;white-space:nowrap}
 .kv b.ko{color:var(--ink3);font-weight:500}
 
-/* réserve 300 L */
+/* historique des étapes */
+.histo{max-height:280px;overflow-y:auto}
+.histo-l{display:flex;align-items:baseline;gap:9px;padding:5px 0;border-bottom:1px solid var(--line-soft);font-size:13px}
+.histo-l:last-child{border-bottom:none}
+.histo-l .c{font-family:var(--fs-cond);font-weight:700;font-size:11px;width:14px;flex:none}
+.histo-l .c.a{color:var(--cuivre)} .histo-l .c.b{color:var(--verdigris)}
+.histo-l .e{font-family:var(--fs-cond);font-weight:600}
+.histo-l .s{color:var(--ink3);font-family:var(--fs-mono);font-size:11px}
+.histo-l .d{margin-left:auto;font-family:var(--fs-mono);font-size:11px;color:var(--ink2);white-space:nowrap}
+.vide-msg{font-size:13px;color:var(--ink3)}
+
+/* réserve */
 .res{display:flex;gap:14px;align-items:stretch}
-.res-tube{width:44px;flex:none;border:1px solid var(--line);border-radius:6px;background:#0C1418;position:relative;min-height:126px}
-.res-tube .eau{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,rgba(79,163,217,.5),rgba(79,163,217,.18));transition:height .5s}
+.res-tube{width:44px;flex:none;border:1px solid var(--line);border-radius:6px;background:#EDF0EE;position:relative;min-height:126px}
+.res-tube .eau{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,
+  color-mix(in srgb,var(--efs) 46%,white),color-mix(in srgb,var(--efs) 22%,white));transition:height .5s}
 .res-tube .air{position:absolute;left:0;right:0;top:0;height:24px;display:flex;align-items:center;
   justify-content:center;font-family:var(--fs-cond);font-size:10px;letter-spacing:.1em;color:var(--ink3)}
 .res-floats{flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:6px}
 .flt{display:flex;align-items:center;gap:9px;font-size:13px}
 .flt i{width:11px;height:11px;border-radius:50%;flex:none;border:2px solid}
-.flt.j i{border-color:#D9B441} .flt.n i{border-color:#7C8D96} .flt.r i{border-color:#C4574C}
-.flt.wet i{background:currentColor}
-.flt.j.wet i{background:#D9B441} .flt.n.wet i{background:#7C8D96} .flt.r.wet i{background:#C4574C}
+.flt.j i{border-color:#B8930E} .flt.n i{border-color:#6C7B77} .flt.r i{border-color:#B7453A}
+.flt.j.wet i{background:#B8930E} .flt.n.wet i{background:#6C7B77} .flt.r.wet i{background:#B7453A}
 .flt span{color:var(--ink2)} .flt b{margin-left:auto;font-family:var(--fs-mono);font-size:11px;color:var(--ink3)}
 
 /* ── réglages ─────────────────────────────────────────────────────────── */
 details.cfg{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-details.cfg>summary{
-  cursor:pointer;padding:14px 16px;font-family:var(--fs-cond);font-weight:600;font-size:14px;
+details.cfg>summary{cursor:pointer;padding:14px 16px;font-family:var(--fs-cond);font-weight:600;font-size:14px;
   letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);list-style:none;
-  display:flex;align-items:center;gap:10px
-}
+  display:flex;align-items:center;gap:10px}
 details.cfg>summary::-webkit-details-marker{display:none}
 details.cfg>summary::before{content:"+";font-size:17px;color:var(--ink3);width:14px}
 details.cfg[open]>summary::before{content:"–"}
 .cfg-body{padding:0 16px 16px;border-top:1px solid var(--line-soft)}
 .note{font-size:13px;color:var(--ink2);margin:12px 0 16px;padding:10px 12px;
-  background:#101A1F;border-left:2px solid var(--efs);border-radius:0 6px 6px 0}
+  background:var(--panel3);border-left:2px solid var(--efs);border-radius:0 6px 6px 0}
 .note code{font-family:var(--fs-mono);font-size:12px;color:var(--ink)}
-.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px 14px}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:10px 14px}
 .f label{display:block;font-size:12px;color:var(--ink2);margin-bottom:3px}
 .f label em{font-style:normal;color:var(--ink3);font-family:var(--fs-mono);font-size:11px}
-.f input,.f select{
-  width:100%;padding:7px 9px;border-radius:6px;background:#0C1418;color:var(--ink);
-  border:1px solid var(--line);font-family:var(--fs-mono);font-size:13px
-}
+.f input,.f select{width:100%;padding:7px 9px;border-radius:6px;background:var(--panel);color:var(--ink);
+  border:1px solid var(--line);font-family:var(--fs-mono);font-size:13px}
 .f input::placeholder{color:var(--ink3)}
 .f input.bad{border-color:var(--alert)}
 table.sattab{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}
 table.sattab th{font-family:var(--fs-cond);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
   color:var(--ink3);text-align:left;padding:6px 6px 6px 0;font-weight:600}
 table.sattab td{padding:3px 6px 3px 0;border-top:1px solid var(--line-soft)}
-table.sattab input{width:100%;min-width:62px;padding:5px 7px;border-radius:5px;background:#0C1418;
+table.sattab input{width:100%;min-width:62px;padding:5px 7px;border-radius:5px;background:var(--panel);
   color:var(--ink);border:1px solid var(--line);font-family:var(--fs-mono);font-size:12.5px}
 table.sattab input.bad{border-color:var(--alert)}
 .tabwrap{overflow-x:auto}
@@ -259,18 +287,27 @@ table.sattab input.bad{border-color:var(--alert)}
 .btn{padding:9px 16px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);
   color:var(--ink);font-family:var(--fs-cond);font-weight:600;font-size:13.5px;letter-spacing:.05em;cursor:pointer}
 .btn:hover{border-color:var(--ink3)}
-.btn.primary{background:var(--efs);border-color:var(--efs);color:#08121A}
+.btn.primary{background:var(--efs);border-color:var(--efs);color:#fff}
 .btn.primary:hover{filter:brightness(1.08)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 #cfgOut{font-family:var(--fs-mono);font-size:12px;color:var(--ink2);white-space:pre-wrap;
-  margin-top:12px;padding:11px 12px;background:#0C1418;border:1px solid var(--line);border-radius:7px;display:none}
+  margin-top:12px;padding:11px 12px;background:var(--panel3);border:1px solid var(--line);border-radius:7px;display:none}
 #cfgOut.show{display:block}
 #cfgOut.err{border-color:var(--alert);color:var(--alert)}
 #cfgOut.ok{border-color:var(--ok);color:var(--ok)}
 
-footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-soft);
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
   font-size:12px;color:var(--ink3);display:flex;flex-wrap:wrap;gap:6px 18px}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* mode présentation (?show=1) */
+body.presentation .eyebrow.reglages,
+body.presentation details.cfg,
+body.presentation .section-diag,
+body.presentation footer{display:none}
+body.presentation .wrap{max-width:1380px}
+body.presentation .sat-vol{font-size:36px}
+body.presentation .organ .v{font-size:29px}
+body.presentation .brand{font-size:27px}
 </style>
 </head>
 <body>
@@ -281,7 +318,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-soft);
     <div class="live"><i class="dot" id="liveDot"></i><span id="liveTxt">connexion…</span></div>
     <div class="meta">
       <div><b id="mDev">—</b></div>
-      <div>seq <b id="mSeq">—</b></div>
+      <div>envoi n° <b id="mSeq">—</b></div>
       <div>en service <b id="mUp">—</b></div>
       <div>dernier envoi <b id="mAge">—</b></div>
       <div>wifi <b id="mRssi">—</b></div>
@@ -292,9 +329,9 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-soft);
 
 <main class="wrap">
 
+  <div id="fige"></div>
   <div id="alertes" aria-live="polite"></div>
 
-  <!-- ═══ LE PUPITRE ═══════════════════════════════════════════════════ -->
   <h2 class="eyebrow">Les deux trains</h2>
   <section class="pupitre" id="pupitre">
     <article class="rail a" id="railA"></article>
@@ -307,33 +344,72 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-soft);
     <article class="rail b" id="railB"></article>
   </section>
 
-  <!-- ═══ SATELLITES ═══════════════════════════════════════════════════ -->
   <h2 class="eyebrow">Satellites</h2>
   <section class="sats" id="sats"></section>
 
-  <!-- ═══ CHAUFFERIE ═══════════════════════════════════════════════════ -->
+  <h2 class="eyebrow">Rendement et énergie</h2>
+  <section class="grid2">
+    <div class="card">
+      <h3>Rendement global <em>— η, et le détail des pertes</em></h3>
+      <div class="stats" id="statRendement"></div>
+    </div>
+    <div class="card">
+      <h3>Énergie par poste</h3>
+      <div class="stats" id="statEnergie"></div>
+    </div>
+  </section>
+
+  <h2 class="eyebrow">Réserve 300 L</h2>
+  <section class="grid2">
+    <div class="card">
+      <h3>Niveau <em>— trois flotteurs</em></h3>
+      <div class="res">
+        <div class="res-tube"><div class="air">air</div><div class="eau" id="resEau" style="height:0%"></div></div>
+        <div class="res-floats" id="resFloats"></div>
+      </div>
+      <div class="kv" style="margin-top:12px"><span>Fourchette déduite</span><b id="resBand">—</b></div>
+    </div>
+    <div class="card">
+      <h3>Compteurs de remplissage</h3>
+      <div class="stats" id="statReserve"></div>
+    </div>
+  </section>
+
   <h2 class="eyebrow">Chaufferie</h2>
   <section class="grid3">
     <div class="card">
-      <h3>Réserve 300 L</h3>
-      <div class="res">
-        <div class="res-tube"><div class="air">air</div><div class="eau" id="resEau" style="height:60%"></div></div>
-        <div class="res-floats" id="resFloats"></div>
-      </div>
-      <div class="kv" style="margin-top:12px"><span>Niveau estimé</span><b id="resBand">—</b></div>
-    </div>
-    <div class="card">
-      <h3>Compteurs d'eau</h3>
+      <h3>Volumes cumulés</h3>
       <div id="eauBox"></div>
     </div>
     <div class="card">
-      <h3>Mesures <em style="font-style:normal;color:var(--ink3);font-size:11px">— relevées au repos</em></h3>
+      <h3>Températures aux points clés</h3>
+      <div id="tempBox"></div>
+    </div>
+    <div class="card">
+      <h3>Mesures <em>— relevées au repos</em></h3>
       <div id="mesuresBox"></div>
     </div>
   </section>
 
-  <!-- ═══ RÉGLAGES ═════════════════════════════════════════════════════ -->
-  <h2 class="eyebrow">Réglages</h2>
+  <h2 class="eyebrow">Historique des étapes</h2>
+  <section class="card">
+    <h3>Étapes durables <em id="histoSeuil"></em></h3>
+    <div class="histo" id="histoBox"></div>
+  </section>
+
+  <h2 class="eyebrow section-diag">Santé de l'automate et réglages appliqués</h2>
+  <section class="grid2 section-diag">
+    <div class="card">
+      <h3>Santé <em>— mémoire, liaison, envois</em></h3>
+      <div class="stats" id="statDiag"></div>
+    </div>
+    <div class="card">
+      <h3>Configuration réellement appliquée <em>— écho de l'automate</em></h3>
+      <div id="cfgActiveBox"></div>
+    </div>
+  </section>
+
+  <h2 class="eyebrow reglages">Réglages</h2>
   <details class="cfg">
     <summary>Modifier la configuration de l'automate</summary>
     <div class="cfg-body">
@@ -343,9 +419,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-soft);
         automatiquement — sans quoi l'automate ignorerait le bloc entier.
         Les bornes ci-dessous sont celles codées en dur dans le firmware.
       </p>
-
       <div class="fields" id="cfgFields"></div>
-
       <h3 style="font-family:var(--fs-cond);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin:22px 0 4px">
         Satellites · capacité, tuyau, repères capteurs
       </h3>
@@ -353,12 +427,10 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-soft);
         L'automate rejette un satellite entier si l'ordre bas &lt; milieu &lt; haut &lt; X n'est pas respecté.
       </p>
       <div class="tabwrap"><table class="sattab" id="cfgSats"></table></div>
-
       <div class="f" style="margin-top:20px;max-width:360px">
-        <label for="cfgKey">Clé d'accès <em>— facultative tant que CONFIG_API_KEY n'est pas définie dans Azure ; gardée en mémoire seulement</em></label>
+        <label for="cfgKey">Clé d'accès <em>— celle définie dans CONFIG_API_KEY côté Azure ; gardée en mémoire seulement</em></label>
         <input id="cfgKey" type="password" autocomplete="off" placeholder="votre CONFIG_API_KEY">
       </div>
-
       <div class="actions">
         <button class="btn primary" id="btnSend">Envoyer à l'automate</button>
         <button class="btn" id="btnCopy">Copier le JSON</button>
@@ -370,11 +442,10 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-soft);
 
   <footer>
     <div>enovaQ · HWQ Concept</div>
-    <div>contrat JSON v3 — deux circuits</div>
+    <div>pupitre v4 — 17/08/2026</div>
     <div id="footMode"></div>
   </footer>
 </main>
-
 <script>
 "use strict";
 /* ══════════════════════════════════════════════════════════════════════════
@@ -382,26 +453,103 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-soft);
    ══════════════════════════════════════════════════════════════════════════ */
 const API = {
   telemetry: '/api/data',     // GET  → { devices: { "<id>": {payload} }, configs: {} }
-  config:    '/api/config',   // POST → config servie en réponse au prochain POST automate
+  config:    '/api/config',   // POST → config servie à l'automate à son prochain envoi
 };
-const DEVICE     = 'chaufferie-01';   // laisser vide pour prendre le premier appareil trouvé
-const PERIODE_MS = 3000;      // rafraîchissement de la page
-const PERIODE_AGE_MS = 1000;  // le compteur d'âge, lui, avance chaque seconde
-const PERIME_MS  = 90000;     // au-delà, le payload est considéré périmé
+const DEVICE     = 'chaufferie-01';
+const PERIODE_MS = 3000;      // cadence de tirage de la page
+const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
+const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
+const FIGE_MS    = 60000;     // seq inchangé plus longtemps que ça = données figées
+
+/* Filtrage de l'historique des étapes (§6.4). Seuil PROPOSÉ, à valider avec
+   le client : une étape plus courte que cela n'apparaît pas dans la liste. */
+const SEUIL_ETAPE_S = 6;
 
 const DEMO = new URLSearchParams(location.search).has('demo');
+const SHOW = new URLSearchParams(location.search).has('show');
 
 /* ══════════════════════════════════════════════════════════════════════════
-   2. Outils
+   2. LE REGISTRE DES INDICATEURS — le cœur du tableau de bord cible.
+
+   RÈGLE (décision client 17/08) : toutes les cases existent à l'écran dès
+   maintenant, même quand l'automate ne publie pas encore la donnée. Une case
+   sans donnée affiche « en attente », JAMAIS un zéro, JAMAIS une valeur
+   inventée.
+
+   Chaque case déclare le CHEMIN du champ dans le JSON de l'automate.
+   `champ: null` = le champ n'existe pas encore. Le jour où l'automate le
+   publie, il suffit de remplacer null par le chemin — UNE SEULE LIGNE, ici,
+   et la case s'anime toute seule. Rien d'autre à toucher.
+
+   dec  : nombre de décimales.  unite : suffixe affiché.
+   type : 'duree' formate des secondes en durée lisible.
+   ══════════════════════════════════════════════════════════════════════════ */
+const RENDEMENT = [
+  {k:'Rendement global η', champ:null, unite:'%',   dec:1,
+   aide:"Part de l'énergie consommée qui finit réellement dans les cuves."},
+  {k:'Somme des pertes',   champ:null, unite:'kWh', dec:1},
+  {k:'Consommation électrique', champ:'chaufferie.sdm120.energie_kwh', unite:'kWh', dec:1,
+   aide:"Compteur électrique de la pompe (SDM120)."},
+  {k:'Pertes thermiques',  champ:null, unite:'kWh', dec:1},
+];
+
+const ENERGIE = [
+  {k:'Pompe',       champ:null, unite:'kWh', dec:1, aide:"Poste dédié, à publier par l'automate."},
+  {k:'Production',  champ:'chaufferie.maddalena.energie_mwh', unite:'MWh', dec:3,
+   aide:"Compteur d'énergie thermique Maddalena, référence de production."},
+  {k:'Satellites',  champ:null, unite:'kWh', dec:1},
+  {k:'Puissance thermique', champ:'chaufferie.maddalena.puissance_w', unite:'W', dec:0},
+  {k:'Puissance électrique', champ:'chaufferie.sdm120.puissance_w', unite:'W', dec:0},
+  {k:'Depuis le dernier puisage', champ:null, type:'duree'},
+];
+
+const RESERVE_CPT = [
+  {k:'Remplissages, total',        champ:null, dec:0},
+  {k:'Remplissages forcés',        champ:null, dec:0, aide:"Déclenchés sous 50 °C."},
+  {k:'Reste avant le prochain',    champ:null, unite:'L', dec:1},
+  {k:'Depuis le dernier',          champ:null, type:'duree'},
+  {k:'Niveau minimum déduit',      champ:'chaufferie.reserve.vol_min', unite:'L', dec:0},
+  {k:'Niveau maximum déduit',      champ:'chaufferie.reserve.vol_max', unite:'L', dec:0},
+];
+
+const DIAG = [
+  {k:'Mémoire libre',       champ:'diag.tas_libre',        unite:'o', dec:0},
+  {k:'Mémoire, plus bas',   champ:'diag.tas_mini',         unite:'o', dec:0},
+  {k:'Pile de la tâche cloud', champ:'diag.pile_cloud_libre', unite:'o', dec:0,
+   aide:"Marge restante sur la pile de la tâche qui envoie vers le cloud."},
+  {k:'Durée du dernier envoi', champ:'diag.post_ms',       unite:'ms', dec:0},
+  {k:'Durée maximale',      champ:'diag.post_ms_max',      unite:'ms', dec:0},
+  {k:'Envois réussis',      champ:'diag.envois',           dec:0},
+  {k:'Envois échoués',      champ:'diag.echecs',           dec:0},
+  {k:'Pompe en marche depuis', champ:'chaufferie.pompe_marche_s', type:'duree'},
+];
+
+/* Cases par satellite, à l'intérieur de chaque carte. Mêmes règles. */
+const SAT_STATS = [
+  {k:'Coût',            champ:null, unite:'€',    dec:2, aide:"CDC A.3 / A.4."},
+  {k:'Énergie',         champ:null, unite:'kWh',  dec:1},
+  {k:'Pertes de stockage', champ:null, unite:'W', dec:0, aide:"CDC A.5."},
+  {k:'Refroidissement', champ:null, unite:'°C/h', dec:2, aide:"CDC A.5."},
+  {k:'Actionnements de vanne', champ:null, dec:0, aide:"CDC A.6."},
+];
+
+/* Cases par circuit, sous la barre de progression du rail. */
+const CIRCUIT_STATS = [
+  {k:'Débit instantané', champA:null, champB:null, unite:'L/min', dec:1,
+   aide:"À publier par l'automate (CDC B.5.1)."},
+  {k:'Actionnements vanne de retour', champA:null, champB:null, dec:0, aide:"CDC A.6."},
+];
+
+/* ══════════════════════════════════════════════════════════════════════════
+   3. Outils
    ══════════════════════════════════════════════════════════════════════════ */
 const $ = s => document.querySelector(s);
 const el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
 const has = v => v !== undefined && v !== null;
-/** nombre à la française : 38,4 */
 const n = (v, d = 1) => has(v) && isFinite(v) ? Number(v).toLocaleString('fr-FR', {minimumFractionDigits: d, maximumFractionDigits: d}) : '—';
 const i0 = v => has(v) && isFinite(v) ? Math.round(v).toLocaleString('fr-FR') : '—';
 const duree = s => {
-  if (!has(s)) return '—';
+  if (!has(s) || !isFinite(s)) return '—';
   s = Math.floor(s);
   const j = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
   if (j) return j + ' j ' + h + ' h';
@@ -410,47 +558,116 @@ const duree = s => {
   return s + ' s';
 };
 const pct = (a, b) => (!b || !isFinite(b) || !isFinite(a)) ? 0 : Math.max(0, Math.min(100, a / b * 100));
-/** Une PT100 en circuit ouvert renvoie une valeur très négative qui passe le filtre
- *  du firmware (-200 à +550 °C). Hors de cette plage-ci, la sonde n'est pas là. */
+/** Une PT100 débranchée renvoie une valeur qui passe le filtre du firmware. */
 const tempValide = v => has(v) && isFinite(v) && v > -20 && v < 150;
 
-/* Ordre RÉEL du process (≠ ordre de l'énumération) */
+/** Lit un champ par son chemin ('chaufferie.reserve.vol_min').
+    Renvoie undefined dès qu'un maillon manque — jamais d'erreur, jamais de zéro. */
+function lire(racine, chemin) {
+  if (!racine || !chemin) return undefined;
+  let v = racine;
+  for (const p of chemin.split('.')) {
+    if (v === null || typeof v !== 'object' || !(p in v)) return undefined;
+    v = v[p];
+  }
+  return v;
+}
+
+/* Ordre RÉEL du process (≠ ordre de l'énumération du firmware) */
 const ORDRE  = [0, 9, 1, 2, 3, 10, 4, 5, 6, 7, 8];
 const LIBEL  = {0:'repos', 9:'départ VR', 1:'amorçage', 2:'ouverture', 3:'remplissage',
                 10:'attente EFS', 4:'bascule EFS', 5:'bouchon', 6:'fermeture',
                 7:'récup', 8:'retour'};
-const EFS_ETAPES = [4, 5, 7];            // le tuyau est en EFS
-const POMPE_ETAPES = [1, 3, 5, 7];       // le circuit demande la pompe
+const EFS_ETAPES = [4, 5, 7];
+const POMPE_ETAPES = [1, 3, 5, 7];
 const codeEtape = s => { const m = /^E(\d+)/.exec(s || ''); return m ? +m[1] : 0; };
 
 /* ══════════════════════════════════════════════════════════════════════════
-   3. État
+   4. État
    ══════════════════════════════════════════════════════════════════════════ */
 const state = {
-  data: null,          // dernier payload valide
-  recuAt: 0,           // horodatage local de la requête
-  emisAt: 0,           // horodatage serveur du dernier envoi automate (_received_at)
-  sig: null,           // signature du payload : évite de reconstruire le DOM pour rien
-  periodeObs: 0,       // cadence d'envoi réellement observée, en secondes
-  erreur: null,
-  mesures: {vfd: null, sdm: null, madd: null, at: 0},  // conservées entre les trains
+  data: null, recuAt: 0, emisAt: 0, sig: null, periodeObs: 0, erreur: null,
+  mesures: {vfd: null, sdm: null, madd: null, at: 0},
+  interp: [null, null],
+  resJamaisSec: true,
+  seqVu: -1, seqMax: -1, seqDepuis: 0, seqRecule: false,
+  histo: [],            // étapes achevées, depuis l'ouverture de la page
+  etapeEnCours: [null, null],
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
-   4. Rendu — bandeau
+   5. La case de statistique — jamais de zéro pour une donnée absente
    ══════════════════════════════════════════════════════════════════════════ */
-/** Ce bloc seul avance toutes les secondes : l'âge du dernier envoi. */
+function statCase(spec, racine) {
+  const v = lire(racine, spec.champ);
+  const absent = !has(v) || (typeof v === 'number' && !isFinite(v));
+  const box = el('div', 'stat' + (absent ? ' attente' : ''));
+  box.appendChild(el('div', 'k', spec.k));
+  const val = el('div', 'v');
+  if (absent) {
+    val.appendChild(document.createTextNode('en attente'));
+    box.title = spec.champ
+      ? "Champ « " + spec.champ + " » pas encore reçu de l'automate."
+      : "Cette mesure n'est pas encore publiée par l'automate."
+        + (spec.aide ? ' ' + spec.aide : '');
+  } else if (spec.type === 'duree') {
+    val.appendChild(document.createTextNode(duree(v)));
+    if (spec.aide) box.title = spec.aide;
+  } else {
+    val.appendChild(document.createTextNode(n(v, has(spec.dec) ? spec.dec : 1)));
+    if (spec.unite) val.appendChild(el('small', null, ' ' + spec.unite));
+    if (spec.aide) box.title = spec.aide;
+  }
+  box.appendChild(val);
+  return box;
+}
+
+function remplirStats(selecteur, specs, racine) {
+  const box = $(selecteur); box.textContent = '';
+  specs.forEach(s => box.appendChild(statCase(s, racine)));
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   6. Bandeau, fraîcheur, et le défaut serveur connu
+
+   La fonction Azure garde le dernier JSON en mémoire volatile, en plusieurs
+   copies non synchronisées : une lecture peut renvoyer un instantané périmé,
+   voire plus ancien que le précédent. On surveille donc seq — le numéro
+   d'envoi de l'automate — et on le dit à l'écran plutôt que de laisser
+   croire à une donnée fraîche.
+   ══════════════════════════════════════════════════════════════════════════ */
 function rendreFraicheur() {
   const d = state.data;
   const age = Date.now() - (state.emisAt || state.recuAt);
   const dot = $('#liveDot'), txt = $('#liveTxt');
   dot.className = 'dot';
-  if (state.erreur)            { dot.classList.add('off');   txt.textContent = state.erreur; }
-  else if (!d)                 { dot.classList.add('off');   txt.textContent = 'aucune donnée'; }
-  else if (age > PERIME_MS)    { dot.classList.add('stale'); txt.textContent = 'dernier envoi il y a ' + duree(age / 1000); }
-  else                         { dot.classList.add('on');    txt.textContent = 'en ligne'; }
+  if (state.erreur)         { dot.classList.add('off');   txt.textContent = state.erreur; }
+  else if (!d)              { dot.classList.add('off');   txt.textContent = 'aucune donnée'; }
+  else if (age > PERIME_MS) { dot.classList.add('stale'); txt.textContent = 'dernier envoi il y a ' + duree(age / 1000); }
+  else                      { dot.classList.add('on');    txt.textContent = 'en ligne'; }
   $('#mAge').textContent = !d ? '—'
     : duree(Math.max(0, age) / 1000) + (state.periodeObs ? ' · toutes les ~' + Math.round(state.periodeObs) + ' s' : '');
+
+  const fige = $('#fige');
+  fige.textContent = '';
+  const bloque = d && state.seqDepuis && (Date.now() - state.seqDepuis > FIGE_MS);
+  if (state.seqRecule) {
+    fige.className = 'on';
+    fige.appendChild(el('b', null, 'Instantané périmé. '));
+    fige.appendChild(document.createTextNode(
+      "Le serveur vient de renvoyer un envoi plus ancien que le précédent (n° " + i0(d.seq)
+      + " après n° " + i0(state.seqMax) + "). C'est le défaut connu du stockage en mémoire : "
+      + "les valeurs affichées peuvent dater. Rechargez dans quelques secondes."));
+  } else if (bloque) {
+    fige.className = 'on';
+    fige.appendChild(el('b', null, 'Données figées. '));
+    fige.appendChild(document.createTextNode(
+      "Le numéro d'envoi n'a pas bougé depuis " + duree((Date.now() - state.seqDepuis) / 1000)
+      + ". Soit l'automate n'envoie plus, soit le serveur ressert un ancien instantané. "
+      + "Rien de ce qui est affiché ci-dessous n'est à jour."));
+  } else {
+    fige.className = '';
+  }
 }
 
 function rendreBandeau(d) {
@@ -459,12 +676,13 @@ function rendreBandeau(d) {
   $('#mDev').textContent  = d.device_id || '—';
   $('#mSeq').textContent  = i0(d.seq);
   $('#mUp').textContent   = duree(d.uptime_s);
-  $('#mRssi').textContent = has(d.rssi_dbm) && d.rssi_dbm ? d.rssi_dbm + ' dBm' : 'hors ligne';
+  const r = d.rssi_dbm;
+  $('#mRssi').textContent = has(r) && r ? r + ' dBm' + (r < -85 ? ' (faible)' : '') : 'hors ligne';
   $('#mCfg').textContent  = 'v' + i0(d.cfg_version);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   5. Rendu — alertes
+   7. Alertes
    ══════════════════════════════════════════════════════════════════════════ */
 function ajouterAlerte(box, niveau, tag, texte, detail) {
   const a = el('div', 'alerte' + (niveau === 'warn' ? ' warn' : ''));
@@ -480,15 +698,34 @@ function rendreAlertes(d) {
   const ch = d.chaufferie || {};
   const rs = ch.reserve || {};
 
-  if (rs.appoint_requis)
-    ajouterAlerte(box, 'alert', 'réserve',
-      "Appoint d'air requis — le flotteur jaune est mouillé, il n'y a plus de matelas d'air.",
-      "Injecter au compresseur ou à l'azote jusqu'à ce que le flotteur rouge soit sec.");
+  /* Trois flotteurs mouillés en permanence depuis le démarrage de la page :
+     cas d'Épinal, capteur non câblé, donc fausse alerte. On la modère — et
+     elle repasse en rouge dès qu'un flotteur a été vu sec une seule fois. */
+  if (rs.appoint_requis) {
+    const suspect = state.resJamaisSec && rs.haut_mouille && rs.milieu_mouille && rs.bas_mouille;
+    if (suspect)
+      ajouterAlerte(box, 'warn', 'réserve',
+        "Appoint d'air signalé, mais les trois flotteurs sont mouillés en permanence depuis le démarrage.",
+        "Lecture douteuse : un capteur non câblé donne exactement cela. À vérifier avant toute injection.");
+    else
+      ajouterAlerte(box, 'alert', 'réserve',
+        "Appoint d'air requis — le flotteur jaune est mouillé, il n'y a plus de matelas d'air.",
+        "Injecter au compresseur ou à l'azote jusqu'à ce que le flotteur rouge soit sec.");
+  }
 
   if (ch.pompe_arret_non_confirme)
     ajouterAlerte(box, 'alert', 'pompe',
       "Le variateur n'a pas confirmé l'ordre d'arrêt.",
       "L'automate réessaie toutes les 0,5 s et maintient les sécurités armées.");
+
+  const prs = ch.pression || {};
+  if (prs.ok && prs.defaut)
+    ajouterAlerte(box, 'warn', 'pression',
+      "Capteur de pression en défaut — boucle 4-20 mA ouverte.",
+      "Vérifier le câblage du capteur en sortie de pompe.");
+  if (prs.ok && prs.sature)
+    ajouterAlerte(box, 'warn', 'pression',
+      "Capteur de pression saturé : la mesure est en butée haute de l'échelle.");
 
   (d.trains || []).forEach(t => {
     if (t.vr_alerte)
@@ -508,38 +745,36 @@ function rendreAlertes(d) {
       ajouterAlerte(box, 'warn', s.sat_id,
         "Capteur muet ou défectueux : " + muets.join(', ') + ".",
         "Le niveau a dépassé le repère sans que le capteur réagisse.");
-    else if (suspectCNH(s))
-      ajouterAlerte(box, 'warn', s.sat_id,
-        "Le CNH est sec alors que le volume dépasse son repère de plus de 2 L.",
-        "Déduit du niveau côté supervision — l'automate ne le signale pas encore dans son envoi.");
     if (df.quarantaine_s > 0)
       ajouterAlerte(box, 'warn', s.sat_id,
         "Mis de côté après " + df.abandons + " abandons consécutifs.",
         "Nouvel essai autorisé dans " + duree(df.quarantaine_s) + ". Vérifier vanne, fuite, capteurs.");
+    if (df.servable === false && !df.capteurs_fous && !(df.quarantaine_s > 0))
+      ajouterAlerte(box, 'warn', s.sat_id, "Déclaré non servable par l'automate.");
   }));
 
   if (ch.eau) {
     if (ch.eau.qa && ch.eau.qa.ok === false) ajouterAlerte(box, 'alert', 'compteur A', "Le compteur QA ne répond plus.");
     if (ch.eau.qb && ch.eau.qb.ok === false) ajouterAlerte(box, 'alert', 'compteur B', "Le compteur QB ne répond plus.");
   }
+
+  /* Un circuit à l'arrêt n'accumule des demandes que s'il a des satellites. */
   (d.trains || []).forEach(t => {
-    if (t.cycle_actif === false)
-      ajouterAlerte(box, 'warn', 'circuit ' + t.circuit, "Circuit " + t.circuit + " à l'arrêt — les demandes s'accumulent sans être servies.");
+    if (t.cycle_actif !== false) return;
+    const nb = t.circuit === 'B' ? d.nb_sats_b : d.nb_sats;
+    if (nb === 0) return;
+    ajouterAlerte(box, 'warn', 'circuit ' + t.circuit,
+      "Circuit " + t.circuit + " à l'arrêt — les demandes s'accumulent sans être servies.");
   });
 }
 
-/** Règle D24 rejouée côté navigateur, faute d'être dans le payload. */
-function suspectCNH(s) {
-  const et = s.etalonnage || {};
-  return s.ok && s.cnh === 0 && has(et.haut) && has(s.volume_l) && s.volume_l > et.haut + 2;
-}
-
 /* ══════════════════════════════════════════════════════════════════════════
-   6. Rendu — un rail
+   8. Un rail de circuit
    ══════════════════════════════════════════════════════════════════════════ */
-function rendreRail(node, t, lettre, bus) {
+function rendreRail(node, t, lettre, bus, d) {
   node.textContent = '';
-  if (!t) { node.appendChild(el('div', 'rail-id', 'CIRCUIT ' + lettre)); node.appendChild(el('p', null, 'Aucune donnée.')); return; }
+  if (!t) { node.appendChild(el('div', 'rail-id', 'CIRCUIT ' + lettre));
+            node.appendChild(el('p', 'vide-msg', 'Aucune donnée.')); return; }
   const code = codeEtape(t.etape);
 
   const head = el('div', 'rail-head');
@@ -570,32 +805,44 @@ function rendreRail(node, t, lettre, bus) {
   top.appendChild(el('div', 'progress-lbl', (t.etape || '—') + (t.sat_actif ? ' · ' + t.sat_actif : '')));
   const val = el('div', 'progress-val');
   if (has(t.cible) && t.cible > 0) {
-    val.appendChild(document.createTextNode(n(t.avancement, t.unite === 's' ? 0 : 1)));
+    const num = el('span', null, n(t.avancement, t.unite === 's' ? 0 : 1));
+    num.id = 'progNum-' + lettre;
+    val.appendChild(num);
     val.appendChild(el('small', null, ' / ' + n(t.cible, t.unite === 's' ? 0 : 1) + ' ' + (t.unite || '')));
   } else {
     val.appendChild(el('small', null, 'depuis ' + duree(t.depuis_s)));
   }
   top.appendChild(val); pr.appendChild(top);
   const bar = el('div', 'bar' + (EFS_ETAPES.includes(code) ? ' efs' : ''));
-  const fill = el('i'); fill.style.width = (has(t.cible) && t.cible > 0 ? pct(t.avancement, t.cible) : 0) + '%';
+  const fill = el('i');
+  fill.style.width = (has(t.cible) && t.cible > 0 ? pct(t.avancement, t.cible) : 0) + '%';
+  bar.id = 'progBar-' + lettre; fill.id = 'progFill-' + lettre;
   bar.appendChild(fill); pr.appendChild(bar); node.appendChild(pr);
 
   const ft = el('div', 'rail-foot');
-  const f1 = el('div'); f1.appendChild(document.createTextNode('front d\'ECS ')); f1.appendChild(el('b', null, n(t.front_l) + ' L'));
-  ft.appendChild(f1);
-  const f2 = el('div'); f2.appendChild(document.createTextNode('dans l\'étape depuis ')); f2.appendChild(el('b', null, duree(t.depuis_s)));
-  ft.appendChild(f2);
-  const f3 = el('div', null); f3.appendChild(document.createTextNode('file '));
+  const f1 = el('div'); f1.appendChild(document.createTextNode("front d'ECS "));
+  f1.appendChild(el('b', null, n(t.front_l) + ' L')); ft.appendChild(f1);
+  const f2 = el('div'); f2.appendChild(document.createTextNode("dans l'étape depuis "));
+  f2.appendChild(el('b', null, duree(t.depuis_s))); ft.appendChild(f2);
+  const f3 = el('div'); f3.style.display = 'flex'; f3.style.gap = '6px'; f3.style.alignItems = 'center';
+  f3.appendChild(document.createTextNode('file '));
   const fl = el('span', 'file-list');
   if ((t.file || []).length) t.file.forEach(id => fl.appendChild(el('span', null, id)));
   else fl.appendChild(el('span', null, 'vide'));
-  f3.appendChild(fl); f3.style.display = 'flex'; f3.style.gap = '6px'; f3.style.alignItems = 'center';
-  ft.appendChild(f3);
+  f3.appendChild(fl); ft.appendChild(f3);
   node.appendChild(ft);
+
+  /* cases par circuit (débit instantané, actionnements) — en attente */
+  const st = el('div', 'stats'); st.style.marginTop = '10px';
+  CIRCUIT_STATS.forEach(spec => {
+    st.appendChild(statCase({k: spec.k, unite: spec.unite, dec: spec.dec, type: spec.type,
+                             aide: spec.aide, champ: lettre === 'A' ? spec.champA : spec.champB}, d));
+  });
+  node.appendChild(st);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   7. Rendu — organes partagés
+   9. Organes partagés
    ══════════════════════════════════════════════════════════════════════════ */
 function organe(cls, k, v, unite, s) {
   const o = el('div', 'organ ' + cls);
@@ -613,27 +860,35 @@ function rendreOrganes(d) {
   const trains = (d && d.trains) || [];
 
   const pp = ch.pompe_pct || 0;
-  box.appendChild(organe('pump' + (pp > 0 ? ' run' : ' ko'), 'Pompe P1', pp > 0 ? pp : 'arrêt', pp > 0 ? '%' : '',
+  box.appendChild(organe('pump' + (pp > 0 ? ' run' : ' ko'), 'Pompe P1', pp > 0 ? pp : 'arrêt',
+    pp > 0 ? '%' : '',
     pp > 0 ? (pp >= 100 ? 'plein régime · 65 Hz' : 'régime réduit') : 'aucun circuit ne la demande'));
 
+  /* La V3 n'a QUE deux états : ECS ou EFS. Le ressort qui la ramène hors
+     tension n'est pas un troisième état (décision client 17/08). */
   const v3 = ch.v3 || '—';
-  box.appendChild(organe('v3 ' + v3.toLowerCase(), 'Vanne 3 voies', v3, '',
-    v3 === 'EFS' ? 'fenêtre EFS ouverte' : 'position de repos'));
+  box.appendChild(organe('v3 ' + String(v3).toLowerCase(), 'Vanne 3 voies', v3, '',
+    v3 === 'EFS' ? 'eau froide sanitaire — fenêtre ouverte'
+    : v3 === 'ECS' ? 'eau chaude sanitaire' : 'état non communiqué'));
 
   const pr = ch.pression || {};
-  const presLue = pr.ok && !pr.defaut && pr.brut > 0;
+  const presLue = pr.ok && !pr.defaut;
   box.appendChild(presLue
     ? organe(pr.sature ? 'ko' : '', 'Pression sortie', n(pr.bar), 'bar',
-             'brut ' + i0(pr.brut) + (pr.sature ? ' — capteur saturé' : ' — service ≈ 3,5 bar'))
+             'brut ' + i0(pr.brut) + (pr.sature ? ' — capteur saturé' : ''))
     : organe('ko', 'Pression sortie', '—', '',
-             pr.ok === false ? 'pas de réponse du ZLAN' : 'registre AI à identifier (commande p)'));
+             pr.ok === false ? 'pas de réponse du ZLAN' : 'boucle 4-20 mA ouverte'));
 
   box.appendChild(tempValide(ch.temp_pompe_c)
-    ? organe('', 'Température P4', n(ch.temp_pompe_c), '°C', 'sortie de pompe')
-    : organe('ko', 'Température P4', '—', '',
+    ? organe('', 'Sortie de pompe', n(ch.temp_pompe_c), '°C', 'sonde P4')
+    : organe('ko', 'Sortie de pompe', '—', '',
              has(ch.temp_pompe_c) ? 'valeur hors plage — sonde débranchée ?' : 'sonde muette'));
 
-  /* les attaches s'allument du côté du circuit qui tient la pompe */
+  box.appendChild(tempValide(ch.temp_retour_c)
+    ? organe('', 'Retour', n(ch.temp_retour_c), '°C', 'sonde V8, avant la cuve d\'air')
+    : organe('ko', 'Retour', '—', '',
+             has(ch.temp_retour_c) ? 'valeur hors plage' : 'sonde muette'));
+
   [['#tieA', 0, 'var(--cuivre)'], ['#tieB', 1, 'var(--verdigris)']].forEach(([sel, idx, col]) => {
     const t = trains[idx], tie = $(sel);
     const live = !!t && POMPE_ETAPES.includes(codeEtape(t.etape)) && pp > 0;
@@ -643,8 +898,51 @@ function rendreOrganes(d) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   8. Rendu — satellites
+   10. Satellites
    ══════════════════════════════════════════════════════════════════════════ */
+/** Règle D24 rejouée côté navigateur, faute d'être dans le payload. */
+function suspectCNH(s) {
+  const et = s.etalonnage || {};
+  return s.ok && s.cnh === 0 && has(et.haut) && has(s.volume_l) && s.volume_l > et.haut + 2;
+}
+
+/* Bilan d'eau (§4).
+   LIVRÉE = conso_totale_l, l'eau entrée dans la cuve (débitmètre du circuit).
+   TIRÉE  = tiree_l, l'eau sortie. Champ ABSENT tant que le compteur de sortie
+            n'est pas câblé et vu : la case affiche « — », jamais un zéro.
+   ÉCART  = livrée − tirée. Purement informatif, aucun seuil. N'a de sens que
+            si les deux compteurs partent d'un même point zéro (commande
+            « tiree raz » de l'automate au raccordement). */
+function caseBilan(cls, titre, valeur, infobulle) {
+  const c = el('div', 'c' + (cls ? ' ' + cls : ''));
+  c.appendChild(el('div', 'k', titre));
+  const v = el('div', 'v' + (valeur === null ? ' vide' : ''));
+  if (valeur === null) v.appendChild(document.createTextNode('—'));
+  else { v.appendChild(document.createTextNode(n(valeur))); v.appendChild(el('small', null, ' L')); }
+  if (infobulle) c.title = infobulle;
+  c.appendChild(v);
+  return c;
+}
+
+function bilanEau(s) {
+  const box = el('div', 'bilan');
+  const livree = has(s.conso_totale_l) ? s.conso_totale_l : null;
+  const tiree  = has(s.tiree_l) ? s.tiree_l : null;
+  const ecart  = (livree !== null && tiree !== null) ? livree - tiree : null;
+  box.appendChild(caseBilan('', 'Livrée', livree,
+    "Eau entrée dans la cuve depuis la mise en service, comptée par le débitmètre du circuit."));
+  box.appendChild(caseBilan('', 'Tirée', tiree,
+    tiree === null ? "Compteur de sortie pas encore câblé ou pas encore vu par l'automate."
+                   : "Eau sortie de la cuve, comptée par le compteur de sortie."));
+  box.appendChild(caseBilan('ecart', 'Écart', ecart,
+    ecart === null ? "Calculable dès que les deux compteurs sont disponibles."
+                   : "Livrée moins tirée. N'a de sens que si les deux compteurs partent du même point zéro."));
+  box.appendChild(el('div', 'bilan-note', tiree === null
+    ? "Compteur de sortie en attente de raccordement."
+    : "L'écart suppose un même point zéro pour les deux compteurs."));
+  return box;
+}
+
 function rendreSats(d) {
   const box = $('#sats'); box.textContent = '';
   const circuits = (d && d.circuits) || [];
@@ -657,85 +955,114 @@ function rendreSats(d) {
     const card = el('article', 'sat ' + lettre + (s.ok ? '' : ' ko') + (actifs.has(s.sat_id) ? ' actif' : ''));
 
     const X = s.X_l || 40, et = s.etalonnage || {};
+    const cible = has(s.cible_l) ? s.cible_l : X - 1;
     const j = el('div', 'jauge');
     if (has(et.haut)) {
       const blind = el('div', 'blind');
       blind.style.bottom = pct(et.haut, X) + '%';
-      blind.style.height = Math.max(0, pct(X - 1, X) - pct(et.haut, X)) + '%';
-      blind.title = 'Zone suivie au débitmètre seul — aucun repère capteur';
+      blind.style.height = Math.max(0, pct(cible, X) - pct(et.haut, X)) + '%';
+      blind.title = 'Zone suivie au débitmètre seul — aucun repère capteur au-dessus du CNH';
       j.appendChild(blind);
     }
-    const fill = el('div', 'fill'); fill.style.height = (s.ok ? pct(s.volume_l, X) : 0) + '%'; j.appendChild(fill);
+    const fill = el('div', 'fill');
+    fill.style.height = (s.ok ? pct(s.volume_l, X) : 0) + '%';
+    fill.id = 'satFill-' + s.sat_id; j.id = 'satJauge-' + s.sat_id;
+    j.appendChild(fill);
     [['bas', s.cnb], ['milieu', s.cnm], ['haut', s.cnh]].forEach(([k, on]) => {
       if (!has(et[k])) return;
-      const tk = el('div', 'tick' + (on ? ' on' : '')); tk.style.bottom = pct(et[k], X) + '%'; j.appendChild(tk);
+      const tk = el('div', 'tick' + (on ? ' on' : ''));
+      tk.style.bottom = pct(et[k], X) + '%'; j.appendChild(tk);
     });
-    const cb = el('div', 'cible'); cb.style.bottom = pct(X - 1, X) + '%';
-    cb.title = 'Cible de remplissage : ' + n(X - 1) + ' L'; j.appendChild(cb);
+    const cb = el('div', 'cible'); cb.style.bottom = pct(cible, X) + '%';
+    cb.title = 'Cible de remplissage : ' + n(cible) + ' L'; j.appendChild(cb);
     card.appendChild(j);
 
     const b = el('div', 'sat-body');
     b.appendChild(el('div', 'sat-id', s.sat_id));
     const v = el('div', 'sat-vol');
-    v.appendChild(document.createTextNode(s.ok ? n(s.volume_l) : '—'));
+    v.id = 'satVol-' + s.sat_id; v.dataset.x = X;
+    const vNum = el('span', null, s.ok ? n(s.volume_l) : '—');
+    vNum.id = 'satNum-' + s.sat_id;
+    v.appendChild(vNum);
     v.appendChild(el('small', null, ' L / ' + i0(X)));
     b.appendChild(v);
 
     const chips = el('div', 'chips');
-    if (!s.ok) chips.appendChild(el('div', 'chip bad', 'sans réponse'));
-    else {
-      const q = (s.volume_qualite || '').toLowerCase();
-      chips.appendChild(el('div', 'chip ' + (q === 'etalonne' ? 'etal' : q === 'mesure' ? 'mesure' : 'inconnu'),
-        q === 'etalonne' ? 'étalonné' : q === 'mesure' ? 'au débitmètre' : 'niveau inconnu'));
-      if (s.vanne)   chips.appendChild(el('div', 'chip open', 'vanne ouverte'));
-      if (s.en_file) chips.appendChild(el('div', 'chip', 'en file'));
-      const df = s.defauts || {};
-      if (df.capteurs_fous)   chips.appendChild(el('div', 'chip bad', 'capteurs incohérents'));
-      if (df.quarantaine_s)   chips.appendChild(el('div', 'chip bad', 'mis de côté'));
+    if (!s.ok) {
+      chips.appendChild(el('div', 'chip bad', 'sans réponse'));
+      b.appendChild(chips);
+      b.appendChild(el('div', 'vide-msg', "Module muet : aucune valeur affichée, les anciennes ne seraient plus fiables."));
+      card.appendChild(b); box.appendChild(card); return;
     }
+    const q = (s.volume_qualite || '').toLowerCase();
+    const cq = el('div', 'chip ' + (q === 'etalonne' ? 'etal' : q === 'mesure' ? 'mesure' : 'inconnu'),
+      q === 'etalonne' ? 'étalonné' : q === 'mesure' ? 'au débitmètre' : 'niveau inconnu');
+    cq.title = q === 'etalonne' ? "Volume recalé sur un franchissement de capteur : c'est le plus sûr."
+             : q === 'mesure'   ? "Volume suivi au débitmètre depuis le dernier repère capteur."
+                                : "Aucun repère capteur franchi depuis le démarrage : le volume est un encadrement.";
+    chips.appendChild(cq);
+    if (s.vanne)   chips.appendChild(el('div', 'chip open', 'vanne ouverte'));
+    if (s.en_file) chips.appendChild(el('div', 'chip', 'en file'));
+    const df = s.defauts || {};
+    if (df.capteurs_fous)  chips.appendChild(el('div', 'chip bad', 'capteurs incohérents'));
+    if (df.quarantaine_s)  chips.appendChild(el('div', 'chip bad', 'mis de côté ' + duree(df.quarantaine_s)));
+    if (df.vanne_alerte)   chips.appendChild(el('div', 'chip bad', 'vanne non confirmée'));
+    if (df.servable === false) chips.appendChild(el('div', 'chip bad', 'non servable'));
+    if (df.abandons > 0)   chips.appendChild(el('div', 'chip', df.abandons + ' abandon' + (df.abandons > 1 ? 's' : '')));
     b.appendChild(chips);
 
-    if (s.ok) {
-      const caps = el('div', 'capteurs');
-      const susp = suspectCNH(s), df = s.defauts || {};
-      [['CNB', s.cnb, et.bas, df.cnb_muet], ['CNM', s.cnm, et.milieu, df.cnm_muet],
-       ['CNH', s.cnh, et.haut, df.cnh_muet || susp]].forEach(([k, on, vol, bad]) => {
-        const c = el('div', 'cap' + (on ? ' wet' : '') + (bad ? ' susp' : ''));
-        c.appendChild(el('i'));
-        c.appendChild(el('span', null, k + ' ' + n(vol)));
-        c.title = k + ' à ' + n(vol) + ' L — ' + (on ? 'immergé' : 'sec') + (bad ? ' (suspect)' : '');
-        caps.appendChild(c);
-      });
-      b.appendChild(caps);
+    const caps = el('div', 'capteurs');
+    const susp = suspectCNH(s);
+    [['CNB', s.cnb, et.bas, df.cnb_muet], ['CNM', s.cnm, et.milieu, df.cnm_muet],
+     ['CNH', s.cnh, et.haut, df.cnh_muet || susp]].forEach(([k, on, vol, bad]) => {
+      const c2 = el('div', 'cap' + (on ? ' wet' : '') + (bad ? ' susp' : ''));
+      c2.appendChild(el('i'));
+      c2.appendChild(el('span', null, k + ' ' + n(vol)));
+      c2.title = k + ' à ' + n(vol) + ' L — ' + (on ? 'immergé' : 'sec') + (bad ? ' (suspect)' : '');
+      caps.appendChild(c2);
+    });
+    b.appendChild(caps);
 
-      const ft = el('div', 'sat-foot');
-      ft.appendChild(el('div', null, 'Y ' + n(s.Y_l) + ' L'));
-      ft.appendChild(el('div', null, 'conso ' + n(s.conso_totale_l) + ' L'));
-      if (tempValide(s.temp_c))   ft.appendChild(el('div', null, n(s.temp_c) + ' °C'));
-      else if (has(s.temp_c))     ft.appendChild(el('div', null, 'sonde hors plage'));
-      b.appendChild(ft);
-    }
+    b.appendChild(bilanEau(s));
+
+    const st = el('div', 'stats'); st.style.marginTop = '9px';
+    SAT_STATS.forEach(spec => st.appendChild(statCase(spec, s)));
+    b.appendChild(st);
+
+    const ft = el('div', 'sat-foot');
+    ft.appendChild(el('div', null, 'Y ' + n(s.Y_l) + ' L'));
+    ft.appendChild(el('div', null, 'cible ' + n(cible) + ' L'));
+    ft.appendChild(el('div', null, 'marge ' + n(s.marge_l) + ' L'));
+    if (tempValide(s.temp_c))   ft.appendChild(el('div', null, n(s.temp_c) + ' °C'));
+    else if (has(s.temp_c))     ft.appendChild(el('div', null, 'sonde hors plage'));
+    b.appendChild(ft);
+
     card.appendChild(b);
     box.appendChild(card);
   }));
 
-  if (!total) box.appendChild(el('p', null, "Aucun satellite dans le dernier envoi."));
+  if (!total) box.appendChild(el('p', 'vide-msg', "Aucun satellite déclaré dans le dernier envoi."));
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   9. Rendu — réserve, compteurs, mesures
+   11. Réserve, volumes, températures, mesures, config appliquée
    ══════════════════════════════════════════════════════════════════════════ */
-function ligne(box, k, v, ko) {
-  const d = el('div', 'kv'); d.appendChild(el('span', null, k));
-  d.appendChild(el('b', ko ? 'ko' : null, v)); box.appendChild(d);
+function ligne(box, k, v, ko, aide) {
+  const d = el('div', 'kv');
+  const s = el('span', null, k); if (aide) s.title = aide;
+  d.appendChild(s);
+  d.appendChild(el('b', ko ? 'ko' : null, v));
+  box.appendChild(d);
 }
 
 function rendreReserve(d) {
   const rs = ((d && d.chaufferie) || {}).reserve || {};
   const box = $('#resFloats'); box.textContent = '';
   const lu = has(rs.haut_mouille);
-  const flotteurs = [['j', 'Jaune', 300, rs.haut_mouille], ['n', 'Noir', 252.5, rs.milieu_mouille], ['r', 'Rouge', 205, rs.bas_mouille]];
-  flotteurs.forEach(([cl, nom, vol, m]) => {
+  if (lu && (!rs.haut_mouille || !rs.milieu_mouille || !rs.bas_mouille))
+    state.resJamaisSec = false;
+  [['j', 'Jaune', 300, rs.haut_mouille], ['n', 'Noir', 252.5, rs.milieu_mouille],
+   ['r', 'Rouge', 205, rs.bas_mouille]].forEach(([cl, nom, vol, m]) => {
     const f = el('div', 'flt ' + cl + (m ? ' wet' : ''));
     f.appendChild(el('i'));
     f.appendChild(el('span', null, nom + ' · ' + n(vol, vol % 1 ? 1 : 0) + ' L'));
@@ -745,21 +1072,47 @@ function rendreReserve(d) {
   const niveau = lu ? (rs.bas_mouille ? (rs.milieu_mouille ? (rs.haut_mouille ? 300 : 276) : 229) : 190) : 0;
   $('#resEau').style.height = (lu ? Math.min(100, niveau / 300 * 100) : 0) + '%';
   $('#resBand').textContent = !lu ? 'lecture indisponible'
-    : rs.haut_mouille ? '≥ 300 L — plus de matelas d\'air'
+    : (has(rs.vol_min) && has(rs.vol_max)) ? n(rs.vol_min, 0) + ' – ' + n(rs.vol_max, 0) + ' L'
+    : rs.haut_mouille ? "≥ 300 L — plus de matelas d'air"
     : rs.milieu_mouille ? '252,5 – 300 L'
     : rs.bas_mouille ? '205 – 252,5 L' : '< 205 L';
 }
 
 function rendreEau(d) {
-  const eau = ((d && d.chaufferie) || {}).eau || {};
+  const ch = (d && d.chaufferie) || {};
+  const eau = ch.eau || {};
   const box = $('#eauBox'); box.textContent = '';
   [['QA', 'A', eau.qa], ['QB', 'B', eau.qb]].forEach(([nom, lettre, q]) => {
-    if (!q) { ligne(box, nom + ' · circuit ' + lettre, '—', true); return; }
-    ligne(box, nom + ' · circuit ' + lettre + ' (DI' + i0(q.voie) + ')',
-          q.ok ? n(q.litres) + ' L' : 'sans réponse', !q.ok);
+    if (!q) { ligne(box, nom + ' · entrée circuit ' + lettre, '—', true); return; }
+    ligne(box, nom + ' · entrée circuit ' + lettre + ' (DI' + i0(q.voie) + ')',
+          q.ok ? n(q.litres) + ' L' : 'sans réponse', !q.ok,
+          "Débitmètre d'entrée : toute l'eau envoyée vers les satellites de ce circuit.");
   });
+  let tiree = null, livree = null;
+  ((d && d.circuits) || []).forEach(c => (c.satellites || []).forEach(s => {
+    if (has(s.tiree_l))        tiree  = (tiree  === null ? 0 : tiree)  + s.tiree_l;
+    if (has(s.conso_totale_l)) livree = (livree === null ? 0 : livree) + s.conso_totale_l;
+  }));
+  ligne(box, 'Livrée, tous satellites', livree === null ? '—' : n(livree) + ' L', livree === null);
+  ligne(box, 'Tirée, tous satellites',  tiree  === null ? '—' : n(tiree)  + ' L', tiree === null,
+        "Somme des compteurs de sortie raccordés.");
   ligne(box, 'Résolution', '0,5 L par impulsion');
   ligne(box, 'Source', eau.source || '—');
+}
+
+function rendreTemp(d) {
+  const ch = (d && d.chaufferie) || {};
+  const box = $('#tempBox'); box.textContent = '';
+  const t = (k, v, aide) => ligne(box, k, tempValide(v) ? n(v) + ' °C' : (has(v) ? 'hors plage' : '—'),
+                                  !tempValide(v), aide);
+  t('Sortie de pompe (P4)', ch.temp_pompe_c);
+  t('Retour (V8)', ch.temp_retour_c, "Sonde placée juste avant la cuve d'air.");
+  ((d && d.circuits) || []).forEach(c => (c.satellites || []).forEach(s => {
+    if (s.ok) t('Cuve ' + s.sat_id, s.temp_c);
+  }));
+  const ma = ch.maddalena || {};
+  t('Départ production', ma.ok ? ma.t_depart_c : undefined, "Compteur d'énergie Maddalena.");
+  t('Retour production', ma.ok ? ma.t_retour_c : undefined);
 }
 
 function rendreMesures(d) {
@@ -769,18 +1122,154 @@ function rendreMesures(d) {
   if (ch.maddalena) { state.mesures.madd = ch.maddalena; state.mesures.at = state.recuAt; }
   const box = $('#mesuresBox'); box.textContent = '';
   const {vfd, sdm, madd, at} = state.mesures;
-  if (!at) { box.appendChild(el('p', null, "Rien encore : ces mesures ne sont relevées que lorsque les deux trains sont au repos.")); return; }
+  if (!at) { box.appendChild(el('p', 'vide-msg',
+    "Rien encore : ces mesures ne sont relevées que lorsque les deux trains sont au repos.")); return; }
   if (vfd)  ligne(box, 'Variateur', vfd.ok ? n(vfd.freq_hz) + ' Hz · ' + n(vfd.courant_a, 2) + ' A' : 'sans réponse', !vfd.ok);
+  if (vfd && vfd.ok) ligne(box, 'Bus continu', n(vfd.vbus_v, 0) + ' V');
   if (sdm)  ligne(box, 'Électricité', sdm.ok ? n(sdm.puissance_w, 0) + ' W · ' + n(sdm.energie_kwh) + ' kWh' : 'sans réponse', !sdm.ok);
-  if (madd) {
-    ligne(box, 'Départ / retour', madd.ok ? n(madd.t_depart_c) + ' / ' + n(madd.t_retour_c) + ' °C' : 'sans réponse', !madd.ok);
-    if (madd.ok) ligne(box, 'Énergie thermique', n(madd.energie_mwh, 3) + ' MWh');
-  }
-  ligne(box, 'Relevé', 'il y a ' + duree((Date.now() - at) / 1000));
+  if (madd) ligne(box, 'Énergie thermique', madd.ok ? n(madd.energie_mwh, 3) + ' MWh' : 'sans réponse', !madd.ok);
+  if (madd && madd.ok) ligne(box, 'Débit production', n(madd.debit_lh, 0) + ' L/h');
+  if (has(ch.mesures_age_s)) ligne(box, 'Âge du relevé', duree(ch.mesures_age_s));
+}
+
+/* Écho des réglages réellement appliqués par l'automate (§6.3). */
+const CFG_LIBELLE = {
+  intervalle_s:'Période d\u2019envoi (s)', vol_pompe_amont_l:'Tronçon commun (L)',
+  vol_recup_l:'Récupération A · Z (L)', vol_recup_b_l:'Récupération B · Z (L)',
+  vitesse_recup_pct:'Vitesse pompe en récup (%)', vitesse_train_pct:'Vitesse pompe en train (%)',
+  t_vanne_s:'Pause de manœuvre (s)', temp_actif:'Sondes de température',
+  temp_addr:'Adresse des sondes', port_bus_b:'Port du bus B',
+  res_actif:'Surveillance réserve', pres_actif:'Lecture de pression',
+  pres_fc:'Fonction Modbus pression', pres_reg_base:'Registre AI de départ',
+  pres_voie:'Voie AI pression', pres_ma:'Entrée 4-20 mA', pres_bar_max:'Pleine échelle (bar)',
+  tol_fin_l:'Tolérance de fin (L)', ecart_defaillant_l:'Écart capteur défaillant (L)',
+  tiree_l_imp:'Litres par impulsion, sortie', tol_amorcage_l:'Tolérance d\u2019amorçage (L)',
+  amorcage_maj_pct:'Majoration d\u2019amorçage (%)', vannes_sous_flux:'Vannes sous flux',
+  fermeture_attrib_s:'Fenêtre d\u2019attribution (s)', config_en_attente:'Config en attente',
+};
+function rendreCfgActive(d) {
+  const box = $('#cfgActiveBox'); box.textContent = '';
+  const cf = (d && d.config_active) || null;
+  if (!cf) { box.appendChild(el('p', 'vide-msg', "L'automate n'a pas encore renvoyé sa configuration.")); return; }
+  Object.keys(cf).forEach(k => {
+    const v = cf[k];
+    ligne(box, CFG_LIBELLE[k] || k,
+          typeof v === 'boolean' ? (v ? 'oui' : 'non') : String(v).replace('.', ','));
+  });
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   10. Formulaire de réglage — n'envoie QUE ce qui a été rempli
+   12. Historique des étapes (§6.4)
+
+   Construit côté page, en observant les changements d'étape entre deux
+   envois. Il commence donc à l'ouverture de la page — c'est dit à l'écran
+   pour qu'on ne le prenne pas pour un journal de l'automate. Seules les
+   étapes ayant duré au moins SEUIL_ETAPE_S y figurent (seuil à valider).
+   ══════════════════════════════════════════════════════════════════════════ */
+function majHistorique(d) {
+  if (!d || !d.trains) return;
+  const now = Date.now();
+  d.trains.forEach((t, c) => {
+    const cle = (t.etape || '') + '|' + (t.sat_actif || '');
+    const cur = state.etapeEnCours[c];
+    if (!cur) { state.etapeEnCours[c] = {cle, etape: t.etape, sat: t.sat_actif, debut: now}; return; }
+    if (cur.cle === cle) return;
+    const duree_s = (now - cur.debut) / 1000;
+    if (duree_s >= SEUIL_ETAPE_S)
+      state.histo.unshift({circuit: c === 0 ? 'A' : 'B', etape: cur.etape,
+                           sat: cur.sat, duree_s, fin: now});
+    if (state.histo.length > 60) state.histo.length = 60;
+    state.etapeEnCours[c] = {cle, etape: t.etape, sat: t.sat_actif, debut: now};
+  });
+}
+
+function rendreHistorique() {
+  $('#histoSeuil').textContent =
+    '— au moins ' + SEUIL_ETAPE_S + ' s, depuis l\u2019ouverture de la page';
+  const box = $('#histoBox'); box.textContent = '';
+  if (!state.histo.length) {
+    box.appendChild(el('p', 'vide-msg',
+      "Aucune étape achevée depuis l'ouverture de la page. La liste se remplit "
+      + "au fil des cycles ; elle repart de zéro à chaque rechargement."));
+    return;
+  }
+  state.histo.forEach(h => {
+    const l = el('div', 'histo-l');
+    l.appendChild(el('div', 'c ' + h.circuit.toLowerCase(), h.circuit));
+    l.appendChild(el('div', 'e', h.etape));
+    if (h.sat) l.appendChild(el('div', 's', h.sat));
+    l.appendChild(el('div', 'd', duree(h.duree_s)));
+    box.appendChild(l);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   13. Poursuite d'affichage entre deux envois
+
+   Entre deux paquets, un remplissage continue d'avancer dans la vraie cuve.
+   On poursuit la progression au RYTHME MESURÉ entre les deux derniers
+   paquets — jamais un rythme inventé, jamais au-delà de la cible, et
+   seulement quand la pompe tourne. La valeur poursuivie est soulignée en
+   pointillés : elle n'est jamais présentée comme une mesure.
+   ══════════════════════════════════════════════════════════════════════════ */
+const TAUX_MAX_LS = 2.0;          // 120 L/min : au-delà, c'est une aberration
+
+function poserReperesInterpolation(d) {
+  const now = Date.now();
+  const pompeOn = !!(d && d.chaufferie && d.chaufferie.pompe_pct > 0);
+  for (let c = 0; c < 2; c++) {
+    const t = d && d.trains && d.trains[c];
+    if (!t || !has(t.cible) || t.cible <= 0 || t.unite !== 'L' || !has(t.avancement)) {
+      state.interp[c] = null; continue;
+    }
+    const prec = state.interp[c];
+    let taux = 0;
+    if (prec && prec.etape === t.etape && prec.sat === t.sat_actif && now > prec.baseAt) {
+      const dt = (now - prec.baseAt) / 1000;
+      const dv = t.avancement - prec.base;
+      if (dt >= 2 && dv > 0) taux = Math.min(dv / dt, TAUX_MAX_LS);
+    }
+    state.interp[c] = {etape: t.etape, sat: t.sat_actif, cible: t.cible,
+                       base: t.avancement, baseAt: now, taux, pompe: pompeOn};
+  }
+}
+
+function majInterpolation() {
+  const now = Date.now();
+  for (let c = 0; c < 2; c++) {
+    const lettre = c === 0 ? 'A' : 'B';
+    const it = state.interp[c];
+    const num = document.getElementById('progNum-' + lettre);
+    const bar = document.getElementById('progBar-' + lettre);
+    const fill = document.getElementById('progFill-' + lettre);
+    if (!num || !bar || !fill) continue;
+    const coule = !!(it && it.pompe && it.taux > 0);
+    bar.classList.toggle('coule', coule);
+    if (!coule) { num.classList.remove('estime'); continue; }
+    const v = Math.min(it.cible, it.base + it.taux * (now - it.baseAt) / 1000);
+    num.textContent = n(v);
+    num.classList.add('estime');
+    num.title = 'Poursuivi à ' + n(it.taux * 60) + ' L/min, rythme mesuré entre les deux derniers envois';
+    fill.style.width = pct(v, it.cible) + '%';
+    const codeE = codeEtape(it.etape);
+    if (it.sat && (codeE === 3 || codeE === 5)) {
+      const sNum = document.getElementById('satNum-' + it.sat);
+      const sFill = document.getElementById('satFill-' + it.sat);
+      const sBoite = document.getElementById('satVol-' + it.sat);
+      const sJauge = document.getElementById('satJauge-' + it.sat);
+      if (sNum && sFill && sBoite) {
+        const X = parseFloat(sBoite.dataset.x) || 40;
+        sNum.textContent = n(v);
+        sNum.classList.add('estime');
+        sFill.style.height = pct(v, X) + '%';
+        if (sJauge) sJauge.classList.add('coule');
+      }
+    }
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   14. Formulaire de réglage — n'envoie QUE ce qui a été rempli
    ══════════════════════════════════════════════════════════════════════════ */
 const CHAMPS = [
   {k:'intervalle_s',      t:'int',   min:5,   max:3600, l:"Période d'envoi",         u:'s'},
@@ -792,13 +1281,14 @@ const CHAMPS = [
   {k:'vitesse_train_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en train',  u:'%'},
   {k:'vitesse_recup_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en récup',  u:'%'},
   {k:'t_vanne_s',         t:'int',   min:1,   max:60,   l:'Pause de manœuvre',       u:'s'},
-  {k:'temp_addr',         t:'int',   min:1,   max:247,  l:'Adresse sondes PT100',    u:'', aide:'4 — surtout pas 3, c\'est le variateur'},
-  {k:'pres_fc',           t:'sel',   opts:[['','— inchangé —'],['3','FC03 · registres de maintien'],['4','FC04 · registres d\'entrée']], l:'Fonction Modbus pression'},
-  {k:'pres_reg_base',     t:'int',   min:0,   max:65535, l:'Registre AI de départ',  u:'', aide:'à caler sur ≈ 224 brut au repos'},
+  {k:'temp_addr',         t:'int',   min:1,   max:247,  l:'Adresse sondes PT100',    u:'', aide:"4 — surtout pas 3, c'est le variateur"},
+  {k:'pres_fc',           t:'sel',   opts:[['','— inchangé —'],['3','FC03 · registres de maintien'],['4','FC04 · registres d\u2019entrée']], l:'Fonction Modbus pression'},
+  {k:'pres_reg_base',     t:'int',   min:0,   max:65535, l:'Registre AI de départ',  u:''},
   {k:'pres_voie',         t:'int',   min:1,   max:8,    l:'Voie AI pression',        u:''},
-  {k:'pres_bar_max',      t:'float', min:1,   max:100,  l:'Pleine échelle pression', u:'bar'},
+  {k:'pres_bar_max',      t:'float', min:1,   max:100,  l:'Pleine échelle pression', u:'bar', aide:'16 après le pont diviseur'},
   {k:'pres_actif',        t:'bool',  l:'Lecture de pression'},
   {k:'res_actif',         t:'bool',  l:'Surveillance réserve 300 L'},
+  {k:'temp_actif',        t:'bool',  l:'Sondes de température'},
   {k:'C1',                t:'bool',  l:'Circuit A en service'},
   {k:'C2',                t:'bool',  l:'Circuit B en service'},
 ];
@@ -809,13 +1299,13 @@ function construireFormulaire() {
     const f = el('div', 'f');
     const lab = el('label'); lab.setAttribute('for', 'cf_' + c.k);
     lab.appendChild(document.createTextNode(c.l + ' '));
-    const bornes = c.t === 'bool' ? '' : c.t === 'sel' ? '' : ' ' + c.min + '–' + c.max + (c.u ? ' ' + c.u : '');
-    if (bornes || c.aide) lab.appendChild(el('em', null, (bornes ? bornes : '') + (c.aide ? ' · ' + c.aide : '')));
+    const bornes = (c.t === 'bool' || c.t === 'sel') ? '' : ' ' + c.min + '–' + c.max + (c.u ? ' ' + c.u : '');
+    if (bornes || c.aide) lab.appendChild(el('em', null, bornes + (c.aide ? ' · ' + c.aide : '')));
     f.appendChild(lab);
     let inp;
     if (c.t === 'bool' || c.t === 'sel') {
       inp = el('select');
-      const opts = c.t === 'bool' ? [['', '— inchangé —'], ['true', 'en service'], ['false', 'à l\'arrêt']] : c.opts;
+      const opts = c.t === 'bool' ? [['', '— inchangé —'], ['true', 'en service'], ['false', "à l'arrêt"]] : c.opts;
       opts.forEach(([v, t]) => { const o = el('option', null, t); o.value = v; inp.appendChild(o); });
     } else {
       inp = el('input'); inp.type = 'number'; inp.placeholder = 'inchangé';
@@ -828,7 +1318,7 @@ function construireFormulaire() {
 
 function construireTableSats(d) {
   const tab = $('#cfgSats');
-  if (tab.dataset.rendu === '1') return;          // ne pas écraser une saisie en cours
+  if (tab.dataset.rendu === '1') return;
   const sats = [];
   ((d && d.circuits) || []).forEach(c => (c.satellites || []).forEach(s => sats.push(s)));
   if (!sats.length) return;
@@ -843,12 +1333,13 @@ function construireTableSats(d) {
     const tr = el('tr');
     tr.appendChild(el('td', null, s.sat_id));
     const et = s.etalonnage || {};
-    [['X_l', s.X_l], ['Y_l', s.Y_l], ['vol_bas', et.bas], ['vol_milieu', et.milieu], ['vol_haut', et.haut]].forEach(([k, cur]) => {
-      const td = el('td'), inp = el('input');
-      inp.type = 'number'; inp.step = '0.1'; inp.placeholder = has(cur) ? n(cur) : '—';
-      inp.dataset.sat = idx; inp.dataset.k = k;
-      td.appendChild(inp); tr.appendChild(td);
-    });
+    [['X_l', s.X_l], ['Y_l', s.Y_l], ['vol_bas', et.bas], ['vol_milieu', et.milieu], ['vol_haut', et.haut]]
+      .forEach(([k, cur]) => {
+        const td = el('td'), inp = el('input');
+        inp.type = 'number'; inp.step = '0.1'; inp.placeholder = has(cur) ? n(cur) : '—';
+        inp.dataset.sat = idx; inp.dataset.k = k;
+        td.appendChild(inp); tr.appendChild(td);
+      });
     tb.appendChild(tr);
   });
   tab.appendChild(tb);
@@ -864,13 +1355,12 @@ function collecterConfig() {
     const num = Number(v);
     const spec = CHAMPS.find(c => c.k === k);
     if (!isFinite(num) || (spec && has(spec.min) && (num < spec.min || num > spec.max))) {
-      inp.classList.add('bad'); erreurs.push(spec.l + ' : hors bornes'); return;
+      inp.classList.add('bad'); erreurs.push((spec ? spec.l : k) + ' : hors bornes'); return;
     }
     cfg[k] = t === 'int' ? Math.round(num) : num;
   });
   if (Object.keys(circuits).length) cfg.circuits = circuits;
 
-  /* satellites : on ne pousse un satellite que si ses 5 valeurs sont cohérentes */
   const parSat = {};
   document.querySelectorAll('#cfgSats input[data-sat]').forEach(inp => {
     inp.classList.remove('bad');
@@ -893,11 +1383,13 @@ function collecterConfig() {
         vol_milieu: has(src.vol_milieu) ? src.vol_milieu : base.vol_milieu,
         vol_haut:   has(src.vol_haut)   ? src.vol_haut   : base.vol_haut,
       };
-      const complet = Object.values(o).every(has);
-      if (!complet) { src.inputs.forEach(x => x.classList.add('bad')); erreurs.push(id + " : renseignez les 5 valeurs, l'automate les relit en bloc"); return; }
+      if (!Object.values(o).every(has)) {
+        src.inputs.forEach(x => x.classList.add('bad'));
+        erreurs.push(id + " : renseignez les 5 valeurs, l'automate les relit en bloc"); return;
+      }
       if (!(o.vol_bas < o.vol_milieu && o.vol_milieu < o.vol_haut && o.vol_haut < o.X_l)) {
         src.inputs.forEach(x => x.classList.add('bad'));
-        erreurs.push(id + ' : il faut bas < milieu < haut < X, sinon l\'automate ignore le satellite'); return;
+        erreurs.push(id + " : il faut bas < milieu < haut < X, sinon l'automate ignore le satellite"); return;
       }
       sats[i] = o;
     });
@@ -906,7 +1398,6 @@ function collecterConfig() {
   return {cfg, erreurs};
 }
 
-/** Valeurs actuelles connues d'un satellite, pour compléter une saisie partielle. */
 function satCourant(idx) {
   const id = (idx < 8 ? 'SA' : 'SB') + ((idx % 8) + 1);
   let out = {};
@@ -925,22 +1416,19 @@ function sortie(msg, cls) {
 
 function paquetConfig() {
   const {cfg, erreurs} = collecterConfig();
-  if (erreurs.length) { sortie('À corriger avant d\'envoyer :\n· ' + erreurs.join('\n· '), 'err'); return null; }
+  if (erreurs.length) { sortie("À corriger avant d'envoyer :\n· " + erreurs.join('\n· '), 'err'); return null; }
   if (!Object.keys(cfg).length) { sortie("Rien à envoyer : aucun champ n'a été rempli.", 'err'); return null; }
   const vNow = (state.data && state.data.cfg_version) || 0;
   cfg.cfg_version = vNow + 1;
   return cfg;
 }
 
-/** Corps du dépôt. La fonction fait `const cfg = req.body` puis lit `cfg.device_id`
- *  et `cfg.cfg_version` : le bloc est donc PLAT, pas emballé dans "config".
- *  Il est stocké tel quel, et /api/data le renvoie à l'automate sous la clé
- *  "config" dans la réponse à son propre POST. */
+/** Corps du dépôt : bloc PLAT avec device_id en tête, tel que l'attend la
+    fonction Azure (elle lit cfg.device_id et cfg.cfg_version). */
 function corpsDepot(cfg) {
   return Object.assign({device_id: (state.data && state.data.device_id) || DEVICE}, cfg);
 }
 
-/** Traduit les refus connus de la fonction en quelque chose d'actionnable. */
 function expliquerRefus(status, texte) {
   if (/CONFIG_API_KEY/i.test(texte || ''))
     return "La variable CONFIG_API_KEY n'existe pas côté Azure.\n"
@@ -955,7 +1443,6 @@ function expliquerRefus(status, texte) {
   return 'réponse ' + status + (texte ? '\n' + texte : '');
 }
 
-/** Met le bloc en français, et signale ce qui a des conséquences sur le service. */
 function resumerConfig(cfg) {
   const lignes = [], alertes = [];
   Object.keys(cfg).forEach(k => {
@@ -981,13 +1468,10 @@ function resumerConfig(cfg) {
     lignes.push((spec ? spec.l : k) + ' : ' + v + (spec && spec.u ? ' ' + spec.u : ''));
   });
   if (cfg.nb_sats_b === 0)
-    alertes.push("Satellites circuit B à 0 : SB1 sort du service, plus aucun train ne partira sur le bus B.");
-  if (has(cfg.intervalle_s) && cfg.intervalle_s <= 10)
-    alertes.push("Envoi toutes les " + cfg.intervalle_s + " s : la fenêtre aveugle du POST tombera "
-               + "souvent pendant un remplissage, au risque de dépasser la cible.");
+    alertes.push("Satellites circuit B à 0 : plus aucun train ne partira sur le bus B.");
   if (has(cfg.pres_bar_max) && Math.abs(cfg.pres_bar_max - 16) > 0.01)
     alertes.push("Pleine échelle pression à " + cfg.pres_bar_max + " bar — D26 donne 16 bar après le pont diviseur.");
-  return {lignes: lignes, alertes: alertes};
+  return {lignes, alertes};
 }
 
 let depotEnAttente = null;
@@ -1002,11 +1486,7 @@ async function deposer(cfg, cle) {
   const entetes = {'Content-Type': 'application/json'};
   if (cle) entetes['x-api-key'] = cle;
   try {
-    const r = await fetch(API.config, {
-      method: 'POST',
-      headers: entetes,
-      body: JSON.stringify(corps),
-    });
+    const r = await fetch(API.config, {method: 'POST', headers: entetes, body: JSON.stringify(corps)});
     if (!r.ok) {
       let texte = '';
       try { texte = (await r.text()).trim().slice(0, 500); } catch (_) {}
@@ -1024,8 +1504,7 @@ async function deposer(cfg, cle) {
 
 $('#btnSend').addEventListener('click', async () => {
   const btn = $('#btnSend');
-  /* 2e clic : on envoie ce qui a été montré */
-  if (depotEnAttente) {
+  if (depotEnAttente) {                       /* 2e clic : on envoie */
     const cfg = depotEnAttente;
     depotEnAttente = null;
     btn.textContent = "Envoyer à l'automate";
@@ -1035,12 +1514,10 @@ $('#btnSend').addEventListener('click', async () => {
     btn.disabled = false;
     return;
   }
-  /* 1er clic : bilan de ce qui va changer */
-  const cfg = paquetConfig(); if (!cfg) return;
+  const cfg = paquetConfig(); if (!cfg) return;   /* 1er clic : bilan */
   const r = resumerConfig(cfg);
   if (!$('#cfgKey').value.trim())
-    r.alertes.push("Dépôt sans clé : accepté tant que CONFIG_API_KEY n'est pas définie dans Azure. "
-                 + "Le jour où elle le sera, ce champ redeviendra obligatoire.");
+    r.alertes.push("Dépôt sans clé : accepté tant que CONFIG_API_KEY n'est pas définie dans Azure.");
   depotEnAttente = cfg;
   btn.textContent = "Confirmer l'envoi";
   sortie("Voici ce qui va changer sur l'automate :\n\n· " + r.lignes.join('\n· ')
@@ -1060,62 +1537,46 @@ $('#btnCopy').addEventListener('click', async () => {
 });
 
 $('#btnReset').addEventListener('click', () => {
-  document.querySelectorAll('#cfgFields [data-k], #cfgSats input[data-sat]').forEach(i => { i.value = ''; i.classList.remove('bad'); });
+  document.querySelectorAll('#cfgFields [data-k], #cfgSats input[data-sat]')
+    .forEach(i => { i.value = ''; i.classList.remove('bad'); });
   sortie('Formulaire vidé.', 'ok');
 });
 
 /* ══════════════════════════════════════════════════════════════════════════
-   11. Boucle
+   15. Boucle
    ══════════════════════════════════════════════════════════════════════════ */
 function rendre(force) {
   const d = state.data;
-  /* Sonder toutes les 3 s ne veut pas dire redessiner toutes les 3 s : l'automate
-   * n'envoie que toutes les ~30 s. On ne reconstruit que sur un vrai changement,
-   * sinon la page clignote et la sélection de texte saute pour rien. */
-  const sig = d ? (d._received_at || '') + '|' + d.seq + '|' + (state.erreur || '') : 'vide|' + (state.erreur || '');
+  /* Tirer toutes les 3 s ne veut pas dire redessiner toutes les 3 s : on ne
+     reconstruit que sur un vrai changement, sinon la page clignote. */
+  const sig = d ? (d._received_at || '') + '|' + d.seq + '|' + (state.erreur || '')
+                : 'vide|' + (state.erreur || '');
   const change = force || sig !== state.sig;
   state.sig = sig;
   rendreFraicheur();
   if (!change) return;
+  majHistorique(d);
   rendreBandeau(d);
   rendreAlertes(d);
-  rendreRail($('#railA'), (d && d.trains && d.trains[0]) || (d && d.train), 'A', 504);
-  rendreRail($('#railB'), (d && d.trains && d.trains[1]), 'B', 505);
+  rendreRail($('#railA'), (d && d.trains && d.trains[0]) || (d && d.train), 'A', 504, d);
+  rendreRail($('#railB'), (d && d.trains && d.trains[1]), 'B', 505, d);
   rendreOrganes(d);
   rendreSats(d);
+  remplirStats('#statRendement', RENDEMENT, d);
+  remplirStats('#statEnergie',   ENERGIE,   d);
+  remplirStats('#statReserve',   RESERVE_CPT, d);
+  remplirStats('#statDiag',      DIAG,      d);
   rendreReserve(d);
   rendreEau(d);
+  rendreTemp(d);
   rendreMesures(d);
+  rendreCfgActive(d);
+  rendreHistorique();
   construireTableSats(d);
+  poserReperesInterpolation(d);
 }
 
-async function relever() {
-  if (DEMO) { state.data = demo(); state.recuAt = Date.now(); state.emisAt = 0; state.erreur = null; rendre(true); return; }
-  try {
-    const r = await fetch(API.telemetry, {cache: 'no-store'});
-    if (!r.ok) throw new Error('réponse ' + r.status);
-    const j = await r.json();
-    const d = extraire(j);
-    if (!d || !d.device_id) throw new Error('payload non reconnu');
-    state.data = d;
-    state.recuAt = Date.now();
-    const t = Date.parse(d._received_at || '');
-    const age = Date.now() - t;
-    const emis = (isFinite(t) && age > -60000 && age < 2.6e9) ? t : 0;
-    /* cadence réellement observée entre deux envois de l'automate */
-    if (emis && state.emisAt && emis > state.emisAt) {
-      const dt = (emis - state.emisAt) / 1000;
-      if (dt > 1 && dt < 3600) state.periodeObs = state.periodeObs ? state.periodeObs * 0.7 + dt * 0.3 : dt;
-    }
-    if (emis) state.emisAt = emis;
-    state.erreur = null;
-  } catch (e) {
-    state.erreur = 'liaison interrompue — ' + e.message;
-  }
-  rendre();
-}
-
-/** L'API peut renvoyer le payload nu ou emballé. Aujourd'hui : { devices: { "<id>": … } } */
+/** L'API renvoie { devices: { "<id>": … } } ; on accepte aussi le payload nu. */
 function extraire(j) {
   if (!j || typeof j !== 'object') return null;
   if (j.device_id) return j;
@@ -1127,65 +1588,111 @@ function extraire(j) {
   return j.payload || j.data || j.telemetry || null;
 }
 
+async function relever() {
+  if (DEMO) { state.data = demo(); state.recuAt = Date.now(); state.emisAt = 0;
+              state.erreur = null; rendre(true); return; }
+  try {
+    const r = await fetch(API.telemetry, {cache: 'no-store'});
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    const j = await r.json();
+    const d = extraire(j);
+    if (!d || !d.device_id) throw new Error('payload non reconnu');
+
+    /* surveillance de seq : figé, ou instantané périmé renvoyé par le serveur */
+    if (has(d.seq)) {
+      state.seqRecule = (state.seqMax >= 0 && d.seq < state.seqMax);
+      if (d.seq !== state.seqVu) { state.seqVu = d.seq; state.seqDepuis = Date.now(); }
+      else if (!state.seqDepuis) state.seqDepuis = Date.now();
+      if (d.seq > state.seqMax) state.seqMax = d.seq;
+    }
+
+    state.data = d;
+    state.recuAt = Date.now();
+    const t = Date.parse(d._received_at || '');
+    const age = Date.now() - t;
+    const emis = (isFinite(t) && age > -60000 && age < 2.6e9) ? t : 0;
+    if (emis && state.emisAt && emis > state.emisAt) {
+      const dt = (emis - state.emisAt) / 1000;
+      if (dt > 1 && dt < 3600)
+        state.periodeObs = state.periodeObs ? state.periodeObs * 0.7 + dt * 0.3 : dt;
+    }
+    if (emis) state.emisAt = emis;
+    state.erreur = null;
+  } catch (e) {
+    state.erreur = 'liaison interrompue — ' + e.message;
+  }
+  rendre();
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
-   12. Mode démonstration (?demo=1) — pour valider la mise en page sans backend
+   16. Mode démonstration (?demo=1) — valider la mise en page sans backend.
+   Jeu de données explicitement factice, réservé à cet usage.
    ══════════════════════════════════════════════════════════════════════════ */
 function demo() {
   const t = Date.now() / 1000;
   const seqEtapes = [0, 9, 1, 2, 3, 3, 3, 4, 5, 6, 7, 8];
-  const nom = c => ({0:'E0 REPOS',1:'E1 AMORCAGE',2:'E2 OUVERTURE',3:'E3 REMPLISSAGE',4:'E4 BASCULE EFS',
-                     5:'E5 BOUCHON',6:'E6 FERMETURE',7:'E7 RECUP',8:'E8 RETOUR REPOS',
-                     9:'E9 DEPART (vanne retour)',10:'E10 ATTENTE EFS'})[c];
-  const cA = seqEtapes[Math.floor(t / 6) % seqEtapes.length];
-  const cB = seqEtapes[Math.floor((t + 26) / 6) % seqEtapes.length];
-  const av = (t % 6) / 6;
-  const train = (lettre, code, sat, X, Y, file) => ({
-    circuit: lettre, etape: nom(code), cycle_actif: true, depuis_s: Math.floor(t % 6),
+  const nom = c => ({0:'E0 REPOS',1:'E1 AMORCAGE',2:'E2 OUVERTURE',3:'E3 REMPLISSAGE',
+    4:'E4 BASCULE EFS',5:'E5 BOUCHON',6:'E6 FERMETURE',7:'E7 RECUP',8:'E8 RETOUR REPOS',
+    9:'E9 DEPART (vanne retour)',10:'E10 ATTENTE EFS'})[c];
+  const cA = seqEtapes[Math.floor(t / 8) % seqEtapes.length];
+  const av = (t % 8) / 8;
+  const train = (lettre, code, sat, X, Y) => ({
+    circuit: lettre, etape: nom(code), cycle_actif: lettre === 'A', depuis_s: Math.floor(t % 8),
     sat_actif: code === 0 ? null : sat, front_l: code === 0 ? 0 : Y + 4,
     dernier: [4,5,7].includes(code), attente_efs: code === 10,
-    vanne_retour: code === 0 || code === 8 ? 'FERMEE' : 'OUVERTE',
-    file: code === 0 ? [] : file,
-    avancement: code === 3 || code === 5 ? (X - 1 - Y) + av * Y : av * 10,
-    cible: code === 3 || code === 5 ? X - 1 : 10, unite: 'L',
+    vanne_retour: (code === 0 || code === 8) ? 'FERMEE' : 'OUVERTE', vr_alerte: false,
+    file: [], avancement: (code === 3 || code === 5) ? (X - 1 - Y) + av * Y : av * 10,
+    cible: (code === 3 || code === 5) ? X - 1 : 10, unite: 'L',
   });
-  const sat = (id, X, Y, vol, temp) => ({
-    sat_id: id, ok: true, cnb: vol > 8.2 ? 1 : 0, cnm: vol > 17.3 ? 1 : 0,
-    cnh: id === 'SB1' ? 0 : (vol > 26.5 ? 1 : 0),
-    niveau: vol > 26.5 ? 'HAUT' : vol > 17.3 ? 'MILIEU' : 'BAS',
-    vanne: 0, en_file: 0, volume_l: Math.round(vol * 10) / 10,
-    volume_qualite: 'MESURE', conso_totale_l: 1284.5, X_l: X, Y_l: Y, temp_c: temp,
-    etalonnage: {bas: 8.2, milieu: 17.3, haut: 26.5},
-  });
+  const vol = 40 + 18 * av;
   return {
-    device_id: 'chaufferie-01', seq: Math.floor(t / 30), uptime_s: 91_000,
-    rssi_dbm: -62, cfg_version: 7, simulation: false, nb_sats: 2, nb_sats_b: 1,
-    trains: [train('A', cA, 'SA1', 59, 5.5, ['SA2']), train('B', cB, 'SB1', 38, 5, [])],
+    device_id: 'chaufferie-01', seq: Math.floor(t / 5), uptime_s: 10049, rssi_dbm: -72,
+    cfg_version: 0, fw_epoch: 5, simulation: false, nb_sats: 1, nb_sats_b: 0,
+    trains: [train('A', cA, 'SA1', 59, 3), train('B', 0, null, 38, 5)],
     chaufferie: {
-      eau: {impulsions: 84_512, litres: 42_256, zlan_ok: true, source: 'ZLAN6808',
-            qa: {voie: 1, impulsions: 84_512, litres: 42_256, ok: true},
-            qb: {voie: 2, impulsions: 21_004, litres: 10_502, ok: true}},
-      v3: [4,5,7].includes(cA) || [4,5,7].includes(cB) ? 'EFS' : 'ECS',
-      vanne_r12: 'CHAUD',
-      pompe_pct: (cA === 0 && cB === 0) ? 0 : ([7].includes(cA) && [7,0,8].includes(cB) ? 60 : 100),
+      vfd: {ok: true, etat: 3, freq_hz: cA === 0 ? 0 : 65, vbus_v: 319, courant_a: cA === 0 ? 0 : 1.4},
+      sdm120: {ok: true, tension_v: 231, courant_a: 1.2, puissance_w: 268, energie_kwh: 21.7},
+      maddalena: {ok: true, puissance_w: 4200, t_depart_c: 62, t_retour_c: 41, debit_lh: 180, energie_mwh: 2.099},
+      mesures_age_s: 3,
+      eau: {impulsions: 271, litres: 135.5, zlan_ok: true, source: 'ZLAN6808',
+            qa: {voie: 1, impulsions: 271, litres: 135.5, ok: true},
+            qb: {voie: 2, impulsions: 0, litres: 0, ok: true}},
+      v3: [4,5,7].includes(cA) ? 'EFS' : 'ECS', vanne_r12: 'CHAUD',
+      pompe_pct: cA === 0 ? 0 : ([7].includes(cA) ? 60 : 100),
+      pompe_arret_non_confirme: false, pompe_marche_s: cA === 0 ? 0 : 120,
       reserve: {ok: true, haut_mouille: 0, milieu_mouille: 0, bas_mouille: 1,
                 appoint_requis: false, vol_min: 205, vol_max: 252.5},
-      pression: {ok: true, bar: (cA === 0 && cB === 0) ? 3.5 : 7.8, brut: (cA === 0 && cB === 0) ? 224 : 499},
-      temp_pompe_c: 54.2,
+      pression: {ok: true, bar: cA === 0 ? 3.0 : 7.6, brut: cA === 0 ? 360 : 486,
+                 defaut: false, sature: false},
+      temp_pompe_c: 54.2, temp_retour_c: 38.4,
     },
     circuits: [
-      {circuit_id: 'C1', actif: true, satellites: [sat('SA1', 59, 5.5, 40 + 12 * av, 55.1), sat('SA2', 38, 6.5, 21.4, 52.8)]},
-      {circuit_id: 'C2', actif: true, satellites: [sat('SB1', 38, 5, 30.2, 51.6)]},
+      {circuit_id: 'C1', actif: true, satellites: [{
+        sat_id: 'SA1', ok: true, cnb: 1, cnm: 1, cnh: vol > 26.5 ? 1 : 0,
+        niveau: 'HAUT', vanne: [2,3,5].includes(cA) ? 1 : 0, en_file: 0,
+        volume_l: Math.round(vol * 10) / 10, volume_qualite: 'MESURE',
+        conso_totale_l: 1271, tiree_l: 58.5, X_l: 59, Y_l: 3, marge_l: 1, cible_l: 58,
+        temp_c: 59.6, etalonnage: {bas: 8.2, milieu: 17.3, haut: 26.5},
+        defauts: {cnb_muet: false, cnm_muet: false, cnh_muet: false, capteurs_fous: false,
+                  vanne_alerte: false, quarantaine_s: 0, abandons: 0, servable: true}}]},
+      {circuit_id: 'C2', actif: false, satellites: []},
     ],
+    config_active: {intervalle_s: 5, vol_pompe_amont_l: 4, vol_recup_l: 10, t_vanne_s: 6,
+                    temp_addr: 4, pres_voie: 5, pres_bar_max: 16, config_en_attente: false},
+    diag: {tas_libre: 185064, tas_mini: 126308, pile_cloud_libre: 4912,
+           post_ms: 1466, post_ms_max: 3413, envois: 1856, echecs: 0, wifi_ok: true},
+    _received_at: new Date().toISOString(),
   };
 }
 
 /* ══════════════════════════════════════════════════════════════════════════ */
+if (SHOW) document.body.classList.add('presentation');
 construireFormulaire();
-$('#footMode').textContent = DEMO ? 'mode démonstration — données simulées' : 'source : ' + API.telemetry;
+$('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
 setInterval(relever, DEMO ? 1000 : PERIODE_MS);
 setInterval(rendreFraicheur, PERIODE_AGE_MS);
-/* onglet remis au premier plan : on ne fait pas attendre 3 s */
+setInterval(majInterpolation, 120);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) relever(); });
 </script>
 </body>
