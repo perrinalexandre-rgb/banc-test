@@ -187,7 +187,8 @@ header{border-bottom:1px solid var(--line);background:var(--panel)}
 .cap{display:flex;align-items:center;gap:4px;font-family:var(--fs-mono);font-size:10.5px;color:var(--ink3)}
 .cap i{width:8px;height:8px;border-radius:50%;background:#E2E6E3;border:1px solid var(--line);display:block}
 .cap.wet i{background:var(--efs);border-color:var(--efs)}
-.cap.susp i{background:var(--alert);border-color:var(--alert)}
+.cap.defaut{color:var(--alert)}
+.cap.defaut i{border:2px solid var(--alert)}   /* le liseré dit le DÉFAUT, la pastille garde l'ÉTAT */
 .sat-foot{margin-top:9px;padding-top:8px;border-top:1px solid var(--line-soft);
   font-family:var(--fs-mono);font-size:11px;color:var(--ink3);display:flex;flex-wrap:wrap;gap:3px 12px}
 
@@ -323,6 +324,7 @@ body.presentation .brand{font-size:27px}
       <div>dernier envoi <b id="mAge">—</b></div>
       <div>wifi <b id="mRssi">—</b></div>
       <div>config <b id="mCfg">—</b></div>
+      <div>ui <b>2008.1</b></div>
     </div>
   </div>
 </header>
@@ -743,8 +745,11 @@ function rendreAlertes(d) {
     const muets = [df.cnb_muet && 'CNB', df.cnm_muet && 'CNM', df.cnh_muet && 'CNH'].filter(Boolean);
     if (muets.length)
       ajouterAlerte(box, 'warn', s.sat_id,
-        "Capteur muet ou défectueux : " + muets.join(', ') + ".",
-        "Le niveau a dépassé le repère sans que le capteur réagisse.");
+        "Capteur déclaré muet par l'automate : " + muets.join(', ') + ".",
+        "Le comptage a atteint " + n(s.volume_l) + " L sans réaction du capteur. "
+        + "Il est écarté puis réhabilité de lui-même à son prochain front cohérent. "
+        + "Nota : un puisage pendant le remplissage peut provoquer cette alerte à tort "
+        + "(correctif automate en préparation).");
     if (df.quarantaine_s > 0)
       ajouterAlerte(box, 'warn', s.sat_id,
         "Mis de côté après " + df.abandons + " abandons consécutifs.",
@@ -900,11 +905,10 @@ function rendreOrganes(d) {
 /* ══════════════════════════════════════════════════════════════════════════
    10. Satellites
    ══════════════════════════════════════════════════════════════════════════ */
-/** Règle D24 rejouée côté navigateur, faute d'être dans le payload. */
-function suspectCNH(s) {
-  const et = s.etalonnage || {};
-  return s.ok && s.cnh === 0 && has(et.haut) && has(s.volume_l) && s.volume_l > et.haut + 2;
-}
+/* Lot 1 (20/08) : le test local « suspectCNH » (règle D24 rejouée côté
+   navigateur) est SUPPRIMÉ — il ignorait la consommation pendant le
+   remplissage et fabriquait des rouges fantômes. Le diagnostic vient
+   EXCLUSIVEMENT des drapeaux 'defauts' envoyés par l'automate. */
 
 /* Bilan d'eau (§4).
    LIVRÉE = conso_totale_l, l'eau entrée dans la cuve (débitmètre du circuit).
@@ -1012,13 +1016,16 @@ function rendreSats(d) {
     b.appendChild(chips);
 
     const caps = el('div', 'capteurs');
-    const susp = suspectCNH(s);
+    /* Lot 1 (20/08) : ÉTAT et DÉFAUT séparés — la pastille dit l'état
+       (pleine = immergé, vide = sec), le liseré + « ! » disent le défaut
+       émis par l'automate. Plus jamais les deux mélangés. */
     [['CNB', s.cnb, et.bas, df.cnb_muet], ['CNM', s.cnm, et.milieu, df.cnm_muet],
-     ['CNH', s.cnh, et.haut, df.cnh_muet || susp]].forEach(([k, on, vol, bad]) => {
-      const c2 = el('div', 'cap' + (on ? ' wet' : '') + (bad ? ' susp' : ''));
+     ['CNH', s.cnh, et.haut, df.cnh_muet]].forEach(([k, on, vol, bad]) => {
+      const c2 = el('div', 'cap' + (on ? ' wet' : '') + (bad ? ' defaut' : ''));
       c2.appendChild(el('i'));
-      c2.appendChild(el('span', null, k + ' ' + n(vol)));
-      c2.title = k + ' à ' + n(vol) + ' L — ' + (on ? 'immergé' : 'sec') + (bad ? ' (suspect)' : '');
+      c2.appendChild(el('span', null, k + ' ' + n(vol) + (bad ? ' !' : '')));
+      c2.title = k + ' à ' + n(vol) + ' L — état : ' + (on ? 'immergé' : 'sec')
+        + (bad ? ". Déclaré MUET par l'automate : le comptage a dépassé sa cote sans réaction — réhabilité à son prochain front cohérent." : '');
       caps.appendChild(c2);
     });
     b.appendChild(caps);
