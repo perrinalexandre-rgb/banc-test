@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · ui 2108.4 (lot 4, 21/08/2026)
+   enovaQ — pupitre de supervision · ui 2208.7 (lot 7, 22/08/2026)
    Socle v4 conservé (fond blanc, décision client B.1) : papier technique,
    filets fins, encre presque noire, cuivre (A) / vert-de-gris (B), ambre et
    bleu réservés à l'eau (ECS / EFS).
@@ -26,6 +26,22 @@
    attendant l'automate), pertes normalisées 35 °C volontairement vides
    sans sonde d'ambiance, étiquettes de la réserve en face des flotteurs,
    puisage nettement plus visible, boutons RAZ / acquittement préparés.
+   Lot 5 (22/08) : Production complétée depuis la fiche de la carte Modbus
+   Engelmann EN-MBRTU (celle des MicroClima Maddalena) — volume total (m³),
+   unité d'énergie affichée telle que LUE sur le compteur, décodage du code
+   erreur, note sur le rafraîchissement de la carte (600 s sur pile, 120 s
+   alimentée). Textes « non raccordé à Épinal » retirés : le compteur
+   répond depuis le 22/08.
+   Lot 6 (22/08) : le °C/h brut dépend de la quantité d'ECS présente — il
+   est renommé « refroidissement mesuré », et une case « cuve pleine »
+   donne le chiffre comparable : pertes (W) ÷ (contenance × 1,163),
+   dérivé de deux champs déjà publiés par l'automate (perte_w, X_l).
+   Lot 7 (22/08) : règles client sur les pertes — moyenne « 3 jours max »
+   (case renommée, nombre de mesures affiché en infobulle, avertissement
+   clair sur l'ancien programme), décantation 45 min après remplissage
+   dite dans les infobulles, volume = entrées − sorties (programme 2208b,
+   D67) avec infobulle du grand chiffre adaptée au programme détecté, et
+   marqueur « prog » du build de l'automate dans le bandeau.
    ══════════════════════════════════════════════════════════════════════════ */
 :root{
   --ground:#F4F5F3; --panel:#FFFFFF; --panel2:#F2F4F2; --panel3:#FAFBFA;
@@ -433,6 +449,7 @@ body.presentation .brand{font-size:27px}
       <div>en service <b id="mUp">—</b></div>
       <div>dernier envoi <b id="mAge">—</b></div>
       <div>wifi <b id="mRssi">—</b></div>
+      <div title="Marqueur de build du PROGRAMME de l'automate (champ « prog » du JSON). Vide (—) sur les programmes antérieurs au 22/08.">prog <b id="mProg">—</b></div>
       <div>config <b id="mCfg">—</b></div>
       <div class="ui" title="Version de la page. Après une mise en ligne : Ctrl+F5, puis vérifier ce marqueur.">ui <b id="mUi">—</b></div>
     </div>
@@ -596,7 +613,7 @@ const API = {
   config:    '/api/config',   // POST → config servie à l'automate à son prochain envoi
 };
 const DEVICE     = 'chaufferie-01';
-const LOT        = '2108.4';  // marqueur « ui » — bandeau et pied de page
+const LOT        = '2208.7';  // marqueur « ui » — bandeau et pied de page
 const PERIODE_MS = 3000;      // cadence de tirage de la page
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -632,15 +649,16 @@ const RENDEMENT = [
   {k:'Somme des pertes',   champ:null, unite:'kWh', dec:1},
   {k:'Consommation électrique', champ:'chaufferie.sdm120.energie_kwh', unite:'kWh', dec:1,
    aide:"Compteur électrique de la pompe (SDM120).",
-   absent:"Le compteur SDM120 ne répond pas sur le bus — non raccordé à Épinal."},
+   absent:"Le compteur SDM120 ne répond pas sur le bus."},
   {k:'Pertes thermiques',  champ:null, unite:'kWh', dec:1},
 ];
 
 const ENERGIE = [
   {k:'Pompe',       champ:null, unite:'kWh', dec:1, aide:"Poste dédié, à publier par l'automate."},
-  {k:'Production',  champ:'chaufferie.maddalena.energie_mwh', unite:'MWh', dec:3,
+  {k:'Production',  champ:'chaufferie.maddalena.energie_mwh', unite:'MWh',
+   unite_champ:'chaufferie.maddalena.energie_unite', dec:3,
    aide:"Compteur d'énergie thermique Maddalena, référence de production.",
-   absent:"Le compteur Maddalena ne répond pas sur le bus — non raccordé à Épinal."},
+   absent:"Le compteur Maddalena ne répond pas sur le bus."},
   {k:'Satellites',  champ:null, unite:'kWh', dec:1},
   {k:'Puissance thermique', champ:'chaufferie.maddalena.puissance_w', unite:'W', dec:0,
    absent:"Compteur Maddalena sans réponse."},
@@ -661,13 +679,23 @@ const RESERVE_CPT = [
    absent:"La réserve n'a pas encore été lue."},
 ];
 
-/* PRODUCTION (lot 3). À Épinal, Maddalena et SDM120 ne répondent pas (non
-   raccordés) : « — » avec la note « sans réponse » est l'affichage CORRECT,
-   pas un défaut de la page. La T° de l'eau froide à la source (sonde V7)
-   est une case créée dès maintenant, à brancher quand l'automate la publie. */
+/* PRODUCTION (lots 3 et 5). Un compteur qui répond ok:false est dit « sans
+   réponse » — la note sous l'encadré précise quoi vérifier. Depuis le lot 5,
+   l'unité de l'énergie est celle LUE sur le compteur (energie_unite), et le
+   volume total (registre 33 de la carte Modbus, en litres → m³) a sa case. */
 const PROD_TH = [
-  {k:'Énergie thermique', champ:'chaufferie.maddalena.energie_mwh', unite:'MWh', dec:3,
+  {k:'Énergie thermique', champ:'chaufferie.maddalena.energie_mwh', unite:'MWh',
+   unite_champ:'chaufferie.maddalena.energie_unite', dec:3,
+   aide:"Cumul du compteur. L'unité affichée est celle lue sur le compteur "
+       +"(programme du 22/08) ; tant que l'ancien programme tourne, l'étiquette "
+       +"MWh est supposée, pas lue — à comparer avec l'écran du compteur.",
    absent:"Compteur Maddalena sans réponse sur le bus."},
+  {k:'Volume total', champ:'chaufferie.maddalena.volume_m3', unite:'m³', dec:2,
+   aide:"Eau totale passée par le compteur depuis sa mise en service — à croiser "
+       +"avec QA/QB et les litres livrés aux satellites.",
+   absent:"Publié par le programme du 22/08 (lecture du registre 33 de la carte "
+        +"Modbus, en litres). Si la case reste vide après reflash de l'automate, "
+        +"le champ volume_m3 manque dans /api/data — me le signaler."},
   {k:'Température de départ', champ:'chaufferie.maddalena.t_depart_c', unite:'°C', dec:1,
    absent:"Compteur Maddalena sans réponse."},
   {k:'Température de retour', champ:'chaufferie.maddalena.t_retour_c', unite:'°C', dec:1,
@@ -758,12 +786,15 @@ const SAT_REMPL = [
 const SAT_PERTES = [
   {k:'Pertes',          champ:'perte_w',        unite:'W',    dec:0,
    aide:"Puissance perdue par la cuve, mesurée sur la dérive de température au repos.",
-   absent:"Publiées après un premier calcul de pente réussi (fenêtre calme d'au moins "
-        +"20 minutes sans mouvement d'eau, sonde de température en service)."},
-  {k:'Moyenne lissée',  champ:'perte_moy_w',    unite:'W',    dec:0,
-   absent:"Publiée avec les pertes."},
-  {k:'Refroidissement', champ:'perte_degh',     unite:'°C/h', dec:2,
-   aide:"Vitesse de refroidissement de la cuve au repos.",
+   absent:"Publiées après une première fenêtre aboutie : commencée au moins 45 min "
+        +"après un remplissage (15 min après un simple puisage), longue d'au moins "
+        +"1 h sans aucun mouvement d'eau, close et calculée au puisage suivant "
+        +"(programme 2208b ; l'ancien programme se contentait de 15 min après "
+        +"tout flux). Sonde de température en service exigée."},
+  {k:'Refroidissement mesuré', champ:'perte_degh', unite:'°C/h', dec:2,
+   aide:"Vitesse de refroidissement AU VOLUME PRÉSENT lors de la mesure : à pertes "
+       +"égales, moitié d'eau = °C/h double. Ce chiffre dépend donc du remplissage — "
+       +"pour comparer, voir la case « cuve pleine » à côté.",
    absent:"Publié avec les pertes."},
 ];
 
@@ -881,7 +912,8 @@ function statCase(spec, racine, cls) {
     if (spec.aide) box.title = spec.aide;
   } else {
     val.appendChild(document.createTextNode(n(v, has(spec.dec) ? spec.dec : 1)));
-    if (spec.unite) val.appendChild(el('small', null, ' ' + spec.unite));
+    const u = spec.unite_champ ? (lire(racine, spec.unite_champ) || spec.unite) : spec.unite;
+    if (u) val.appendChild(el('small', null, ' ' + u));
     if (spec.aide) box.title = spec.aide;
   }
   box.appendChild(val);
@@ -945,6 +977,7 @@ function rendreBandeau(d) {
   const r = d.rssi_dbm;
   $('#mRssi').textContent = has(r) && r ? r + ' dBm' + (r < -85 ? ' (faible)' : '') : 'hors ligne';
   $('#mCfg').textContent  = 'v' + i0(d.cfg_version);
+  $('#mProg').textContent = d.prog || '—';
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1346,7 +1379,7 @@ function dessinerCuve(s, K) {
    connu : 50 °C, le seuil de réchauffage. ≥ 50 °C = teinte normale/verte,
    < 50 °C = ambre « réchauffage souhaitable ». JAMAIS de rouge : une eau
    tiède n'est pas un défaut. Sonde absente : « — » discret. */
-function heroNums(s, X) {
+function heroNums(s, X, progNeuf) {
   const box = el('div', 'hero-nums');
 
   const hv = el('div', 'hn vol');
@@ -1362,12 +1395,16 @@ function heroNums(s, X) {
   hv.appendChild(el('div', 'hn-s',
     (has(X) ? 'sur ' + i0(X) + ' L' : 'contenance inconnue')
     + (s.niveau ? ' · ' + String(s.niveau).toLowerCase() : '')));
-  hv.title = "Volume d'ECS estimé par l'automate : il ADDITIONNE l'eau livrée (débitmètre "
-           + "du circuit) et se RECALE à chaque franchissement de flotteur (8,2 / 17,3 / "
-           + "26,5 L). Le décompte de l'eau tirée aux puisages n'existe pas encore dans le "
-           + "programme — demandé le 21/08 : d'ici là, entre deux recalages, les puisages "
-           + "ne font pas baisser ce chiffre. La qualité de l'estimation est la première "
-           + "pastille sous les chiffres.";
+  hv.title = progNeuf
+    ? "Volume d'ECS estimé par l'automate (programme 2208b, D67) : eau livrée MOINS "
+      + "eau tirée, recalé à chaque franchissement de flotteur (8,2 / 17,3 / 26,5 L) — "
+      + "la « quantité exacte » demandée le 22/08. La qualité de l'estimation est la "
+      + "première pastille sous les chiffres."
+    : "Volume d'ECS estimé par l'automate : il ADDITIONNE l'eau livrée et se recale "
+      + "aux flotteurs — sur CE programme (antérieur au 2208b), les puisages ne font "
+      + "pas encore baisser ce chiffre entre deux recalages ; le programme 2208b "
+      + "corrige (D67, entrées − sorties). La pastille sous les chiffres dit la "
+      + "qualité de l'estimation.";
   box.appendChild(hv);
 
   const t = s.temp_c;
@@ -1490,6 +1527,75 @@ function caseTmaxRempl(s) {
   return box;
 }
 
+/* Moyenne des pertes — règle client du 22/08 : SEULES les mesures de moins
+   de trois jours comptent, les plus anciennes sortent d'elles-mêmes. Le
+   programme 2208b publie cette moyenne fenêtrée et son nombre de mesures
+   (perte_moy_nb) ; l'ancien programme publiait un lissage « sur 5 » sans
+   limite d'âge — l'infobulle le dit alors clairement. */
+function casePerteMoy(s, d) {
+  const box = el('div', 'st');
+  box.appendChild(el('div', 'k', 'Moyenne, 3 jours'));
+  const val = el('div', 'v');
+  const neuf = !!(d && d.prog) || has(s.perte_moy_nb);
+  if (has(s.perte_moy_w) && isFinite(s.perte_moy_w)) {
+    val.appendChild(document.createTextNode(n(s.perte_moy_w, 0)));
+    val.appendChild(el('small', null, ' W'));
+    box.title = neuf
+      ? "Moyenne des " + (has(s.perte_moy_nb) ? i0(s.perte_moy_nb) + ' ' : '')
+        + "mesures de moins de 3 jours (programme 2208b) : les plus anciennes "
+        + "sortent d'elles-mêmes du calcul, et la moyenne repart de zéro après "
+        + "un redémarrage de l'automate — jamais de vieille valeur restaurée."
+      : "ATTENTION, ancien programme : cette valeur est un lissage « sur 5 » "
+        + "SANS limite d'âge — une mesure très ancienne pèse encore. Le "
+        + "programme 2208b applique la règle des 3 jours (décision du 22/08).";
+  } else if (has(s.perte_w)) {
+    box.className = 'st attente';
+    val.appendChild(document.createTextNode('—'));
+    box.title = "Aucune mesure de moins de 3 jours : les anciennes sont sorties "
+              + "de la moyenne (règle du 22/08).";
+  } else {
+    box.className = 'st attente';
+    val.appendChild(document.createTextNode('—'));
+    box.title = "Publiée avec les pertes, dès la première fenêtre aboutie.";
+  }
+  box.appendChild(val);
+  return box;
+}
+
+/* Refroidissement ramené à la CUVE PLEINE (demande client du 22/08).
+   Le °C/h brut dépend de la quantité d'ECS présente ; les pertes en watts,
+   elles, intègrent déjà le volume du moment (perte_w = volume × 1,163 ×
+   pente, calcul D62 de l'automate). On les redistribue donc sur la
+   contenance : °C/h pleine = perte_w ÷ (X × 1,163). Dérivation exacte de
+   deux champs publiés — la page ne mesure rien, elle convertit.
+   Hypothèse assumée : les pertes en watts varient peu avec le remplissage
+   (moins de paroi mouillée à cuve basse -> l'estimation est légèrement
+   optimiste quand la mesure a été faite cuve presque vide). */
+function caseRefroidissementPlein(s) {
+  const box = el('div', 'st');
+  box.appendChild(el('div', 'k', 'Refroidissement, cuve pleine'));
+  const val = el('div', 'v');
+  if (has(s.perte_w) && isFinite(s.perte_w) && has(s.X_l) && s.X_l > 0) {
+    const v = s.perte_w / (s.X_l * 1.163);
+    val.appendChild(document.createTextNode(n(v, 2)));
+    val.appendChild(el('small', null, ' °C/h'));
+    box.title = "Estimation à cuve PLEINE (" + i0(s.X_l) + " L) : les pertes mesurées ("
+              + n(s.perte_w, 0) + " W) redistribuées sur toute la contenance — "
+              + n(s.perte_w, 0) + " ÷ (" + i0(s.X_l) + " × 1,163) = " + n(v, 2)
+              + " °C/h. C'est le chiffre comparable d'une mesure à l'autre et d'une "
+              + "cuve à l'autre, contrairement au °C/h mesuré qui dépend du "
+              + "remplissage. Hypothèse : pertes en watts peu sensibles au niveau — "
+              + "légèrement optimiste si la mesure a été faite cuve presque vide.";
+  } else {
+    box.className = 'st attente';
+    val.appendChild(document.createTextNode('—'));
+    box.title = "Calculée dès que l'automate publie des pertes : pertes (W) ÷ "
+              + "(contenance × 1,163). Aucun changement de programme nécessaire.";
+  }
+  box.appendChild(val);
+  return box;
+}
+
 function caseAmbiante(s, d) {
   const box = el('div', 'st');
   box.appendChild(el('div', 'k', 'T° ambiante'));
@@ -1533,6 +1639,7 @@ function rendreSats(d) {
   const K = H_REF / Xmax;                  /* pixels par litre, identique partout */
   const heroMin = H_REF + 22;              /* aligne le « sol » des cuves entre cartes */
 
+  const progNeuf = !!(d && d.prog);      /* programme 2208b ou plus récent */
   circuits.forEach((c, ci) => (c.satellites || []).forEach(s => {
     total++;
     const lettre = ci === 0 ? 'a' : 'b';
@@ -1580,7 +1687,7 @@ function rendreSats(d) {
     const hero = el('div', 'sat-hero');
     hero.style.minHeight = heroMin + 'px';
     hero.appendChild(dessinerCuve(s, K));
-    if (s.ok) hero.appendChild(heroNums(s, s.X_l));
+    if (s.ok) hero.appendChild(heroNums(s, s.X_l, progNeuf));
     card.appendChild(hero);
 
     if (!s.ok) {
@@ -1678,8 +1785,9 @@ function rendreSats(d) {
     const mP = el('div', 'mini');
     mP.appendChild(statCase(SAT_PERTES[0], s, 'st'));
     mP.appendChild(casePerteNorm35(s, d));
+    mP.appendChild(casePerteMoy(s, d));
     mP.appendChild(statCase(SAT_PERTES[1], s, 'st'));
-    mP.appendChild(statCase(SAT_PERTES[2], s, 'st'));
+    mP.appendChild(caseRefroidissementPlein(s));
     mP.appendChild(caseAmbiante(s, d));
     const notesP = [];
     if (s.perte_fiable === false)
@@ -1837,13 +1945,14 @@ function rendreMesures(d) {
   if (vfd)  ligne(box, 'Variateur', vfd.ok ? n(vfd.freq_hz) + ' Hz · ' + n(vfd.courant_a, 2) + ' A' : 'sans réponse', !vfd.ok);
   if (vfd && vfd.ok) ligne(box, 'Bus continu', n(vfd.vbus_v, 0) + ' V');
   if (sdm)  ligne(box, 'Électricité', sdm.ok ? n(sdm.puissance_w, 0) + ' W · ' + n(sdm.energie_kwh) + ' kWh' : 'sans réponse', !sdm.ok);
-  if (madd) ligne(box, 'Énergie thermique', madd.ok ? n(madd.energie_mwh, 3) + ' MWh' : 'sans réponse', !madd.ok);
+  if (madd) ligne(box, 'Énergie thermique', madd.ok ? n(madd.energie_mwh, 3) + ' ' + (madd.energie_unite || 'MWh') : 'sans réponse', !madd.ok);
   if (madd && madd.ok) ligne(box, 'Débit production', n(madd.debit_lh, 0) + ' L/h');
   if (has(ch.mesures_age_s)) ligne(box, 'Âge du relevé', duree(ch.mesures_age_s));
 }
 
-/* PRODUCTION. Si le compteur répond ok:false, on le dit en clair : à Épinal
-   ces appareils ne sont pas raccordés, ce n'est pas un défaut d'affichage. */
+/* PRODUCTION. Si un compteur répond ok:false, la note sous l'encadré dit
+   quoi vérifier (câblage, adresse Modbus, appareil). Lot 5 : notes sur le
+   rafraîchissement de la carte et décodage du code erreur du compteur. */
 function rendreProduction(d) {
   const ch = (d && d.chaufferie) || {};
   remplirStats('#statProdTh', PROD_TH, d);
@@ -1853,13 +1962,35 @@ function rendreProduction(d) {
     if (!app) { b.appendChild(el('p', 'peu-fiable-note',
       "Ce compteur n'apparaît pas dans le dernier envoi.")); return; }
     if (app.ok === false) b.appendChild(el('p', 'peu-fiable-note',
-      "Le compteur " + nom + " ne répond pas sur le bus — il n'est pas raccordé à Épinal. "
-      + "« Sans réponse » est donc l'affichage correct, pas un défaut de la page."));
+      "Le compteur " + nom + " ne répond pas sur le bus : câblage, adresse Modbus ou "
+      + "appareil à vérifier. La page affiche « — », jamais une ancienne valeur."));
     else if (has(ch.mesures_age_s)) b.appendChild(el('p', 'peu-fiable-note',
       'Relevé il y a ' + duree(ch.mesures_age_s) + '.'));
   };
   note('#prodThNote', ch.maddalena, 'Maddalena');
   note('#prodElNote', ch.sdm120, 'SDM120');
+  const ma = ch.maddalena;
+  if (ma && ma.ok) {
+    const b = $('#prodThNote');
+    b.appendChild(el('p', 'peu-fiable-note',
+      "La carte Modbus du compteur ne rafraîchit ses données que toutes les 10 min "
+      + "sur pile (2 min si le compteur est alimenté) : « relevé il y a… » date la "
+      + "lecture par l'automate, pas la mesure elle-même."));
+    if (has(ma.erreur) && ma.erreur) {
+      const bits = [];
+      if (ma.erreur & 1)   bits.push('sonde T1 coupée');
+      if (ma.erreur & 2)   bits.push('sonde T1 en court-circuit');
+      if (ma.erreur & 4)   bits.push('sonde T2 coupée');
+      if (ma.erreur & 8)   bits.push('sonde T2 en court-circuit');
+      if (ma.erreur & 16)  bits.push('défaut débitmètre (bobine ou manque d\u2019eau)');
+      if (ma.erreur & 32)  bits.push('défaut électronique');
+      if (ma.erreur & 64)  bits.push('redémarrage récent du compteur');
+      if (ma.erreur & 128) bits.push('pile faible');
+      b.appendChild(el('p', 'peu-fiable-note',
+        'Le compteur signale un code erreur ' + i0(ma.erreur)
+        + (bits.length ? ' — ' + bits.join(', ') : '') + '.'));
+    }
+  }
 }
 
 /* Écho des réglages réellement appliqués par l'automate (§6.3). */
@@ -2443,12 +2574,14 @@ function demo() {
   const puise1 = cA === 0 && cyc < 12;               /* puisage visible au repos */
   return {
     device_id: 'chaufferie-01', seq: Math.floor(t / 5), uptime_s: 10049, rssi_dbm: -72,
-    cfg_version: 0, fw_epoch: 5, simulation: false, nb_sats: 3, nb_sats_b: 0,
+    cfg_version: 0, fw_epoch: 5, simulation: false, prog: '2208b', nb_sats: 3, nb_sats_b: 0,
     trains: [train('A', cA, 'SA1', 59, 3.3), train('B', 0, null, 38, 5)],
     chaufferie: {
       vfd: {ok: true, etat: 3, freq_hz: cA === 0 ? 0 : 65, vbus_v: 319, courant_a: cA === 0 ? 0 : 1.4},
       sdm120: {ok: false},
-      maddalena: {ok: false},
+      maddalena: {ok: true, puissance_w: 28, t_depart_c: 25.0, t_retour_c: 24.0,
+                  debit_lh: 11, energie_mwh: 2.427, energie_unite: 'MWh',
+                  volume_m3: 213.42},
       mesures_age_s: 3,
       eau: {impulsions: 271, litres: 135.5, zlan_ok: true, source: 'ZLAN6808',
             qa: {voie: 1, impulsions: 271, litres: 135.5, ok: true},
@@ -2470,7 +2603,7 @@ function demo() {
           conso_totale_l: 1271, tiree_l: 58.5,
           tiree_depuis_s: puise1 ? cyc : 60 + cyc, puise: puise1,
           rempl_nb: 21, rempl_moy_l_min: 8.4,
-          perte_w: 58, perte_norm35_w: 49, perte_moy_w: 55, perte_degh: 0.85,
+          perte_w: 58, perte_norm35_w: 49, perte_moy_w: 55, perte_moy_nb: 4, perte_degh: 0.85,
           perte_age_s: 1240, perte_fiable: true,
           X_l: 59, Y_l: 3.3, marge_l: 1, cible_l: 58,
           temp_c: 57.8, etalonnage: {bas: 8.2, milieu: 17.3, haut: 26.5},
@@ -2482,7 +2615,7 @@ function demo() {
           conso_totale_l: 812, tiree_l: 640.2,
           tiree_depuis_s: 4210, puise: false,
           rempl_nb: 9, rempl_moy_l_min: 7.9,
-          perte_w: 71, perte_norm35_w: 66, perte_moy_w: 69, perte_degh: 1.32,
+          perte_w: 34, perte_norm35_w: 31, perte_moy_w: 36, perte_moy_nb: 2, perte_degh: 1.32,
           perte_age_s: 3610, perte_fiable: false,
           X_l: 39, Y_l: 4.7, marge_l: 1, cible_l: 38,
           temp_c: 49.2, etalonnage: {bas: 8.2, milieu: 17.3, haut: 26.5},
@@ -2514,7 +2647,7 @@ function demo() {
 if (SHOW) document.body.classList.add('presentation');
 construireFormulaire();
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'pupitre — ui ' + LOT + ' · lot 4 — 21/08/2026';
+$('#footVer').textContent = 'pupitre — ui ' + LOT + ' · lot 7 — 22/08/2026';
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
 setInterval(relever, DEMO ? 1000 : PERIODE_MS);
