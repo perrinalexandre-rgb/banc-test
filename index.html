@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · ui 2408.14 (lot 14, 24/08/2026)
+   enovaQ — pupitre de supervision · ui 2608.15b (lot 15b, 26/08/2026)
    Socle v4 conservé (fond blanc, décision client B.1) : papier technique,
    filets fins, encre presque noire, cuivre (A) / vert-de-gris (B), ambre et
    bleu réservés à l'eau (ECS / EFS).
@@ -79,6 +79,28 @@
    (rempl_therm_nb, réchauffage D78 livré ÉTEINT : « rech_actif » dans les
    Réglages, seuil « rech_seuil_c ») ; secours volumétrique du CNB signalé
    partout (D76) ; textes des cases puisage passés au programme 2408.
+   Lot 14b (24/08/2026, programme 2408b) : la moitié manquante du tableau —
+   les statistiques du DERNIER REMPLISSAGE arrivent de l'automate (D81) :
+   « il y a », vitesse, durée, pression moyenne pendant le remplissage,
+   pression moyenne lissée sur 5, et T° max en sortie de pompe (la mesure
+   automate remplace l'« observé » de la page dès qu'elle existe). La case
+   « Débit instantané » des circuits est câblée sur le champ déjà publié
+   par les trains. Mémoires D81 en RAM : « — » après un redémarrage,
+   jusqu'au remplissage suivant.
+   Lot 15 (26/08/2026, programme 2608) : la passe d'infobulles — chaque
+   encadré explique au survol comment sa valeur est obtenue (méthode,
+   fenêtre, mises en garde) ; « Dernier remplissage, il y a » déménage
+   d'EAU vers REMPLISSAGE, sa vraie famille ; deux cases neuves du
+   mitigeur (« Dose EFS du dernier », « Correction du mitigeur ») ; les
+   Réglages gagnent l'interrupteur et la cible du mitigeur (D88) et
+   perdent « Volume après la sonde », obsolète (la sonde EST
+   l'embranchement) ; les pertes racontent le trône (D89 : le meilleur
+   échantillon règne, minimum 2 h, âge en jours assumé) et l'écart du
+   bilan dit comment se réaligner (RAZ Livrée + Tirée ensemble).
+   Lot 15b (26/08/2026, programme 2608b) : la mesure ÉTALON des pertes
+   (D89b) — cuve remplie, 30 min après un remplissage, ≥ 2 h de calme —
+   prime sur tout le reste ; la note des pertes écrit « estimatif »
+   quand le champion n'en est pas une.
    ══════════════════════════════════════════════════════════════════════════ */
 :root{
   --ground:#F4F5F3; --panel:#FFFFFF; --panel2:#F2F4F2; --panel3:#FAFBFA;
@@ -665,7 +687,7 @@ const API = {
   config:    '/api/config',   // POST → config servie à l'automate à son prochain envoi
 };
 const DEVICE     = 'chaufferie-01';
-const LOT        = '2408.14';  // marqueur « ui » — bandeau et pied de page
+const LOT        = '2608.15b'; // marqueur « ui » — bandeau et pied de page
 const PERIODE_MS = 3000;      // cadence de tirage de la page
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -825,13 +847,14 @@ const SAT_EAU = [
    aide:"Vitesse moyenne de la session de puisage en cours.",
    absent:"Publié par le programme 2408 pendant un puisage : vitesse de la session "
         +"en cours (D75)."},
-  {k:'Dernier remplissage, il y a', champ:'rempl_dernier_age_s', type:'duree',
-   aide:"Temps écoulé depuis la fin du dernier remplissage de cette cuve.",
-   absent:"À publier par l'automate (demande du 21/08) : âge de la fin du dernier "
-        +"remplissage."},
 ];
 
 const SAT_REMPL = [
+  {k:'Dernier remplissage, il y a', champ:'rempl_dernier_age_s', type:'duree',
+   aide:"Temps écoulé depuis la fin du dernier remplissage de cette cuve (D81) — "
+       +"déménagé d'EAU au lot 15 : c'est un fait de remplissage.",
+   absent:"Publié par le programme 2408b après le premier remplissage mesuré depuis le "
+        +"démarrage de l'automate (« — » après un redémarrage, jusqu'au suivant)."},
   {k:'Nb remplissages', champ:'rempl_nb', dec:0,
    aide:"Nombre de remplissages complets mesurés par l'automate (mémorisé entre les redémarrages).",
    absent:"L'automate ne publie ce compteur qu'après un premier remplissage complet "
@@ -839,31 +862,63 @@ const SAT_REMPL = [
         +"Si la cuve s'est pourtant remplie plusieurs fois, le point est à vérifier "
         +"côté automate."},
   {k:'Vitesse moy. rempl.', champ:'rempl_moy_l_min', unite:'L/min', dec:1,
-   aide:"Moyenne lissée sur les cinq derniers remplissages.",
+   aide:"Litres attribués ÷ durée, lissés sur les cinq derniers remplissages. Un "
+       +"chiffre bien au-dessus de ~10 L/min trahit un héritage d'anciennes mesures : "
+       +"« Vitesse du dernier » fait foi, ou RAZ sélective « Remplissages ».",
    absent:"Publiée avec le nombre de remplissages, après le premier remplissage mesuré."},
   {k:'Pression moy. rempl.', champ:'rempl_moy_bar', unite:'bar', dec:1,
-   aide:"Pression moyenne pendant les remplissages, lissée sur cinq comme la vitesse — "
-       +"demande client du 21/08, case prévue côté automate."},
+   aide:"Pression moyenne pendant les remplissages, lissée sur cinq comme la vitesse "
+       +"(programme 2408b, D81) — depuis le dernier démarrage de l'automate.",
+   absent:"Publiée par le programme 2408b après un premier remplissage mesuré avec le "
+        +"capteur de pression en service. Mémoire non conservée au redémarrage."},
   {k:'Vitesse du dernier', champ:'rempl_dernier_l_min', unite:'L/min', dec:1,
-   aide:"Vitesse du dernier remplissage — case prévue côté automate (priorité SA1)."},
+   aide:"Vitesse du dernier remplissage (programme 2408b, D81).",
+   absent:"Publiée par le programme 2408b après le premier remplissage mesuré depuis "
+        +"le démarrage de l'automate."},
   {k:'Durée du dernier', champ:'rempl_dernier_duree_s', type:'duree',
-   aide:"Durée du dernier remplissage — case prévue côté automate."},
+   aide:"Chronomètre ouvert quand la vanne du satellite est confirmée ouverte, fermé "
+       +"à l'ordre de fermeture. Pour le dernier satellite du train, la bascule EFS "
+       +"et le bouchon sont inclus (une à deux minutes de plus) ; les pauses "
+       +"partagées avec l'autre circuit comptent aussi — un même volume peut donc "
+       +"durer plus ou moins selon sa place dans le train (D81).",
+   absent:"Publiée par le programme 2408b après le premier remplissage mesuré depuis "
+        +"le démarrage de l'automate."},
   {k:'Pression du dernier', champ:'rempl_dernier_bar', unite:'bar', dec:1,
-   aide:"Pression pendant le dernier remplissage — case prévue côté automate."},
+   aide:"Pression moyenne en sortie de pompe pendant le dernier remplissage "
+       +"(programme 2408b, D81).",
+   absent:"Publiée par le programme 2408b si le capteur de pression a répondu pendant "
+        +"le remplissage."},
+  {k:'Dose EFS du dernier', champ:'d88_dose_l', unite:'L', dec:1,
+   aide:"Litres d'eau froide volontairement poussés en fin de remplissage par le "
+       +"mitigeur (D88) pour viser la cible — en substitution, jamais en débordement.",
+   absent:"Publiée par le programme 2608 quand le mitigeur a dosé du froid au dernier "
+        +"remplissage ; « — » sinon (aucune dose nécessaire, ou mitigeur coupé)."},
+  {k:'Correction du mitigeur', champ:'d88_biais_c', unite:'°C', dec:1,
+   aide:"Biais appris par le mitigeur (D88) pour CE satellite : l'écart systématique "
+       +"entre sa prévision et la température lue 5 min après chaque remplissage. "
+       +"Demi-pas, borné à ±5 °C, mémorisé entre les redémarrages.",
+   absent:"Publiée par le programme 2608 quand le mitigeur (D88) est actif."},
 ];
 
 const SAT_PERTES = [
   {k:'Pertes',          champ:'perte_w',        unite:'W',    dec:0,
-   aide:"Puissance perdue par la cuve, mesurée sur la dérive de température au repos.",
-   absent:"Publiées après une première fenêtre aboutie : commencée au moins 45 min "
-        +"après un remplissage (15 min après un simple puisage), longue d'au moins "
-        +"1 h sans aucun mouvement d'eau, close et calculée au puisage suivant "
-        +"(programme 2308 ; l'ancien programme se contentait de 15 min après "
-        +"tout flux). Sonde de température en service exigée."},
+   aide:"Puissance perdue par la cuve, mesurée sur la dérive de température au repos. "
+       +"Depuis le programme 2608, c'est le MEILLEUR échantillon qui s'affiche — le "
+       +"plus long, cuve pleine de préférence — et il règne jusqu'à mieux ou 3 jours "
+       +"(D89). Son âge, indiqué sous les cases, peut donc atteindre plusieurs "
+       +"jours : c'est voulu, la fiabilité prime sur la fraîcheur. Une mesure "
+       +"ÉTALON — cuve remplie, fenêtre ouverte dans les 40 min après un "
+       +"remplissage, au moins 2 h de calme — prime toujours sur une estimative ; "
+       +"sinon, la note sous les cases dit « estimatif » (D89b).",
+   absent:"Publiées après une première fenêtre aboutie : commencée au moins 30 min "
+        +"après un remplissage et 1 h après un puisage (règle nuit du 24/08), longue "
+        +"d'au moins 2 h sans aucun mouvement d'eau (programme 2608, D89). Sonde de "
+        +"température en service exigée."},
   {k:'Refroidissement mesuré', champ:'perte_degh', unite:'°C/h', dec:2,
-   aide:"Vitesse de refroidissement AU VOLUME PRÉSENT lors de la mesure : à pertes "
-       +"égales, moitié d'eau = °C/h double. Ce chiffre dépend donc du remplissage — "
-       +"pour comparer, voir la case « cuve pleine » à côté.",
+   aide:"Pente de la droite ajustée sur TOUTES les lectures de la fenêtre calme "
+       +"(une toutes les 10 s, régression) — pas un simple écart entre deux points. "
+       +"C'est une vitesse AU VOLUME PRÉSENT lors de la mesure : à pertes égales, "
+       +"moitié d'eau = °C/h double ; pour comparer, voir « cuve pleine » à côté.",
    absent:"Publié avec les pertes."},
 ];
 
@@ -897,8 +952,11 @@ const APPARTEMENTS = {
 
 /* Cases par circuit, sous la barre de progression du rail. */
 const CIRCUIT_STATS = [
-  {k:'Débit instantané', champA:null, champB:null, unite:'L/min', dec:1,
-   aide:"À publier par l'automate (CDC B.5.1)."},
+  {k:'Débit instantané', champA:'trains.0.debit_l_min', champB:'trains.1.debit_l_min',
+   unite:'L/min', dec:1,
+   aide:"Débit du compteur du circuit, publié par l'automate pendant un pompage (D45).",
+   absent:"Publié pendant un pompage seulement (moins de 8 s après le dernier "
+        +"demi-litre) : « — » au repos, c'est normal."},
   {k:'Actionnements vanne de retour', champA:null, champB:null, dec:0, aide:"CDC A.6."},
 ];
 
@@ -1338,7 +1396,10 @@ function bilanEau(s) {
       : "ECS prélevée à la cuve, comptée par le compteur de sortie (voie " + di + ")."));
   box.appendChild(caseBilan('ecart', 'Écart', ecart,
     ecart === null ? "Calculable dès que les deux compteurs sont disponibles."
-                   : "Livrée moins tirée. N'a de sens que si les deux compteurs partent du même point zéro."));
+                   : "Livrée moins tirée. N'a de sens que si les deux compteurs partent du même "
+                     + "point zéro — pour les réaligner : RAZ sélective, cocher « Eau livrée » ET "
+                     + "« Eau tirée » ensemble. L'écart repart alors de zéro et ne doit plus "
+                     + "refléter que le stock, borné par la contenance des cuves."));
   frag.appendChild(box);
   frag.appendChild(el('div', 'bilan-note', tiree === null
     ? "Compteur de sortie (" + di + ") pas encore vu par l'automate."
@@ -1572,7 +1633,7 @@ function casePerteNorm35(s, d) {
 }
 
 /* T° maxi en sortie de pompe pendant le dernier remplissage de cette cuve.
-   Champ exact demandé à l'automate (rempl_dernier_tmax_c). En attendant,
+   Champ publié par le programme 2408b (rempl_dernier_tmax_c, D81). Avant lui,
    la page OBSERVE elle-même : pendant qu'un train remplit cette cuve
    (E2 à E6), elle retient le maximum de la sonde de sortie de pompe, et le
    fige à la fin du remplissage. Valeur marquée « observé » : échantillonnée
@@ -1617,13 +1678,13 @@ function caseTmaxRempl(s) {
     val.appendChild(el('small', null, ' °C · observé'));
     box.title = "Relevé PAR LA PAGE pendant le dernier remplissage observé depuis son "
               + "ouverture (échantillon toutes les 3 s, sonde lue toutes les 10 s) : un "
-              + "ordre de grandeur, pas une mesure d'automate. Champ exact demandé côté "
-              + "automate : rempl_dernier_tmax_c (21/08).";
+              + "ordre de grandeur, pas une mesure d'automate — remplacé par la mesure "
+              + "de l'automate (rempl_dernier_tmax_c, programme 2408b) dès qu'elle arrive.";
   } else {
     box.className = 'st attente';
     val.appendChild(document.createTextNode('—'));
     box.title = "Température maximale en sortie de pompe pendant le dernier remplissage — "
-              + "champ demandé à l'automate (rempl_dernier_tmax_c, 21/08). En attendant, "
+              + "publié par le programme 2408b (D81) au premier remplissage. En attendant, "
               + "la page l'observera elle-même au premier remplissage complet qui se "
               + "déroule pendant qu'elle est ouverte.";
   }
@@ -1646,9 +1707,10 @@ function casePerteMoy(s, d) {
     val.appendChild(el('small', null, ' W'));
     box.title = neuf
       ? "Moyenne des " + (has(s.perte_moy_nb) ? i0(s.perte_moy_nb) + ' ' : '')
-        + "mesures de moins de 3 jours (programme 2308) : les plus anciennes "
-        + "sortent d'elles-mêmes du calcul, et la moyenne repart de zéro après "
-        + "un redémarrage de l'automate — jamais de vieille valeur restaurée."
+        + "mesures de moins de 3 jours : les plus anciennes sortent d'elles-mêmes "
+        + "du calcul, et la moyenne repart de zéro après un redémarrage — jamais de "
+        + "vieille valeur restaurée. Seules les fenêtres CLOSES y entrent : les "
+        + "provisoires du trône (D89) n'y comptent jamais deux fois."
       : "ATTENTION, ancien programme : cette valeur est un lissage « sur 5 » "
         + "SANS limite d'âge — une mesure très ancienne pèse encore. Le "
         + "programme 2308 applique la règle des 3 jours (décision du 23/08).";
@@ -1954,7 +2016,8 @@ function rendreSats(d) {
       if (has(s.perte_vol_l))
         tP += ' Mesure : à ' + n(s.perte_vol_l) + ' L'
             + (has(s.perte_tmoy_c) ? ' · T° moy ' + n(s.perte_tmoy_c) + ' °C' : '')
-            + (has(s.perte_duree_s) ? ' · fenêtre ' + duree(s.perte_duree_s) : '') + '.';
+            + (has(s.perte_duree_s) ? ' · fenêtre ' + duree(s.perte_duree_s) : '')
+            + (s.perte_etalon === false ? ' · estimatif' : '') + '.';
       notesP.push(el('div', 'peu-fiable-note', tP));
     }
     card.appendChild(famille('Pertes de stockage',
@@ -2169,8 +2232,9 @@ const CFG_LIBELLE = {
   amorcage_maj_pct:'Majoration d\u2019amorçage (%)', vannes_sous_flux:'Vannes sous flux',
   fermeture_attrib_s:'Fenêtre d\u2019attribution (s)', config_en_attente:'Config en attente',
   d58_seuil:'Seuil D58', pilot_therm:'Pilotage thermique',
-  vol_apres_sonde_l:'Volume après la sonde (L)', t_amb_defaut:'T° ambiante par défaut (°C)',
+  t_amb_defaut:'T° ambiante par défaut (°C)',
   rech_actif:'Réchauffage sous seuil (D78)', rech_seuil_c:'Seuil de réchauffage (°C)',
+  d88_actif:'Mitigeur (D88)', d88_cible_c:'Cible du mitigeur (°C)',
   raz_compteurs:'Remise à zéro des compteurs (un coup)',
   acq_defauts:'Acquittement des défauts (un coup)',
 };
@@ -2317,11 +2381,14 @@ const CHAMPS = [
   {k:'res_actif',         t:'bool',  l:'Surveillance réserve 300 L'},
   {k:'temp_actif',        t:'bool',  l:'Sondes de température'},
   {k:'pilot_therm',       t:'int',   min:0,   max:2,    l:'Pilotage thermique', u:'', aide:'mode, voir le firmware'},
-  {k:'vol_apres_sonde_l', t:'float', min:0,   max:50,   l:'Volume après la sonde', u:'L'},
   {k:'rech_actif',        t:'bool',  l:'Réchauffage sous seuil (D78)',
    aide:'livré ÉTEINT — remplissage forcé quand la T° ECS passe sous le seuil (programme 2408)'},
   {k:'rech_seuil_c',      t:'float', min:30,  max:60,   l:'Seuil de réchauffage', u:'°C',
    aide:'50 °C par défaut ; borné 30-60 par l\u2019automate'},
+  {k:'d88_actif',         t:'bool',  l:'Mitigeur (D88)',
+   aide:'livré ALLUMÉ — vise la cible après chaque remplissage ; commande série « d88 » équivalente'},
+  {k:'d88_cible_c',       t:'float', min:45,  max:60,   l:'Cible du mitigeur', u:'°C',
+   aide:'55 °C par défaut ; borné 45-60 par l\u2019automate'},
   {k:'t_amb_defaut',      t:'float', min:0,   max:40,   l:'Température ambiante par défaut', u:'°C',
    aide:'sert aux pertes ramenées à 35 °C tant qu\u2019il n\u2019y a pas de sonde'},
   {k:'C1',                t:'bool',  l:'Circuit A en service'},
@@ -2782,7 +2849,7 @@ function demo() {
   const puise1 = cA === 0 && cyc < 12;               /* puisage visible au repos */
   return {
     device_id: 'chaufferie-01', seq: Math.floor(t / 5), uptime_s: 10049, rssi_dbm: -72,
-    cfg_version: 0, fw_epoch: 5, simulation: false, prog: '2408', nb_sats: 3, nb_sats_b: 0,
+    cfg_version: 0, fw_epoch: 5, simulation: false, prog: '2608', nb_sats: 3, nb_sats_b: 0,
     trains: [train('A', cA, 'SA1', 59, 3.3), train('B', 0, null, 38, 5)],
     chaufferie: {
       vfd: {ok: true, etat: 3, freq_hz: cA === 0 ? 0 : 65, vbus_v: 319, courant_a: cA === 0 ? 0 : 1.4},
@@ -2814,8 +2881,9 @@ function demo() {
           perte_w: 58, perte_norm35_w: 49, perte_moy_w: 55, perte_moy_nb: 4, perte_degh: 0.85,
           perte_vol_l: 57.4, perte_tmoy_c: 57.8, perte_duree_s: 8100,
           rempl_therm_nb: 2,
-          perte_age_s: 1240, perte_fiable: true,
-          X_l: 59, Y_l: 3.3, marge_l: 1, cible_l: 58,
+          d88_biais_c: -0.8, d88_dose_l: 2.4,
+          perte_age_s: 1240, perte_fiable: true, perte_etalon: true,
+          X_l: 59, Y_l: 3.3, marge_l: 2, cible_l: 57,
           temp_c: 57.8, etalonnage: {bas: 8.2, milieu: 17.3, haut: 26.5},
           defauts: {cnb_muet: false, cnm_muet: false, cnh_muet: false, capteurs_fous: false,
                     vanne_alerte: false, quarantaine_s: 0, abandons: 0, servable: true}},
@@ -2827,7 +2895,7 @@ function demo() {
           rempl_nb: 9, rempl_moy_l_min: 7.9,
           perte_w: 34, perte_norm35_w: 31, perte_moy_w: 36, perte_moy_nb: 2, perte_degh: 1.32,
           perte_age_s: 3610, perte_fiable: false,
-          X_l: 39, Y_l: 4.7, marge_l: 1, cible_l: 38,
+          X_l: 39, Y_l: 4.7, marge_l: 2, cible_l: 37,
           temp_c: 49.2, etalonnage: {bas: 8.2, milieu: 17.3, haut: 26.5},
           defauts: {cnb_muet: false, cnm_muet: false, cnh_muet: false, capteurs_fous: false,
                     vanne_alerte: false, quarantaine_s: 0, abandons: 0, servable: true}},
@@ -2837,7 +2905,7 @@ function demo() {
           conso_totale_l: 401,
           /* volontairement SANS tiree_l, tiree_depuis_s, rempl_* : l'état
              réel constaté à Épinal, pour voir les « — » et leurs infobulles */
-          X_l: 39, Y_l: 5.7, marge_l: 1, cible_l: 38,
+          X_l: 39, Y_l: 5.7, marge_l: 2, cible_l: 37,
           temp_c: 61.3, etalonnage: {bas: 8.2, milieu: 17.3, haut: 26.5},
           defauts: {cnb_muet: false, cnm_muet: false, cnh_muet: false, capteurs_fous: false,
                     vanne_alerte: false, quarantaine_s: 0, abandons: 0, servable: true}},
@@ -2858,7 +2926,7 @@ function demo() {
 if (SHOW) document.body.classList.add('presentation');
 construireFormulaire();
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'pupitre — ui ' + LOT + ' · lot 14 — 24/08/2026';
+$('#footVer').textContent = 'pupitre — ui ' + LOT + ' · lot 15b — 26/08/2026';
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
 setInterval(relever, DEMO ? 1000 : PERIODE_MS);
