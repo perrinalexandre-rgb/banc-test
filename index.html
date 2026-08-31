@@ -9,10 +9,12 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · ui 3108.22 (lot 22, 31/08/2026)
-   Nom officiel du fichier : « enovaQ pupitre 3108.html » (règle de nommage
+   enovaQ — pupitre de supervision · ui 3108c.24 (lot 24, 31/08/2026)
+   Nom officiel du fichier : « enovaQ pupitre 3108b.html » (règle de nommage
    client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
    enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
+   LIVRAISON (règle client du 31/08, définitive) : fichiers remis DIRECTS,
+   jamais de .zip ni d'aucune archive.
    Socle v4 conservé (fond blanc, décision client B.1) : papier technique,
    filets fins, encre presque noire, cuivre (A) / vert-de-gris (B), ambre et
    bleu réservés à l'eau (ECS / EFS).
@@ -185,6 +187,40 @@
    cumulus n°6). REMPLISSAGE : cumul et moyenne du temps de remplissage.
    Réglages : « Confirmation avant réchauffage » (30 min), récup 20 L à
    40 % ; démo à jour.
+   Lot 23 (31/08/2026, retours client sur le 3108a) : (1) le SURVOL des
+   cartes satellites est RETIRÉ — le rafraîchissement périodique de la
+   page reconstruisait les cartes et repliait le détail en pleine lecture ;
+   les familles sont de nouveau visibles en permanence (on y reviendra
+   proprement si besoin). (2) Cotes des capteurs satellites ARRONDIES à
+   l'affichage : 8, 17 et 27 L (les valeurs fines restent dans les
+   réglages). (3) RÉSERVE D'AIR : cotes rondes 200 / 250 / 300 L, plus de
+   zone hachurée — l'eau bleue est dessinée AU MILIEU de la fourchette
+   donnée par les flotteurs (mi-chemin entre cuve vide et le capteur 200
+   si tout est sec, entre 200 et 250 si le rouge est mouillé, etc.), et un
+   flotteur MOUILLÉ CLIGNOTE dans sa couleur (rouge, noir, jaune), comme
+   une alarme. (4) Notes des compteurs électriques précisées : les trois
+   chapitres (pompe, auxiliaires, cumulus) existent depuis le lot 22 —
+   s'ils affichent « — », c'est que l'automate n'a pas reçu de réponse du
+   compteur sur le bus (adresses 5 et 6) ou qu'un programme antérieur au
+   3108 tourne encore.
+   Lot 24 (31/08/2026, GO client « sort le dernier pupitre ») :
+   (1) ÉLECTRICITÉ regroupée en UN SEUL TABLEAU (trois chapitres → un,
+   demande client : « prendre moins de place ») : une ligne par
+   compteur — « Compteur électrique pompe P1 », « Compteur élec
+   auxiliaires (automate, vannes motorisées, transfos…) », « Compteur
+   élec cumulus » — avec « WDM120-M · adresse n°7 / 5 / 6 » en petits
+   caractères sous le nom (l'adresse pompe suit le réglage
+   elec_pompe_addr, D114 : muet à l'adresse 1, déménagé en 7).
+   Colonnes Énergie / Puissance / Tension / Courant ; ligne GRISÉE +
+   note quand un compteur ne répond pas ; auxiliaires et cumulus ne
+   publient qu'énergie et puissance (« — » en tension/courant : normal,
+   pas une panne). (2) T° D'ARRIVÉE DE L'EFS dans les ORGANES PARTAGÉS
+   (sonde V7, temp_efs_c, minimum glissant 5 h en sous-texte — D91).
+   (3) Pression mise au capteur 1 MPa DÉFINITIF (D117, 10 bar — le
+   1,6 MPa sous-lisait ~15 %, réformé) : infobulle de l'organe, aide du
+   réglage, alerte « échelle ≠ 10 ». (4) Réglage « Adresse compteur
+   pompe » ajouté au formulaire (elec_pompe_addr, D114). Démo à jour
+   (EFS 14,8 °C, cumulus muet conservé pour montrer la ligne grisée).
    ══════════════════════════════════════════════════════════════════════════ */
 :root{
   --ground:#F4F5F3; --panel:#FFFFFF; --panel2:#F2F4F2; --panel3:#FAFBFA;
@@ -375,18 +411,9 @@ header{border-bottom:1px solid var(--line);background:var(--panel)}
 .sat-etat.defaut{color:var(--alert);background:rgba(188,54,38,.1)}
 .sat-etat.urgence{color:#fff;background:var(--alert)}
 .sat-etat.somm{color:var(--verdigris);background:rgba(28,119,103,.1)}
-/* Lot 22 (D113) : l'essentiel devant, le détail au survol. La zone
-   .sat-detail est repliée ; elle s'ouvre au survol de la carte (petit
-   délai anti-clignotement), au clic sur « détails », ou partout à la
-   fois avec ?detail dans l'adresse (impression). */
-.sat-detail{max-height:0;overflow:hidden;opacity:0;
-  transition:max-height .35s ease .12s,opacity .3s ease .12s}
-.sat:hover .sat-detail,.sat.ouvert .sat-detail,
-body.tout-detail .sat-detail{max-height:4000px;opacity:1}
-.sat-detail-hint{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);
-  font-family:var(--fs-cond);font-size:11px;letter-spacing:.08em;
-  color:var(--ink3);text-transform:uppercase;cursor:pointer;user-select:none}
-.sat:hover .sat-detail-hint,.sat.ouvert .sat-detail-hint{color:var(--ink2)}
+/* Lot 23 : le repli au survol du lot 22 est RETIRÉ (demande client du
+   31/08 — le rafraîchissement périodique repliait le détail en pleine
+   lecture). .sat-detail reste un simple conteneur, toujours visible. */
 .sat-fill{margin-top:8px;padding:6px 9px;border-radius:8px;font-size:12px;
   font-weight:600;color:var(--ecs);background:rgba(192,103,18,.08);
   border:1px solid rgba(192,103,18,.25)}
@@ -536,9 +563,6 @@ body.tout-detail .sat-detail{max-height:4000px;opacity:1}
   background:repeating-linear-gradient(90deg,var(--ink3) 0 3px,transparent 3px 7px)}
 .res-tube .eau{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,
   color-mix(in srgb,var(--efs) 46%,white),color-mix(in srgb,var(--efs) 22%,white));transition:height .5s}
-.res-tube .eau-flou{position:absolute;left:0;right:0;transition:bottom .5s,height .5s;
-  background:repeating-linear-gradient(-45deg,
-  color-mix(in srgb,var(--efs) 30%,white) 0 5px, color-mix(in srgb,var(--efs) 10%,white) 5px 10px)}
 .res-tube .air{position:absolute;left:0;right:0;top:0;height:24px;display:flex;align-items:center;
   justify-content:center;font-family:var(--fs-cond);font-size:10px;letter-spacing:.1em;color:var(--ink3);z-index:2}
 .res-floats{flex:1;position:relative;min-height:200px}
@@ -546,6 +570,9 @@ body.tout-detail .sat-detail{max-height:4000px;opacity:1}
 .flt i{width:11px;height:11px;border-radius:50%;flex:none;border:2px solid}
 .flt.j i{border-color:#B8930E} .flt.n i{border-color:#6C7B77} .flt.r i{border-color:#B7453A}
 .flt.j.wet i{background:#B8930E} .flt.n.wet i{background:#6C7B77} .flt.r.wet i{background:#B7453A}
+/* Lot 23 : un flotteur MOUILLÉ clignote dans sa couleur, comme une alarme */
+@keyframes resAlarme{0%,49%{opacity:1}50%,100%{opacity:.1}}
+.res-rep.wet i,.flt.wet i{animation:resAlarme 1s step-end infinite}
 .flt span{color:var(--ink2)} .flt b{margin-left:auto;font-family:var(--fs-mono);font-size:11px;color:var(--ink3)}
 
 /* ── réglages ─────────────────────────────────────────────────────────── */
@@ -575,6 +602,10 @@ table.sattab input{width:100%;min-width:62px;padding:5px 7px;border-radius:5px;b
   color:var(--ink);border:1px solid var(--line);font-family:var(--fs-mono);font-size:12.5px}
 table.sattab input.bad{border-color:var(--alert)}
 .tabwrap{overflow-x:auto}
+/* Lot 24 : tableau électricité — adresse en petit sous le nom, ligne
+   grisée quand le compteur ne répond pas. */
+.elec-adr{display:block;font-family:var(--fs-mono);font-size:10.5px;color:var(--ink3);margin-top:1px}
+table.sattab tr.elec-muet td{opacity:.45}
 .actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:18px}
 .btn{padding:9px 16px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);
   color:var(--ink);font-family:var(--fs-cond);font-weight:600;font-size:13.5px;letter-spacing:.05em;cursor:pointer}
@@ -647,12 +678,11 @@ body.presentation .brand{font-size:27px}
       <h3>Niveau <em>— trois flotteurs, dessinés à leur hauteur physique</em></h3>
       <div class="res">
         <div class="res-tube" id="resTube"><div class="air">air</div>
-          <div class="eau-flou" id="resEauFlou" style="height:0"></div>
           <div class="eau" id="resEau" style="height:0%"></div>
           <div class="res-demi" title="mi-cuve"></div></div>
         <div class="res-floats" id="resFloats"></div>
       </div>
-      <div class="kv" style="margin-top:12px"><span title="Encadré du volume d'eau déduit des trois flotteurs — la zone hachurée du dessin.">Fourchette déduite</span><b id="resBand">—</b></div>
+      <div class="kv" style="margin-top:12px"><span title="Encadré du volume d'eau déduit des trois flotteurs (cotes rondes 200 / 250 / 300 L).">Fourchette déduite</span><b id="resBand">—</b></div>
       <div class="kv"><span>Remplissage de la cuve</span><b id="resPct">—</b></div>
       <p class="peu-fiable-note">Les cotes en litres sont provisoires : elles seront corrigées au câblage des flotteurs.</p>
     </div>
@@ -669,25 +699,11 @@ body.presentation .brand{font-size:27px}
     <div id="prodThNote"></div>
   </section>
 
-  <h2 class="eyebrow">Électricité · pompe</h2>
+  <h2 class="eyebrow">Électricité</h2>
   <section class="card">
-    <h3>Compteur SDM120 <em>— adresse 1 : la pompe P1</em></h3>
-    <div class="stats" id="statElecPompe"></div>
-    <div id="elecPompeNote"></div>
-  </section>
-
-  <h2 class="eyebrow">Électricité · auxiliaires</h2>
-  <section class="card">
-    <h3>Compteur n°5 <em>— automate, transformateurs, vannes (D94)</em></h3>
-    <div class="stats" id="statElecAux"></div>
-    <div id="elecAuxNote"></div>
-  </section>
-
-  <h2 class="eyebrow">Électricité · cumulus</h2>
-  <section class="card">
-    <h3>Compteur n°6 <em>— les deux chauffe-eau 200 L (D94)</em></h3>
-    <div class="stats" id="statElecCum"></div>
-    <div id="elecCumNote"></div>
+    <h3>Les trois compteurs <em>— WDM120-M sur le bus, un tableau (lot 24)</em></h3>
+    <div class="tabwrap"><table class="sattab" id="elecTable"></table></div>
+    <div id="elecNote"></div>
   </section>
 
   <h2 class="eyebrow">Chaufferie</h2>
@@ -803,7 +819,7 @@ const API = {
   config:    '/api/config',   // POST → config servie à l'automate à son prochain envoi
 };
 const DEVICE     = 'chaufferie-01';
-const LOT        = '3108.22';  // marqueur « ui » — bandeau et pied de page
+const LOT        = '3108c.24';  // marqueur « ui » — bandeau et pied de page
 const PERIODE_MS = 3000;      // cadence de tirage de la page
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -813,9 +829,6 @@ const SEUIL_ECS_C   = 50;     // seul seuil métier connu : réchauffage sous 50
 
 const DEMO = new URLSearchParams(location.search).has('demo');
 const SHOW = new URLSearchParams(location.search).has('show');
-/* Lot 22 : ?detail deplie toutes les cartes satellites (impression). */
-const DETAIL = new URLSearchParams(location.search).has('detail');
-if (DETAIL) document.body.classList.add('tout-detail');
 
 /* ══════════════════════════════════════════════════════════════════════════
    2. LE REGISTRE DES INDICATEURS — le mécanisme central du tableau cible.
@@ -878,9 +891,12 @@ const RESERVE_CPT = [
   {k:'Reste avant le prochain', champ:null, unite:'L', dec:1},
   {k:'Depuis le dernier',       champ:null, type:'duree'},
   {k:'Niveau minimum déduit',   champ:'chaufferie.reserve.vol_min', unite:'L', dec:0,
-   aide:"Bas de la fourchette donnée par les flotteurs.",
+   calc: d => resRond(lire(d, 'chaufferie.reserve.vol_min')),
+   aide:"Bas de la fourchette donnée par les flotteurs (cotes rondes "
+       +"200 / 250 / 300 L, lot 23).",
    absent:"La réserve n'a pas encore été lue (module ZLAN muet ou surveillance désactivée)."},
   {k:'Niveau maximum déduit',   champ:'chaufferie.reserve.vol_max', unite:'L', dec:0,
+   calc: d => resRond(lire(d, 'chaufferie.reserve.vol_max')),
    absent:"La réserve n'a pas encore été lue."},
 ];
 
@@ -910,40 +926,35 @@ const PROD_TH = [
   {k:'Débit', champ:'chaufferie.maddalena.debit_lh', unite:'L/h', dec:0,
    absent:"Compteur Maddalena sans réponse."},
   {k:'T° eau froide source', champ:'chaufferie.temp_efs_c', unite:'°C', dec:1,
-   aide:"Température de l'eau froide à la source (sonde V7) — case prévue, "
-       +"l'automate ne la publie pas encore."},
+   aide:"Température de l'eau froide à la source (sonde V7, D91). Le minimum "
+       +"glissant 5 h (temp_efs_min5h_c) servira au rendement.",
+   absent:"Publiée dès que la sonde V7 répond sur le module PT100."},
 ];
-/* Lot 22 (client 31/08) : les TROIS compteurs d'énergie électrique, un
-   chapitre et un encadré chacun — pompe (SDM120, adresse 1), auxiliaires
-   (adresse 5), cumulus (adresse 6). D94. */
-const ELEC_POMPE = [
-  {k:'Énergie', champ:'chaufferie.sdm120.energie_kwh', unite:'kWh', dec:1,
-   aide:"Cumul du compteur SDM120 de la pompe P1 (adresse 1).",
-   absent:"Compteur SDM120 sans réponse sur le bus."},
-  {k:'Puissance', champ:'chaufferie.sdm120.puissance_w', unite:'W', dec:0,
-   absent:"Compteur SDM120 sans réponse."},
-  {k:'Tension', champ:'chaufferie.sdm120.tension_v', unite:'V', dec:0,
-   absent:"Compteur SDM120 sans réponse."},
-  {k:'Courant', champ:'chaufferie.sdm120.courant_a', unite:'A', dec:2,
-   absent:"Compteur SDM120 sans réponse."},
-];
-const ELEC_AUX = [
-  {k:'Énergie', champ:'chaufferie.elec_aux.energie_kwh', unite:'kWh', dec:1,
-   aide:"Compteur nº 5 : automate, transformateurs, vannes — tout sauf la pompe "
-       +"et les chauffe-eau (D94).",
-   absent:"Publiée dès que le compteur d'énergie à l'adresse 5 répond sur le bus."},
-  {k:'Puissance', champ:'chaufferie.elec_aux.puiss_w', unite:'W', dec:0,
-   absent:"Publiée avec l'énergie (compteur à l'adresse 5)."},
-];
-const ELEC_CUM = [
-  {k:'Énergie', champ:'chaufferie.elec_cumulus.energie_kwh', unite:'kWh', dec:1,
-   aide:"Compteur nº 6 : les deux cumulus 200 L en série. Le rendement d'un "
-       +"chauffe-eau valant 1, cette énergie électrique vaut l'énergie thermique "
-       +"produite — indicative : c'est le thermique ENTRANT (Maddalena) qui "
-       +"servira au rendement de l'installation (D94).",
-   absent:"Publiée dès que le compteur d'énergie à l'adresse 6 répond sur le bus."},
-  {k:'Puissance', champ:'chaufferie.elec_cumulus.puiss_w', unite:'W', dec:0,
-   absent:"Publiée avec l'énergie (compteur à l'adresse 6)."},
+/* Lot 24 (client 31/08, « regrouper les conso élec dans un seul tableau
+   pour prendre moins de place ») : UN tableau, une ligne par compteur.
+   Les auxiliaires et le cumulus ne publient qu'énergie et puissance :
+   « — » en tension/courant, c'est NORMAL, pas une panne. L'adresse de la
+   pompe suit le réglage elec_pompe_addr (D114 : muette à l'adresse 1
+   — collision d'usine probable —, le compteur a déménagé en 7). */
+const ELEC_LIGNES = [
+  {cle:'sdm120', nom:'Compteur électrique pompe P1',
+   adresse: cf => (cf && has(cf.elec_pompe_addr)) ? cf.elec_pompe_addr : 7,
+   cols:[['energie_kwh','kWh',1], ['puissance_w','W',0], ['tension_v','V',0], ['courant_a','A',2]],
+   aide:"Le compteur de la pompe P1. Adresse réglable (elec_pompe_addr, "
+       +"D114) : muet à l'adresse 1, il a déménagé à la 7."},
+  {cle:'elec_aux', nom:'Compteur élec auxiliaires (automate, vannes motorisées, transfos…)',
+   adresse: () => 5,
+   cols:[['energie_kwh','kWh',1], ['puiss_w','W',0], null, null],
+   aide:"Tout sauf la pompe et les chauffe-eau (D94). Ce compteur ne "
+       +"publie qu'énergie et puissance."},
+  {cle:'elec_cumulus', nom:'Compteur élec cumulus',
+   adresse: () => 6,
+   cols:[['energie_kwh','kWh',1], ['puiss_w','W',0], null, null],
+   aide:"Les deux cumulus 200 L en série. Le rendement d'un chauffe-eau "
+       +"valant 1, cette énergie électrique vaut l'énergie thermique "
+       +"produite — indicative : c'est le thermique ENTRANT (Maddalena) "
+       +"qui servira au rendement de l'installation (D94). Ce compteur ne "
+       +"publie qu'énergie et puissance."},
 ];
 
 const DIAG = [
@@ -1628,10 +1639,11 @@ function rendreOrganes(d) {
              'brut ' + i0(pr.brut) + (pr.sature ? ' — capteur saturé' : ''))
     : organe('ko', 'Pression sortie', '—', '',
              pr.ok === false ? 'pas de réponse du ZLAN' : 'boucle 4-20 mA ouverte');
-  oPres.title = "Capteur 1,6 MPa = 16 bar pleine échelle, 4-20 mA sur la voie AI5, "
-              + "sans pont diviseur (câblage D40). Zéro à 4 mA ; sous ~3 mA "
-              + "l'automate déclare la boucle ouverte ; à 20 mA il signale la "
-              + "saturation. Réglage correspondant : pres_bar_max = 16.";
+  oPres.title = "Capteur 1 MPa = 10 bar pleine échelle, DÉFINITIF (D117 — le "
+              + "1,6 MPa sous-lisait ~15 %, réformé), 4-20 mA sur la voie AI6 "
+              + "(D92). La carte rend une échelle déjà calée : 0 = 4 mA (D116). "
+              + "Brut à zéro = boucle ouverte ; brut en butée = saturation. "
+              + "Réglage correspondant : pres_bar_max = 10.";
   box.appendChild(oPres);
 
   box.appendChild(tempValide(ch.temp_pompe_c)
@@ -1643,6 +1655,21 @@ function rendreOrganes(d) {
     ? organe('', 'Retour', n(ch.temp_retour_c), '°C', 'sonde V8, avant la cuve d\'air')
     : organe('ko', 'Retour', '—', '',
              has(ch.temp_retour_c) ? 'valeur hors plage' : 'sonde muette'));
+
+  /* Lot 24 (client 31/08) : la température d'arrivée de l'eau froide dans
+     les organes partagés — sonde V7 (D91), minimum glissant 5 h en
+     sous-texte : c'est LUI qui servira au rendement (la vraie eau froide,
+     pas l'eau tiédie dans le tube). */
+  const oEfs = tempValide(ch.temp_efs_c)
+    ? organe('', 'Arrivée EFS', n(ch.temp_efs_c), '°C',
+             'sonde V7' + (tempValide(ch.temp_efs_min5h_c)
+                           ? ' · min 5 h ' + n(ch.temp_efs_min5h_c) + ' °C' : ''))
+    : organe('ko', 'Arrivée EFS', '—', '',
+             has(ch.temp_efs_c) ? 'valeur hors plage — sonde débranchée ?' : 'sonde muette');
+  oEfs.title = "Température de l'eau froide sanitaire à l'arrivée (sonde V7, D91). "
+             + "Le minimum glissant sur 5 h est la référence pour le rendement : "
+             + "c'est la vraie eau froide, pas l'eau qui a tiédi dans le tube.";
+  box.appendChild(oEfs);
 
   [['#tieA', 0, 'var(--cuivre)'], ['#tieB', 1, 'var(--verdigris)']].forEach(([sel, idx, col]) => {
     const t = trains[idx], tie = $(sel);
@@ -1809,7 +1836,7 @@ function dessinerCuve(s, K) {
     if (!has(et[k])) return;
     const tk = el('div', 'tick' + (on ? ' on' : ''));
     tk.style.bottom = pct(et[k], X) + '%';
-    tk.title = nom + ' à ' + n(et[k]) + ' L — ' + (on ? 'immergé' : 'sec');
+    tk.title = nom + ' à ' + i0(et[k]) + ' L — ' + (on ? 'immergé' : 'sec');
     c.appendChild(tk);
   });
   const cb = el('div', 'cible'); cb.style.bottom = pct(cible, X) + '%';
@@ -1817,7 +1844,7 @@ function dessinerCuve(s, K) {
   /* graduations : la cote en litres écrite en face de chaque repère */
   [et.bas, et.milieu, et.haut].forEach(v => {
     if (!has(v)) return;
-    const lab = el('div', 'cuve-lab', n(v));
+    const lab = el('div', 'cuve-lab', i0(v));    /* lot 23 : cotes rondes */
     lab.style.bottom = 'calc(' + pct(v, X) + '% + 2px)';
     c.appendChild(lab);
   });
@@ -2128,10 +2155,11 @@ function rendreSats(d) {
      ['CNH', s.cnh, et2.haut, df.cnh_muet]].forEach(([k, on, vol, muet]) => {
       const c2 = el('div', 'cap' + (on ? ' wet' : '') + (muet ? ' def' : ''));
       c2.appendChild(el('i'));
-      c2.appendChild(el('span', null, k + ' ' + n(vol)));
+      c2.appendChild(el('span', null, k + ' ' + i0(vol)));
       c2.appendChild(el('b', 'cap-etat', on ? 'mouillé' : 'sec'));
       const bloque = muet && !on && has(s.volume_l) && has(vol) && s.volume_l > vol;
-      c2.title = k + ' à ' + n(vol) + ' L — se déclare ' + (on ? 'MOUILLÉ' : 'SEC')
+      c2.title = k + ' à ' + i0(vol) + ' L (cote arrondie, lot 23) — se déclare '
+               + (on ? 'MOUILLÉ' : 'SEC')
                + (muet ? ". DÉFAUT : déclaré muet par l'automate (voir l'encadré rouge)."
                  + (bloque
                    ? " L'eau est au-dessus de sa cote et il se dit encore sec : "
@@ -2150,7 +2178,7 @@ function rendreSats(d) {
       if (!muet) return;
       const bloque = !on && has(s.volume_l) && has(vol) && s.volume_l > vol;
       defs.push([nom,
-        "L'automate a compté au-delà de " + n(vol) + " L sans que ce flotteur réagisse : "
+        "L'automate a compté au-delà de " + i0(vol) + " L sans que ce flotteur réagisse : "
         + "il le déclare muet ou défectueux."
         + (bloque
           ? " Et il se dit toujours SEC alors que l'eau est au-dessus de sa cote : "
@@ -2219,9 +2247,8 @@ function rendreSats(d) {
       card.appendChild(fe);
     }
 
-    /* ---- niveau 3 : les familles de detail, repliees (lot 22) ----
-       Visibles au survol de la carte, au clic sur « détails », ou toutes
-       ensemble avec ?detail dans l'adresse. */
+    /* ---- niveau 3 : les familles de détail — TOUJOURS visibles (le
+       repli au survol du lot 22 est retiré, lot 23) ---- */
     const det = el('div', 'sat-detail');
 
     const mEau = el('div', 'mini');
@@ -2285,13 +2312,6 @@ function rendreSats(d) {
     SAT_COUTS.forEach(spec => mC.appendChild(statCase(spec, s, 'st')));
     det.appendChild(famille('Coûts et usure', [mC]));
 
-    const hint = el('div', 'sat-detail-hint',
-      '▾ détails — eau, remplissages, réchauffages, pertes, coûts');
-    hint.title = "Les chiffres de détail se déplient au survol de la carte ou "
-               + "d'un clic ici ; ajoutez ?detail à l'adresse pour tout "
-               + "déplier (impression).";
-    hint.addEventListener('click', () => card.classList.toggle('ouvert'));
-    card.appendChild(hint);
     card.appendChild(det);
 
     box.appendChild(card);
@@ -2311,14 +2331,15 @@ function ligne(box, k, v, ko, aide) {
   box.appendChild(d);
 }
 
-/* Réserve 300 L — lot 3 : les flotteurs sont dessinés à leur hauteur
-   PHYSIQUE dans la cuve (relevé client : tous dans la moitié haute, le
-   « bas » à peu près à mi-hauteur), pas à la hauteur de leur cote en
-   litres. Les cotes en litres (205 / 252,5 / 300) restent affichées mais
-   sont PROVISOIRES : corrigées au câblage des flotteurs.
-   L'eau est dessinée en plein jusqu'au dernier flotteur mouillé, puis en
-   hachuré jusqu'au flotteur suivant : la zone hachurée EST la fourchette
-   d'incertitude — on ne prétend jamais connaître le niveau mieux que ça. */
+/* Réserve 300 L — lot 3, refondu au lot 23 (client 31/08) : cotes RONDES
+   200 / 250 / 300 L, PLUS de zone hachurée — l'eau bleue est dessinée AU
+   MILIEU de la fourchette donnée par les flotteurs : à mi-chemin entre
+   cuve vide et le capteur 200 si tout est sec, entre 200 et 250 si le
+   rouge est mouillé, entre 250 et 300 si le noir l'est aussi, pleine si
+   le jaune est mouillé. Un flotteur MOUILLÉ CLIGNOTE dans sa couleur
+   (rouge, noir, jaune), comme une alarme. Les flotteurs restent dessinés
+   à leur hauteur PHYSIQUE dans la cuve (relevé client). */
+const resRond = v => has(v) && isFinite(v) ? Math.round(v / 50) * 50 : v;
 function rendreReserve(d) {
   const rs = ((d && d.chaufferie) || {}).reserve || {};
   const tube = $('#resTube');
@@ -2327,20 +2348,19 @@ function rendreReserve(d) {
   if (lu && (!rs.haut_mouille || !rs.milieu_mouille || !rs.bas_mouille))
     state.resJamaisSec = false;
 
-  /* [classe, nom, position physique en % de hauteur, cote provisoire en L, mouillé] */
+  /* [classe, nom, position physique en % de hauteur, cote ronde en L, mouillé] */
   const FLOTTEURS = [
-    ['j', 'Jaune', 92, 300,   rs.haut_mouille],
-    ['n', 'Noir',  72, 252.5, rs.milieu_mouille],
-    ['r', 'Rouge', 50, 205,   rs.bas_mouille],
+    ['j', 'Jaune', 92, 300, rs.haut_mouille],
+    ['n', 'Noir',  72, 250, rs.milieu_mouille],
+    ['r', 'Rouge', 50, 200, rs.bas_mouille],
   ];
 
   tube.querySelectorAll('.res-rep').forEach(e => e.remove());
   FLOTTEURS.forEach(([cl, nom, pos, vol, m]) => {
     const r = el('div', 'res-rep ' + cl + (m ? ' wet' : ''));
     r.style.bottom = pos + '%';
-    r.title = nom + ' — à ' + pos + ' % de la hauteur de la cuve (cote provisoire '
-            + n(vol, vol % 1 ? 1 : 0) + ' L) — '
-            + (lu ? (m ? 'mouillé' : 'sec') : 'lecture indisponible');
+    r.title = nom + ' — à ' + pos + ' % de la hauteur de la cuve (cote ' + i0(vol)
+            + ' L) — ' + (lu ? (m ? 'MOUILLÉ (clignote)' : 'sec') : 'lecture indisponible');
     r.appendChild(el('u'));
     r.appendChild(el('i'));
     tube.appendChild(r);
@@ -2350,34 +2370,31 @@ function rendreReserve(d) {
     const f = el('div', 'flt ' + cl + (m ? ' wet' : ''));
     f.style.bottom = pos + '%';               /* en face de son repère */
     f.appendChild(el('i'));
-    f.appendChild(el('span', null, nom + ' · ' + n(vol, vol % 1 ? 1 : 0) + ' L'));
+    f.appendChild(el('span', null, nom + ' · ' + i0(vol) + ' L'));
     f.appendChild(el('b', null, lu ? (m ? 'mouillé' : 'sec') : '—'));
     box.appendChild(f);
   });
 
-  /* eau : plein jusqu'au dernier flotteur mouillé, hachures jusqu'au suivant */
-  let plein = 0, flou = 0;
+  /* eau : AU MILIEU de la fourchette physique donnée par les flotteurs */
+  let eauPct = 0, litres = null;
   if (lu) {
-    if (rs.haut_mouille)        { plein = 92; flou = 100; }
-    else if (rs.milieu_mouille) { plein = 72; flou = 92; }
-    else if (rs.bas_mouille)    { plein = 50; flou = 72; }
-    else                        { plein = 0;  flou = 50; }
+    if (rs.haut_mouille)        { eauPct = 97;            litres = 300; }
+    else if (rs.milieu_mouille) { eauPct = (72 + 92) / 2; litres = 275; }
+    else if (rs.bas_mouille)    { eauPct = (50 + 72) / 2; litres = 225; }
+    else                        { eauPct = 25;            litres = 100; }
   }
-  const eau = $('#resEau'), eauFlou = $('#resEauFlou');
-  eau.style.height = plein + '%';
-  eauFlou.style.bottom = plein + '%';
-  eauFlou.style.height = Math.max(0, flou - plein) + '%';
-  eauFlou.title = lu ? "Le niveau réel est quelque part dans cette zone : entre le dernier "
-                     + "flotteur mouillé et le premier flotteur sec." : '';
+  const eau = $('#resEau');
+  eau.style.height = eauPct + '%';
+  eau.title = !lu ? '' :
+    "Niveau dessiné au MILIEU de la fourchette donnée par les flotteurs — "
+    + "on ne connaît pas mieux que ça (lot 23).";
 
   $('#resBand').textContent = !lu ? 'lecture indisponible'
-    : (has(rs.vol_min) && has(rs.vol_max)) ? n(rs.vol_min, 0) + ' – ' + n(rs.vol_max, 0) + ' L'
     : rs.haut_mouille ? "≥ 300 L — plus de matelas d'air"
-    : rs.milieu_mouille ? '252,5 – 300 L'
-    : rs.bas_mouille ? '205 – 252,5 L' : '< 205 L';
-  const p = lu && has(rs.vol_min) && has(rs.vol_max)
-    ? Math.round((rs.vol_min + rs.vol_max) / 2 / 300 * 100) : null;
-  $('#resPct').textContent = p === null ? '—' : '~' + p + ' %';
+    : rs.milieu_mouille ? '250 – 300 L'
+    : rs.bas_mouille ? '200 – 250 L' : '< 200 L';
+  $('#resPct').textContent = litres === null ? '—'
+    : '~' + Math.round(litres / 300 * 100) + ' %';
 }
 
 function rendreEau(d) {
@@ -2417,7 +2434,8 @@ function rendreTemp(d) {
   t('Départ production', ma.ok ? ma.t_depart_c : undefined, "Compteur d'énergie Maddalena.");
   t('Retour production', ma.ok ? ma.t_retour_c : undefined);
   t('Eau froide à la source (V7)', ch.temp_efs_c,
-    "Sonde prévue au tableau cible — s'affichera dès que l'automate publiera temp_efs_c.");
+    "Sonde V7 en amont des chauffe-eau (D91) ; le minimum glissant 5 h est la "
+    + "référence pour le rendement.");
   ligne(box, "Ambiante (autour de la réserve)",
         tempValide(ch.temp_amb_c) ? n(ch.temp_amb_c) + ' °C' : '—', !tempValide(ch.temp_amb_c),
         "Sonde d'ambiance prévue (voies 5 à 7 du module PT100 libres) : elle rendra "
@@ -2444,16 +2462,77 @@ function rendreMesures(d) {
 /* PRODUCTION. Si un compteur répond ok:false, la note sous l'encadré dit
    quoi vérifier (câblage, adresse Modbus, appareil). Lot 5 : notes sur le
    rafraîchissement de la carte et décodage du code erreur du compteur. */
+/* Lot 24 : le tableau unique des trois compteurs WDM120-M. Une ligne par
+   compteur, l'adresse en petit sous le nom. Ligne grisée quand le compteur
+   ne répond pas ; « — » sans grisé quand la grandeur n'est simplement pas
+   publiée (tension/courant des adresses 5 et 6). */
+function rendreElecTable(d) {
+  const ch = (d && d.chaufferie) || {};
+  const cf = (d && d.config_active) || null;
+  const t = $('#elecTable'); t.textContent = '';
+  const thead = document.createElement('thead');
+  const hr = document.createElement('tr');
+  ['Compteur', 'Énergie', 'Puissance', 'Tension', 'Courant'].forEach(h => {
+    const th = document.createElement('th'); th.textContent = h; hr.appendChild(th);
+  });
+  thead.appendChild(hr); t.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  const nb = $('#elecNote'); nb.textContent = '';
+  let unMuet = false, unAbsent = false;
+  ELEC_LIGNES.forEach(lg => {
+    const app = ch[lg.cle];
+    const muet = !app || app.ok === false;
+    const tr = document.createElement('tr');
+    if (muet) tr.className = 'elec-muet';
+    const td0 = document.createElement('td');
+    td0.appendChild(document.createTextNode(lg.nom));
+    const adr = el('small', 'elec-adr', 'WDM120-M · adresse n°' + lg.adresse(cf));
+    td0.appendChild(adr);
+    td0.title = lg.aide;
+    tr.appendChild(td0);
+    lg.cols.forEach(col => {
+      const td = document.createElement('td');
+      if (col === null) {
+        td.textContent = '—';
+        td.title = "Grandeur non publiée par ce compteur : énergie et puissance seulement (normal).";
+      } else {
+        const v = app ? app[col[0]] : undefined;
+        if (!muet && has(v) && isFinite(v)) {
+          td.appendChild(document.createTextNode(n(v, col[2])));
+          td.appendChild(el('small', null, ' ' + col[1]));
+        } else {
+          td.textContent = '—';
+          td.title = "Compteur sans réponse sur le bus : la page affiche « — », jamais une ancienne valeur.";
+        }
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+    if (muet) { if (!app) unAbsent = true; else unMuet = true; }
+  });
+  t.appendChild(tbody);
+  if (unAbsent) nb.appendChild(el('p', 'peu-fiable-note',
+    "Ligne grisée : le compteur n'apparaît pas dans le dernier envoi de "
+    + "l'automate — pas de réponse sur le bus (câblage, adresse Modbus), ou un "
+    + "programme antérieur tourne encore."));
+  else if (unMuet) nb.appendChild(el('p', 'peu-fiable-note',
+    "Ligne grisée : ce compteur ne répond pas sur le bus — câblage, adresse "
+    + "Modbus ou appareil à vérifier."));
+  else if (has(ch.mesures_age_s)) nb.appendChild(el('p', 'peu-fiable-note',
+    'Relevé il y a ' + duree(ch.mesures_age_s) + '.'));
+}
+
 function rendreProduction(d) {
   const ch = (d && d.chaufferie) || {};
   remplirStats('#statProdTh', PROD_TH, d);
-  remplirStats('#statElecPompe', ELEC_POMPE, d);
-  remplirStats('#statElecAux',   ELEC_AUX,   d);
-  remplirStats('#statElecCum',   ELEC_CUM,   d);
+  rendreElecTable(d);
   const note = (sel, app, nom) => {
     const b = $(sel); b.textContent = '';
     if (!app) { b.appendChild(el('p', 'peu-fiable-note',
-      "Ce compteur n'apparaît pas dans le dernier envoi.")); return; }
+      "Ce compteur n'apparaît pas dans le dernier envoi de l'automate : il ne "
+      + "répond pas sur le bus (câblage, adresse Modbus), ou un programme "
+      + "antérieur tourne encore. La page affiche « — », jamais une ancienne "
+      + "valeur.")); return; }
     if (app.ok === false) b.appendChild(el('p', 'peu-fiable-note',
       "Le compteur " + nom + " ne répond pas sur le bus : câblage, adresse Modbus ou "
       + "appareil à vérifier. La page affiche « — », jamais une ancienne valeur."));
@@ -2461,9 +2540,6 @@ function rendreProduction(d) {
       'Relevé il y a ' + duree(ch.mesures_age_s) + '.'));
   };
   note('#prodThNote', ch.maddalena, 'Maddalena');
-  note('#elecPompeNote', ch.sdm120, 'SDM120');
-  note('#elecAuxNote', ch.elec_aux, 'de l\u2019adresse 5');
-  note('#elecCumNote', ch.elec_cumulus, 'de l\u2019adresse 6');
   const ma = ch.maddalena;
   if (ma && ma.ok) {
     const b = $('#prodThNote');
@@ -2498,6 +2574,7 @@ const CFG_LIBELLE = {
   res_actif:'Surveillance réserve', pres_actif:'Lecture de pression',
   pres_fc:'Fonction Modbus pression', pres_reg_base:'Registre AI de départ',
   pres_voie:'Voie AI pression', pres_ma:'Entrée 4-20 mA', pres_bar_max:'Pleine échelle (bar)',
+  elec_pompe_addr:'Adresse compteur pompe',
   tol_fin_l:'Tolérance de fin (L)', ecart_defaillant_l:'Écart capteur défaillant (L)',
   tiree_l_imp:'Litres par impulsion, sortie', tol_amorcage_l:'Tolérance d\u2019amorçage (L)',
   amorcage_maj_pct:'Majoration d\u2019amorçage (%)', vannes_sous_flux:'Vannes sous flux',
@@ -2664,7 +2741,8 @@ const CHAMPS = [
   {k:'pres_fc',           t:'sel',   opts:[['','— inchangé —'],['3','FC03 · registres de maintien'],['4','FC04 · registres d\u2019entrée']], l:'Fonction Modbus pression'},
   {k:'pres_reg_base',     t:'int',   min:0,   max:65535, l:'Registre AI de départ',  u:''},
   {k:'pres_voie',         t:'int',   min:1,   max:8,    l:'Voie AI pression',        u:''},
-  {k:'pres_bar_max',      t:'float', min:1,   max:100,  l:'Pleine échelle pression', u:'bar', aide:'capteur 1,6 MPa : 16 bar pleine échelle, 4-20 mA sans pont diviseur (D40)'},
+  {k:'pres_bar_max',      t:'float', min:1,   max:100,  l:'Pleine échelle pression', u:'bar', aide:'capteur 1 MPa : 10 bar pleine échelle, 4-20 mA (D117 — le 1,6 MPa sous-lisait ~15 %, réformé)'},
+  {k:'elec_pompe_addr',   t:'int',   min:1,   max:247,  l:'Adresse compteur pompe', u:'', aide:'WDM120-M de la pompe P1 — 7 par défaut (D114 : muet en 1, déménagé) ; éviter 2 (Maddalena), 3 (variateur), 4 (PT100), 5 et 6 (auxiliaires, cumulus)'},
   {k:'pres_actif',        t:'bool',  l:'Lecture de pression'},
   {k:'res_actif',         t:'bool',  l:'Surveillance réserve 300 L'},
   {k:'temp_actif',        t:'bool',  l:'Sondes de température'},
@@ -2901,8 +2979,8 @@ function resumerConfig(cfg) {
   });
   if (cfg.nb_sats_b === 0)
     alertes.push("Satellites circuit B à 0 : plus aucun train ne partira sur le bus B.");
-  if (has(cfg.pres_bar_max) && Math.abs(cfg.pres_bar_max - 16) > 0.01)
-    alertes.push("Pleine échelle pression à " + cfg.pres_bar_max + " bar — le capteur installé est un 1,6 MPa : 16 bar pleine échelle (D26/D40).");
+  if (has(cfg.pres_bar_max) && Math.abs(cfg.pres_bar_max - 10) > 0.01)
+    alertes.push("Pleine échelle pression à " + cfg.pres_bar_max + " bar — le capteur installé est un 1 MPa : 10 bar pleine échelle (D117).");
   return {lignes, alertes};
 }
 
@@ -3192,6 +3270,7 @@ function demo() {
                   debit_lh: 11, energie_mwh: 2.427, energie_unite: 'MWh',
                   volume_m3: 213.42},
       mesures_age_s: 3,
+      temp_efs_c: 14.8, temp_efs_min5h_c: 14.2,
       eau: {impulsions: 271, litres: 135.5, zlan_ok: true, source: 'ZLAN6808',
             qa: {voie: 1, impulsions: 271, litres: 135.5, ok: true},
             qb: {voie: 2, impulsions: 0, litres: 0, ok: true}},
@@ -3200,7 +3279,9 @@ function demo() {
       pompe_arret_non_confirme: false, pompe_marche_s: cA === 0 ? 0 : 120,
       reserve: {ok: true, haut_mouille: 0, milieu_mouille: 0, bas_mouille: 1,
                 appoint_requis: false, vol_min: 205, vol_max: 252.5},
-      pression: {ok: true, bar: cA === 0 ? 3.0 : 7.6, brut: cA === 0 ? 360 : 486,
+      /* Lot 24 : démo alignée sur le capteur 1 MPa (D117) — brut ~390 =
+         ~3,8 bar au repos, un peu plus pompe en marche. */
+      pression: {ok: true, bar: cA === 0 ? 3.8 : 4.6, brut: cA === 0 ? 389 : 471,
                  defaut: false, sature: false},
       temp_pompe_c: 54.2, temp_retour_c: 38.4,
     },
@@ -3260,7 +3341,7 @@ function demo() {
     mesure_nuit: {repere_pose: 1, repere_age_s: 46200, prochaine_dans_s: 41300},
     config_active: {intervalle_s: 5, vol_pompe_amont_l: 4, vol_recup_l: 20,
                     vitesse_recup_pct: 40, t_vanne_s: 6,
-                    temp_addr: 4, pres_voie: 6, pres_bar_max: 16, t_amb_defaut: 20,
+                    temp_addr: 4, pres_voie: 6, pres_bar_max: 10, elec_pompe_addr: 7, t_amb_defaut: 20,
                     rech_seuil_c: 50, rech_confirme_min: 30,
                     rech_opport_c: 51.5, rech_amorce_c: 45,
                     rech_tmax_c: 54, rech_grand_l: 50, rech_place_l: 1.5,
@@ -3279,7 +3360,7 @@ function demo() {
 if (SHOW) document.body.classList.add('presentation');
 construireFormulaire();
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 3108 — ui ' + LOT + ' · lot 22 — 31/08/2026';
+$('#footVer').textContent = 'enovaQ pupitre 3108c — ui ' + LOT + ' · lot 24 — 31/08/2026';
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
 setInterval(relever, DEMO ? 1000 : PERIODE_MS);
