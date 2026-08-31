@@ -9,7 +9,10 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · ui 2608.15b (lot 15b, 26/08/2026)
+   enovaQ — pupitre de supervision · ui 3108.22 (lot 22, 31/08/2026)
+   Nom officiel du fichier : « enovaQ pupitre 3108.html » (règle de nommage
+   client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
+   enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
    Socle v4 conservé (fond blanc, décision client B.1) : papier technique,
    filets fins, encre presque noire, cuivre (A) / vert-de-gris (B), ambre et
    bleu réservés à l'eau (ECS / EFS).
@@ -101,6 +104,87 @@
    (D89b) — cuve remplie, 30 min après un remplissage, ≥ 2 h de calme —
    prime sur tout le reste ; la note des pertes écrit « estimatif »
    quand le champion n'en est pas une.
+   Lot 16 (26/08/2026, programme 2608g) : le CYCLE DE RÉCHAUFFAGE à
+   l'écran — T° obtenue à l'issue du dernier remplissage (lecture à
+   +5 min, à côté de la correction du mitigeur), nombre de cycles par
+   satellite et âge du dernier ; et l'ÉNERGIE ÉLECTRIQUE dissociée en
+   trois postes : pompe (compteur 1), auxiliaires (5), chauffe-eau (6)
+   — « — » tant que les compteurs 5 et 6 ne répondent pas.
+   Lot 17 (27/08/2026, programme 2708) : RETRAIT DU MITIGEUR — la
+   régulation de température ne donnait pas satisfaction, tout ce qui
+   s'y rapportait disparaît de la page : cases « Dose EFS du dernier »
+   et « Correction du mitigeur », réglages « Mitigeur » et « Cible du
+   mitigeur ». RESTENT : la T° relevée 5 min après le remplissage (le
+   résultat réel), le cycle de réchauffage et ses compteurs, l'énergie
+   électrique par poste, le trône des pertes et tout le reste.
+   Lot 18 (27/08/2026, programme 2708b) : le cycle de réchauffage perd
+   son interrupteur — il fait partie du programme, plus de case à
+   cocher ; le seuil reste réglable. L'infobulle des cycles décrit la
+   règle du jour : vidange graduée CNH / CNM sous 45 °C / CNB sous
+   40 °C, trois cycles d'affilée au maximum, départ groupé en un seul
+   train.
+   Lot 19 (27/08/2026, programme 2708e) : vidange du réchauffage revue —
+   jusqu'à CNM sous le seuil, jusqu'à CNB sous 45 °C (CNH n'est plus une
+   cible) ; l'infobulle des cycles le dit.
+   Lot 20 (28/08/2026, programme 2808a) : le RÉCHAUFFAGE version
+   PLANIFICATEUR + RÈGLE DE MÉLANGE (décisions client du 28/08, D109 à
+   D111 du programme). Fini le déclenchement brut sous 50 °C : l'automate
+   PRÉVOIT l'heure de passage sous 50 (vitesse de refroidissement mesurée),
+   se greffe sur les trains existants, groupe les gestes, ne part jamais
+   seul à froid ; la dose est CALCULÉE (bilan de mélange avec la T° réelle
+   de l'eau à l'embranchement) et exécutée au compteur — surremplissage
+   lent ~5 L/min quand la cuve est pleine, le débordé part à la réserve et
+   il est RETRANCHÉ du volume livré. La vidange (complète, jusqu'à CNB
+   sec) devient un cas exceptionnel ; la chasse disparaît. À l'écran :
+   famille « Réchauffage » sur chaque satellite (gestes avec / sans
+   vidange, gestes des dernières 24 h, prévision « 50 °C dans X h »,
+   dernier geste — dose, T° avant → visée, litres partis à la réserve —
+   et cumul), alerte « refroidissement anormal » (plafond de gestes
+   journalier atteint), huit réglages neufs dans le formulaire (vidange
+   47 °C, dose +3 °C, plafond 55 °C, horizon 8 h, garde 60 min, plafond
+   30 L, 4 gestes/jour, débit lent 5 L/min), infobulles réécrites aux
+   règles du jour. Satellite déjà > 55 °C à un remplissage : amorçage
+   sans majoration (D110) — dit dans les infobulles.
+   Lot 21 (30/08/2026, programme 3008) : le RÉCHAUFFAGE v5 « AMORÇAGE
+   INVERSE » (règles R1-R12b dictées par le client, D112 — remplace
+   ENTIÈREMENT le planificateur du lot 20, jamais mis en service).
+   T° < 50 °C = réchauffage OBLIGATOIRE, qui commence par une VIDANGE
+   INVERSE : vanne ouverte, pompe à l'arrêt, l'eau tiède du satellite
+   redescend chauffer tuyau et pompe et repart vers la production ; arrêt
+   à CNH sec + 45 °C à l'embranchement (au plus bas CNB sec, alors
+   complément d'amorçage ×1,33 au remplissage). Pendant un cycle, tout
+   satellite du circuit sous 51 °C est embarqué ; remplissages normaux
+   d'abord, réchauffés du plus lointain au plus proche, un seul bouchon ;
+   récup à +2 min sur TOUS les trains. Cuve déjà > 54 °C : amorçage sans
+   majoration, et sur les grandes cuves le remplissage laisse 1,5 L au
+   bouchon. FREIN : 4 réchauffages sans remplissage normal (ou 3 sans
+   puisage) → MISE EN SOMMEIL : vidange totale + purge 20 min, récup,
+   sentinelle d'EAU FROIDE à CNB mouillé (renouvelée toutes les 48 h) ;
+   le premier tirage du retour réveille par l'urgence CNB. MESURE DE
+   NUIT : cuve sans mesure précise → remplissage provoqué au repère de la
+   veille + 24 h + 15 min ; l'étalon des pertes devient « cuve pleine,
+   1 h de repos, ≥ 5 h jusqu'au prochain puisage, sans tronçonnage ».
+   À l'écran : famille « Réchauffage » refaite (freins, sommeil,
+   renouvellement, mesure précise), alertes sommeil, quinze réglages v5
+   au formulaire, deux lignes « mesure de nuit » dans Santé, infobulles
+   réécrites, démo à jour (SA2 dort).
+   Lot 22 (31/08/2026, programme 3108, D113) : L'ESSENTIEL DEVANT, LE
+   DÉTAIL AU SURVOL — sur chaque carte satellite, le direct (cuve, volume,
+   T°, capteurs, défauts, état du remplissage en toutes lettres) reste
+   visible ; les familles de chiffres (Eau, Remplissage, Réchauffage,
+   Pertes, Coûts) se déplient au survol de la carte, au clic sur
+   « détails », ou toutes ensemble avec ?detail dans l'adresse (pour
+   imprimer). Les VIDANGES sont identifiées : réchauffages avec / sans
+   vidange, litres rendus à la chaufferie (dernier + cumul) — et l'écart
+   livrée − tirée devient le juge de paix (théoriquement zéro, D113).
+   PERTES : seules les mesures FIABLES s'affichent (cuve pleine, 1 h de
+   repos, ≥ 5 h jusqu'au puisage) ; les caractéristiques complètes vivent
+   dans l'infobulle (litres, durée, T° début → fin, moyenne des fiables) ;
+   « Normalisé 35 °C » : en attente d'une sonde d'ambiance. ÉLECTRICITÉ :
+   trois chapitres, un par compteur (pompe SDM120, auxiliaires n°5,
+   cumulus n°6). REMPLISSAGE : cumul et moyenne du temps de remplissage.
+   Réglages : « Confirmation avant réchauffage » (30 min), récup 20 L à
+   40 % ; démo à jour.
    ══════════════════════════════════════════════════════════════════════════ */
 :root{
   --ground:#F4F5F3; --panel:#FFFFFF; --panel2:#F2F4F2; --panel3:#FAFBFA;
@@ -290,6 +374,24 @@ header{border-bottom:1px solid var(--line);background:var(--panel)}
 .sat-etat.pui{color:var(--ecs);background:rgba(192,103,18,.1)}
 .sat-etat.defaut{color:var(--alert);background:rgba(188,54,38,.1)}
 .sat-etat.urgence{color:#fff;background:var(--alert)}
+.sat-etat.somm{color:var(--verdigris);background:rgba(28,119,103,.1)}
+/* Lot 22 (D113) : l'essentiel devant, le détail au survol. La zone
+   .sat-detail est repliée ; elle s'ouvre au survol de la carte (petit
+   délai anti-clignotement), au clic sur « détails », ou partout à la
+   fois avec ?detail dans l'adresse (impression). */
+.sat-detail{max-height:0;overflow:hidden;opacity:0;
+  transition:max-height .35s ease .12s,opacity .3s ease .12s}
+.sat:hover .sat-detail,.sat.ouvert .sat-detail,
+body.tout-detail .sat-detail{max-height:4000px;opacity:1}
+.sat-detail-hint{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);
+  font-family:var(--fs-cond);font-size:11px;letter-spacing:.08em;
+  color:var(--ink3);text-transform:uppercase;cursor:pointer;user-select:none}
+.sat:hover .sat-detail-hint,.sat.ouvert .sat-detail-hint{color:var(--ink2)}
+.sat-fill{margin-top:8px;padding:6px 9px;border-radius:8px;font-size:12px;
+  font-weight:600;color:var(--ecs);background:rgba(192,103,18,.08);
+  border:1px solid rgba(192,103,18,.25)}
+.sat-fill.somm{color:var(--verdigris);background:rgba(28,119,103,.07);
+  border-color:rgba(28,119,103,.25)}
 .sat-def{font-size:11.5px;color:var(--ink2);margin-top:2px}
 .sat-appts{font-size:11.5px;color:var(--ink3);margin-top:1px}
 .sat-appts b{font-family:var(--fs-mono);font-weight:400;color:var(--ink2)}
@@ -561,17 +663,31 @@ body.presentation .brand{font-size:27px}
   </section>
 
   <h2 class="eyebrow">Production</h2>
-  <section class="grid2">
-    <div class="card">
-      <h3>Énergie thermique <em>— compteur Maddalena</em></h3>
-      <div class="stats" id="statProdTh"></div>
-      <div id="prodThNote"></div>
-    </div>
-    <div class="card">
-      <h3>Électricité de la pompe <em>— compteur SDM120</em></h3>
-      <div class="stats" id="statProdEl"></div>
-      <div id="prodElNote"></div>
-    </div>
+  <section class="card">
+    <h3>Énergie thermique <em>— compteur Maddalena</em></h3>
+    <div class="stats" id="statProdTh"></div>
+    <div id="prodThNote"></div>
+  </section>
+
+  <h2 class="eyebrow">Électricité · pompe</h2>
+  <section class="card">
+    <h3>Compteur SDM120 <em>— adresse 1 : la pompe P1</em></h3>
+    <div class="stats" id="statElecPompe"></div>
+    <div id="elecPompeNote"></div>
+  </section>
+
+  <h2 class="eyebrow">Électricité · auxiliaires</h2>
+  <section class="card">
+    <h3>Compteur n°5 <em>— automate, transformateurs, vannes (D94)</em></h3>
+    <div class="stats" id="statElecAux"></div>
+    <div id="elecAuxNote"></div>
+  </section>
+
+  <h2 class="eyebrow">Électricité · cumulus</h2>
+  <section class="card">
+    <h3>Compteur n°6 <em>— les deux chauffe-eau 200 L (D94)</em></h3>
+    <div class="stats" id="statElecCum"></div>
+    <div id="elecCumNote"></div>
   </section>
 
   <h2 class="eyebrow">Chaufferie</h2>
@@ -687,7 +803,7 @@ const API = {
   config:    '/api/config',   // POST → config servie à l'automate à son prochain envoi
 };
 const DEVICE     = 'chaufferie-01';
-const LOT        = '2608.15b'; // marqueur « ui » — bandeau et pied de page
+const LOT        = '3108.22';  // marqueur « ui » — bandeau et pied de page
 const PERIODE_MS = 3000;      // cadence de tirage de la page
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -697,6 +813,9 @@ const SEUIL_ECS_C   = 50;     // seul seuil métier connu : réchauffage sous 50
 
 const DEMO = new URLSearchParams(location.search).has('demo');
 const SHOW = new URLSearchParams(location.search).has('show');
+/* Lot 22 : ?detail deplie toutes les cartes satellites (impression). */
+const DETAIL = new URLSearchParams(location.search).has('detail');
+if (DETAIL) document.body.classList.add('tout-detail');
 
 /* ══════════════════════════════════════════════════════════════════════════
    2. LE REGISTRE DES INDICATEURS — le mécanisme central du tableau cible.
@@ -751,10 +870,11 @@ const RESERVE_CPT = [
      }));
      return vus ? somme : undefined;
    },
-   aide:"Somme, tous satellites, des remplissages déclenchés par la température "
-      +"(réchauffage D78 du programme 2408).",
-   absent:"Publié par le programme 2408 dès le premier remplissage forcé — et le "
-        +"réchauffage est livré ÉTEINT (« rech_actif » à activer dans Réglages)."},
+   aide:"Somme, tous satellites, des remplissages de réchauffage aboutis "
+      +"(cycles v5 à l'amorçage inverse, D112 du programme 3008).",
+   absent:"Publié dès le premier réchauffage abouti (programme 3008) : le "
+        +"réchauffage est permanent, sans interrupteur — le frein est la mise "
+        +"en sommeil (4 réchauffages sans remplissage normal)."},
   {k:'Reste avant le prochain', champ:null, unite:'L', dec:1},
   {k:'Depuis le dernier',       champ:null, type:'duree'},
   {k:'Niveau minimum déduit',   champ:'chaufferie.reserve.vol_min', unite:'L', dec:0,
@@ -793,8 +913,12 @@ const PROD_TH = [
    aide:"Température de l'eau froide à la source (sonde V7) — case prévue, "
        +"l'automate ne la publie pas encore."},
 ];
-const PROD_EL = [
-  {k:'Énergie électrique', champ:'chaufferie.sdm120.energie_kwh', unite:'kWh', dec:1,
+/* Lot 22 (client 31/08) : les TROIS compteurs d'énergie électrique, un
+   chapitre et un encadré chacun — pompe (SDM120, adresse 1), auxiliaires
+   (adresse 5), cumulus (adresse 6). D94. */
+const ELEC_POMPE = [
+  {k:'Énergie', champ:'chaufferie.sdm120.energie_kwh', unite:'kWh', dec:1,
+   aide:"Cumul du compteur SDM120 de la pompe P1 (adresse 1).",
    absent:"Compteur SDM120 sans réponse sur le bus."},
   {k:'Puissance', champ:'chaufferie.sdm120.puissance_w', unite:'W', dec:0,
    absent:"Compteur SDM120 sans réponse."},
@@ -802,6 +926,24 @@ const PROD_EL = [
    absent:"Compteur SDM120 sans réponse."},
   {k:'Courant', champ:'chaufferie.sdm120.courant_a', unite:'A', dec:2,
    absent:"Compteur SDM120 sans réponse."},
+];
+const ELEC_AUX = [
+  {k:'Énergie', champ:'chaufferie.elec_aux.energie_kwh', unite:'kWh', dec:1,
+   aide:"Compteur nº 5 : automate, transformateurs, vannes — tout sauf la pompe "
+       +"et les chauffe-eau (D94).",
+   absent:"Publiée dès que le compteur d'énergie à l'adresse 5 répond sur le bus."},
+  {k:'Puissance', champ:'chaufferie.elec_aux.puiss_w', unite:'W', dec:0,
+   absent:"Publiée avec l'énergie (compteur à l'adresse 5)."},
+];
+const ELEC_CUM = [
+  {k:'Énergie', champ:'chaufferie.elec_cumulus.energie_kwh', unite:'kWh', dec:1,
+   aide:"Compteur nº 6 : les deux cumulus 200 L en série. Le rendement d'un "
+       +"chauffe-eau valant 1, cette énergie électrique vaut l'énergie thermique "
+       +"produite — indicative : c'est le thermique ENTRANT (Maddalena) qui "
+       +"servira au rendement de l'installation (D94).",
+   absent:"Publiée dès que le compteur d'énergie à l'adresse 6 répond sur le bus."},
+  {k:'Puissance', champ:'chaufferie.elec_cumulus.puiss_w', unite:'W', dec:0,
+   absent:"Publiée avec l'énergie (compteur à l'adresse 6)."},
 ];
 
 const DIAG = [
@@ -820,6 +962,18 @@ const DIAG = [
   {k:'Périmètre de la dernière RAZ', champ:'diag.raz_quoi',
    aide:"Familles remises à zéro lors de la dernière RAZ (sélective depuis 2308e).",
    absent:"Publié avec l'âge de la remise à zéro (programme 2308e)."},
+  {k:'Repère de nuit, appris il y a', champ:'mesure_nuit.repere_age_s', type:'duree',
+   aide:"Le repère du site : dernier puisage suivi d'une longue accalmie "
+       +"(≥ 4 h), appris après coup chaque jour (R10, D112). Il donne l'heure "
+       +"des remplissages de mesure provoqués : repère + 24 h + 15 min.",
+   absent:"Publié par le programme 3008 après une première nuit d'observation "
+        +"(l'automate n'a pas d'horloge : après un redémarrage, il regarde "
+        +"passer une nuit avant d'agir)."},
+  {k:'Mesure de nuit, prochaine dans', champ:'mesure_nuit.prochaine_dans_s', type:'duree',
+   aide:"Prochaine fenêtre de provocation (repère + 24 h + 15 min). Il ne s'y "
+       +"passera quelque chose que si une cuve est SANS mesure précise (voir la "
+       +"case de chaque satellite) et que le site est calme (R10, D112).",
+   absent:"Publié quand le repère de nuit est appris et l'échéance à venir."},
   {k:'Pompe en marche depuis', type:'duree',
    champ:'chaufferie.pompe_marche_s',
    calc:d => { const ch = (d && d.chaufferie) || {};
@@ -861,6 +1015,16 @@ const SAT_REMPL = [
         +"mesuré : au moins 3 L comptés entre l'ouverture et la fermeture de la vanne. "
         +"Si la cuve s'est pourtant remplie plusieurs fois, le point est à vérifier "
         +"côté automate."},
+  {k:'Temps de remplissage, cumul', champ:'rempl_duree_cumul_s', type:'duree',
+   aide:"Somme des durées de tous les remplissages chronométrés de cette cuve "
+       +"(vanne confirmée ouverte → ordre de fermeture). Mémorisé entre les "
+       +"redémarrages, remis à zéro par la RAZ « Remplissages » (D113).",
+   absent:"Publié par le programme 3108 après le premier remplissage chronométré."},
+  {k:'Temps de remplissage, moyen', champ:'rempl_duree_moy_s', type:'duree',
+   aide:"Cumul ÷ nombre de remplissages chronométrés — le temps que prend un "
+       +"remplissage ordinaire de cette cuve (D113). Un chiffre qui dérive dans "
+       +"le temps peut dire un débit qui baisse (filtre, vanne, pompe).",
+   absent:"Publié avec le cumul (programme 3108)."},
   {k:'Vitesse moy. rempl.', champ:'rempl_moy_l_min', unite:'L/min', dec:1,
    aide:"Litres attribués ÷ durée, lissés sur les cinq derniers remplissages. Un "
        +"chiffre bien au-dessus de ~10 L/min trahit un héritage d'anciennes mesures : "
@@ -888,39 +1052,157 @@ const SAT_REMPL = [
        +"(programme 2408b, D81).",
    absent:"Publiée par le programme 2408b si le capteur de pression a répondu pendant "
         +"le remplissage."},
-  {k:'Dose EFS du dernier', champ:'d88_dose_l', unite:'L', dec:1,
-   aide:"Litres d'eau froide volontairement poussés en fin de remplissage par le "
-       +"mitigeur (D88) pour viser la cible — en substitution, jamais en débordement.",
-   absent:"Publiée par le programme 2608 quand le mitigeur a dosé du froid au dernier "
-        +"remplissage ; « — » sinon (aucune dose nécessaire, ou mitigeur coupé)."},
-  {k:'Correction du mitigeur', champ:'d88_biais_c', unite:'°C', dec:1,
-   aide:"Biais appris par le mitigeur (D88) pour CE satellite : l'écart systématique "
-       +"entre sa prévision et la température lue 5 min après chaque remplissage. "
-       +"Demi-pas, borné à ±5 °C, mémorisé entre les redémarrages.",
-   absent:"Publiée par le programme 2608 quand le mitigeur (D88) est actif."},
+  {k:'T° à l\u2019issue du dernier remplissage', champ:'temp_apres_rempl_c',
+   unite:'°C', dec:1,
+   aide:"Température de la cuve lue 5 min après la fin du dernier remplissage — "
+       +"le temps que la sonde et les couches se posent. Simple relevé : c'est le "
+       +"résultat réel du remplissage, et le CONTRÔLE d'un réchauffage (à "
+       +"comparer à « T° avant le dernier réchauffage » de la famille "
+       +"Réchauffage, D112).",
+   absent:"Publiée par le programme 2708 après le premier remplissage suivi de "
+        +"5 min de calme."},
 ];
 
-const SAT_PERTES = [
-  {k:'Pertes',          champ:'perte_w',        unite:'W',    dec:0,
-   aide:"Puissance perdue par la cuve, mesurée sur la dérive de température au repos. "
-       +"Depuis le programme 2608, c'est le MEILLEUR échantillon qui s'affiche — le "
-       +"plus long, cuve pleine de préférence — et il règne jusqu'à mieux ou 3 jours "
-       +"(D89). Son âge, indiqué sous les cases, peut donc atteindre plusieurs "
-       +"jours : c'est voulu, la fiabilité prime sur la fraîcheur. Une mesure "
-       +"ÉTALON — cuve remplie, fenêtre ouverte dans les 40 min après un "
-       +"remplissage, au moins 2 h de calme — prime toujours sur une estimative ; "
-       +"sinon, la note sous les cases dit « estimatif » (D89b).",
-   absent:"Publiées après une première fenêtre aboutie : commencée au moins 30 min "
-        +"après un remplissage et 1 h après un puisage (règle nuit du 24/08), longue "
-        +"d'au moins 2 h sans aucun mouvement d'eau (programme 2608, D89). Sonde de "
-        +"température en service exigée."},
-  {k:'Refroidissement mesuré', champ:'perte_degh', unite:'°C/h', dec:2,
-   aide:"Pente de la droite ajustée sur TOUTES les lectures de la fenêtre calme "
-       +"(une toutes les 10 s, régression) — pas un simple écart entre deux points. "
-       +"C'est une vitesse AU VOLUME PRÉSENT lors de la mesure : à pertes égales, "
-       +"moitié d'eau = °C/h double ; pour comparer, voir « cuve pleine » à côté.",
-   absent:"Publié avec les pertes."},
+/* Lot 21 : la famille RÉCHAUFFAGE v5 (programme 3008, D112 — amorçage
+   inverse, freins, sommeil, mesure de nuit). Les cases du planificateur
+   du lot 20 (prévision, doses, litres à la réserve) disparaissent avec lui. */
+const SAT_RECH = [
+  {k:'Réchauffages', champ:'rech_nb', dec:0,
+   aide:"Nombre de réchauffages aboutis sur cette cuve. Un réchauffage v5 "
+       +"commence par une VIDANGE INVERSE : vanne ouverte, pompe à l'arrêt, "
+       +"l'eau tiède redescend chauffer le tuyau et la pompe et repart vers la "
+       +"production ; arrêt à CNH sec quand l'embranchement atteint 45 °C (au "
+       +"plus bas CNB sec), puis remplissage très chaud à la cible habituelle "
+       +"(D112, programme 3008). Compteur mémorisé, RAZ « Remplissages ».",
+   absent:"Publié par le programme 3008 dès le premier réchauffage abouti."},
+  {k:'… dont avec vidange', champ:'rech_nb_vid', dec:0,
+   aide:"Réchauffages où au moins 1 L d'eau tiède est réellement redescendu "
+       +"vers la chaufferie (D113). Les autres sont « sans vidange » : la cuve "
+       +"avait déjà la place (CNH sec) et le chemin s'est chauffé presque sans "
+       +"rien rendre.",
+   absent:"Publié par le programme 3108 avec les réchauffages."},
+  {k:'… sans vidange', champ:'rech_nb',
+   calc: s => (has(s.rech_nb) && has(s.rech_nb_vid))
+              ? Math.max(0, s.rech_nb - s.rech_nb_vid) : undefined,
+   dec:0,
+   aide:"Réchauffages qui n'ont rendu presque rien (moins de 1 L) : la place "
+       +"était déjà là, seul le chemin a été chauffé (D113).",
+   absent:"Publié par le programme 3108 avec les réchauffages."},
+  {k:'Litres vidangés, dernier', champ:'rech_vid_dern_l', unite:'L', dec:1,
+   aide:"Eau tiède rendue à la chaufferie par la vidange du DERNIER "
+       +"réchauffage — déduite : volume au début de la vidange + litres "
+       +"comptés à l'ajout − volume final cuve pleine. Elle est RETRANCHÉE de "
+       +"l'eau livrée : l'écart livrée − tirée (famille Eau) doit rester "
+       +"proche de zéro (D113).",
+   absent:"Publié par le programme 3108 avec les réchauffages."},
+  {k:'Litres vidangés, cumul', champ:'rech_vid_cumul_l', unite:'L', dec:1,
+   aide:"Cumul de l'eau tiède rendue à la chaufferie par les vidanges de "
+       +"réchauffage de cette cuve (mémorisé ; RAZ « Remplissages »). Déjà "
+       +"retranché de l'eau livrée au fil de l'eau (D113).",
+   absent:"Publié par le programme 3108 avec les réchauffages."},
+  {k:'T° avant le dernier', champ:'rech_avant_c', unite:'°C', dec:1,
+   aide:"Température de la cuve au départ du dernier réchauffage. Le résultat "
+       +"réel se lit dans « T° à l'issue du dernier remplissage » (relevé à "
+       +"+5 min) et aux mesures suivantes (D112).",
+   absent:"Publiée avec le premier réchauffage (sonde de cuve en service)."},
+  {k:'Dernier réchauffage, il y a', champ:'rech_dernier_age_s', type:'duree',
+   aide:"Temps écoulé depuis la fin du dernier réchauffage. L'automate n'a pas "
+       +"d'horloge réseau : l'âge est exact, l'heure absolue viendra avec la "
+       +"synchronisation horaire.",
+   absent:"Publié après le premier réchauffage abouti (« — » après un "
+        +"redémarrage, jusqu'au suivant)."},
+  {k:'Sans remplissage normal', champ:'rech_sans_rempl', dec:0,
+   aide:"Réchauffages consécutifs depuis le dernier remplissage NORMAL (demandé "
+       +"par les flotteurs) ou d'urgence. Au réglage « Frein : sans remplissage » "
+       +"(4 par défaut), le réchauffage suivant devient une MISE EN SOMMEIL — "
+       +"personne ne tire, on arrête de chauffer pour rien (R7/R12, D112).",
+   absent:"Publié par le programme 3008 (0 = un remplissage normal est passé "
+        +"depuis le dernier réchauffage)."},
+  {k:'Sans puisage', champ:'rech_sans_puis', dec:0,
+   aide:"Réchauffages consécutifs depuis le dernier puisage compté en sortie de "
+       +"cuve. Au réglage « Frein : sans puisage » (3 par défaut), même sanction "
+       +"que l'autre frein : mise en sommeil (R7, D112). Le premier des deux "
+       +"freins atteint l'emporte.",
+   absent:"Publié pour les cuves équipées d'un compteur de sortie (SA1-SA3)."},
+  {k:'Sommeil', champ:'sommeil',
+   calc: s => {
+     if (s.sommeil) return has(s.somm_depuis_s)
+                    ? 'sentinelle · ' + duree(s.somm_depuis_s) : 'sentinelle';
+     if (has(s.somm_etat) && s.somm_etat) return 'séquence ' + s.somm_etat;
+     return undefined;
+   },
+   aide:"SOMMEIL (R12, D112) : la cuve, chauffée en boucle sans que personne ne "
+       +"tire, est vidangée en totalité (CNB sec + purge 20 min), le tuyau est "
+       +"récupéré, puis une SENTINELLE D'EAU FROIDE est posée jusqu'à CNB "
+       +"mouillé — elle garde la vanne de sortie ouverte et le matelas d'air. "
+       +"Le premier tirage du retour assèche CNB : RÉVEIL automatique par "
+       +"l'urgence, remplissage chaud prioritaire. Persiste au redémarrage. "
+       +"« séquence 1-6 » = mise en sommeil en cours ; « 11-14 » = "
+       +"renouvellement de la sentinelle.",
+   absent:"« — » = cuve éveillée, service normal."},
+  {k:'Eau de la sentinelle, renouvelée dans', champ:'somm_renouv_dans_s', type:'duree',
+   aide:"Hygiène de la sentinelle (R12b, D112) : l'eau froide est REMPLACÉE "
+       +"toutes les 48 h (réglable) — vidange vers la réserve (V3 sur EFS), "
+       +"purge 20 min, nouvelle eau froide. Après un redémarrage, le compte "
+       +"repart du démarrage.",
+   absent:"Publié pour une cuve en sommeil seulement."},
+  {k:'Mesure précise', champ:'mes_precise',
+   calc: s => has(s.mes_precise) ? (s.mes_precise ? 'oui' : 'non') : undefined,
+   aide:"« oui » = le trône des pertes porte une mesure ÉTALON v5 encore "
+       +"valable : cuve PLEINE, fenêtre ouverte 1 h après un remplissage, au "
+       +"moins 5 h de calme jusqu'au puisage suivant (R10, D112). « non » = "
+       +"l'automate PROVOQUERA un remplissage de nuit — au repère de la veille "
+       +"+ 24 h + 15 min (repère = dernier puisage du site suivi d'une longue "
+       +"accalmie ≥ 4 h, appris chaque jour) — pour créer les conditions de la "
+       +"mesure. Cuve pleine : un cycle de réchauffage sert de remplissage.",
+   absent:"Publié par le programme 3008 dès que la cuve répond."},
 ];
+
+/* Lot 22 (D113) : la famille Pertes n'affiche plus QUE la mesure fiable —
+   cuve pleine, fenêtre ouverte 1 h après un remplissage, au moins 5 h de
+   calme jusqu'au puisage suivant. Plus d'estimatif nulle part. Toutes les
+   caractéristiques de la mesure vivent dans l'infobulle (au survol). */
+function titrePertes(s) {
+  let t = "Mesure FIABLE (D113) — toujours cuve pleine, fenêtre ouverte 1 h "
+        + "après un remplissage, close au puisage suivant (5 h de calme au "
+        + "moins). Plus aucun estimatif : sans mesure fiable, la case reste "
+        + "vide et la mesure de nuit s'en occupe.";
+  const car = [];
+  if (has(s.perte_vol_l))   car.push(n(s.perte_vol_l) + " L à bord");
+  if (has(s.perte_duree_s)) car.push("fenêtre " + duree(s.perte_duree_s));
+  if (has(s.perte_t0_c) && has(s.perte_t1_c))
+    car.push(n(s.perte_t0_c) + " → " + n(s.perte_t1_c) + " °C");
+  if (has(s.perte_tmoy_c))  car.push("T° moyenne " + n(s.perte_tmoy_c) + " °C");
+  if (has(s.perte_age_s))   car.push("calculée il y a " + duree(s.perte_age_s));
+  if (car.length) t += "\nCette mesure : " + car.join(" · ") + ".";
+  if (has(s.perte_moy_w))
+    t += "\nMoyenne des mesures fiables (3 jours) : " + n(s.perte_moy_w, 0)
+       + " W" + (has(s.perte_moy_nb)
+                 ? " sur " + i0(s.perte_moy_nb) + " mesure"
+                   + (s.perte_moy_nb > 1 ? "s" : "") : "") + ".";
+  return t;
+}
+const PERTE_ABSENT =
+  "Aucune mesure fiable pour l'instant : il faut une cuve PLEINE, 1 h de "
+  + "repos après le remplissage, puis au moins 5 h de calme jusqu'au puisage "
+  + "suivant (D113). Si les conditions ne se présentent pas d'elles-mêmes, "
+  + "la MESURE DE NUIT provoque le remplissage qu'il faut (R10). Sonde de "
+  + "température en service exigée.";
+function casePerteFiable(s) {
+  const box = statCase({k:'Pertes', champ:'perte_w', unite:'W', dec:0,
+                        absent: PERTE_ABSENT}, s, 'st');
+  if (has(s.perte_w)) box.title = titrePertes(s);
+  return box;
+}
+function caseRefroidFiable(s) {
+  const box = statCase({k:'Refroidissement', champ:'perte_degh', unite:'°C/h',
+                        dec:2, absent: PERTE_ABSENT}, s, 'st');
+  if (has(s.perte_degh))
+    box.title = "La vitesse de refroidissement qui se rattache à la mesure "
+              + "fiable affichée à côté (régression sur toutes les lectures "
+              + "de la fenêtre, une toutes les 10 s).\n" + titrePertes(s);
+  return box;
+}
 
 const SAT_COUTS = [
   {k:'Coût',            champ:null, unite:'€',   dec:2, aide:"Chapitres A.3 / A.4 du CDC programme."},
@@ -1204,6 +1486,21 @@ function rendreAlertes(d) {
         "Nouvel essai autorisé dans " + duree(df.quarantaine_s) + ". Vérifier vanne, fuite, capteurs.");
     if (df.servable === false && !df.capteurs_fous && !(df.quarantaine_s > 0) && !df.urgence)
       ajouterAlerte(box, 'warn', s.sat_id, "Déclaré non servable par l'automate.");
+    /* Lot 21 (D112) : sommeil — le frein v5 a parlé */
+    if (s.sommeil)
+      ajouterAlerte(box, 'warn', s.sat_id,
+        "En SOMMEIL — sentinelle d'eau froide en place"
+        + (has(s.somm_depuis_s) ? " depuis " + duree(s.somm_depuis_s) : "") + ".",
+        "Personne ne tirait : l'automate a cessé de chauffer cette cuve pour "
+        + "rien (frein R7). Le premier tirage du retour assèche le flotteur bas "
+        + "et RÉVEILLE tout seul : remplissage chaud prioritaire. Rien à faire "
+        + "— c'est le fonctionnement voulu (D112).");
+    else if (has(s.somm_etat) && s.somm_etat)
+      ajouterAlerte(box, 'warn', s.sat_id,
+        "Mise en sommeil en cours (séquence " + s.somm_etat + ").",
+        "Vidange totale, purge, récup puis sentinelle d'eau froide — la "
+        + "séquence se replie d'elle-même si une demande normale arrive, et un "
+        + "puisage sur cette cuve la réveille immédiatement (D112).");
   }));
 
   if (ch.eau) {
@@ -1396,14 +1693,16 @@ function bilanEau(s) {
       : "ECS prélevée à la cuve, comptée par le compteur de sortie (voie " + di + ")."));
   box.appendChild(caseBilan('ecart', 'Écart', ecart,
     ecart === null ? "Calculable dès que les deux compteurs sont disponibles."
-                   : "Livrée moins tirée. N'a de sens que si les deux compteurs partent du même "
-                     + "point zéro — pour les réaligner : RAZ sélective, cocher « Eau livrée » ET "
-                     + "« Eau tirée » ensemble. L'écart repart alors de zéro et ne doit plus "
-                     + "refléter que le stock, borné par la contenance des cuves."));
+                   : "Livrée moins tirée — LE JUGE DE PAIX depuis le programme 3108 (D113) : "
+                     + "toute l'eau vidangée (réchauffages, sommeil, renouvellement) est "
+                     + "retranchée du livré, donc l'écart doit rester proche de zéro, au "
+                     + "stock présent dans la cuve près. N'a de sens que si les deux "
+                     + "compteurs partent du même point zéro — pour les réaligner : RAZ "
+                     + "sélective, cocher « Eau livrée » ET « Eau tirée » ensemble."));
   frag.appendChild(box);
   frag.appendChild(el('div', 'bilan-note', tiree === null
     ? "Compteur de sortie (" + di + ") pas encore vu par l'automate."
-    : "L'écart suppose un même point zéro pour les deux compteurs."));
+    : "Écart théorique : le stock de la cuve (D113) — même point zéro requis."));
   return frag;
 }
 
@@ -1427,6 +1726,9 @@ function etatSatellite(s, d) {
   if (df.urgence) return {cls: 'urgence', txt: 'URGENCE CNB'};
   const actif = ((d && d.trains) || []).some(t => t.sat_actif === s.sat_id);
   if (actif)      return {cls: 'service', txt: 'EN SERVICE'};
+  if (s.sommeil)  return {cls: 'somm',    txt: 'EN SOMMEIL'};
+  if (has(s.somm_etat) && s.somm_etat)
+                  return {cls: 'somm',    txt: 'MISE EN SOMMEIL'};
   if (df.inc_basse || df.secours_vol || df.capteurs_fous || df.quarantaine_s > 0 || df.servable === false || df.vanne_alerte)
     return {cls: 'defaut', txt: 'EN DÉFAUT'};
   if (s.en_file) {
@@ -1581,7 +1883,10 @@ function heroNums(s, X, progNeuf) {
     tv.appendChild(document.createTextNode(n(t)));
     tv.appendChild(el('small', null, ' °C'));
     ht.appendChild(tv);
-    ht.appendChild(el('div', 'hn-s', t >= SEUIL_ECS_C
+    /* Lot 21 (D112) : une cuve en sommeil est froide EXPRÈS — sentinelle. */
+    ht.appendChild(el('div', 'hn-s', s.sommeil
+      ? 'sentinelle d\u2019eau froide — sommeil voulu (D112)'
+      : t >= SEUIL_ECS_C
       ? 'au-dessus du seuil de réchauffage (' + SEUIL_ECS_C + ' °C)'
       : 'sous ' + SEUIL_ECS_C + ' °C — réchauffage souhaitable'));
   } else if (has(t)) {
@@ -1620,13 +1925,13 @@ function casePerteNorm35(s, d) {
     box.title = "Pertes ramenées à un écart de 35 °C avec l'ambiance MESURÉE — "
               + "comparables d'une cuve à l'autre.";
   } else {
-    box.className = 'st attente';
-    val.appendChild(document.createTextNode('—'));
-    box.title = "Volontairement vide (décision client du 21/08) : sans sonde d'ambiance, "
-              + "l'automate calcule cette valeur avec le RÉGLAGE t_amb_defaut (20 °C), pas "
-              + "une mesure — le chiffre serait faux, la page ne l'affiche donc pas. Il "
-              + "s'affichera dès que la sonde extérieure prévue (voie 5 du module PT100, "
-              + "libre) sera posée et publiée (temp_amb_c).";
+    box.className = 'st attente venir';
+    val.appendChild(document.createTextNode('en attente'));
+    box.title = "En attente d'une sonde de température ambiante (décision client "
+              + "31/08, D113) : l'automate ne publie plus d'estimation — le calcul "
+              + "avec le réglage t_amb_defaut (20 °C) ne serait pas une mesure. La "
+              + "case vivra quand la sonde extérieure prévue (voie 5 du module "
+              + "PT100, libre) sera posée et publiée.";
   }
   box.appendChild(val);
   return box;
@@ -1687,99 +1992,6 @@ function caseTmaxRempl(s) {
               + "publié par le programme 2408b (D81) au premier remplissage. En attendant, "
               + "la page l'observera elle-même au premier remplissage complet qui se "
               + "déroule pendant qu'elle est ouverte.";
-  }
-  box.appendChild(val);
-  return box;
-}
-
-/* Moyenne des pertes — règle client du 23/08 : SEULES les mesures de moins
-   de trois jours comptent, les plus anciennes sortent d'elles-mêmes. Le
-   programme 2308 publie cette moyenne fenêtrée et son nombre de mesures
-   (perte_moy_nb) ; l'ancien programme publiait un lissage « sur 5 » sans
-   limite d'âge — l'infobulle le dit alors clairement. */
-function casePerteMoy(s, d) {
-  const box = el('div', 'st');
-  box.appendChild(el('div', 'k', 'Moyenne, 3 jours'));
-  const val = el('div', 'v');
-  const neuf = !!(d && d.prog) || has(s.perte_moy_nb);
-  if (has(s.perte_moy_w) && isFinite(s.perte_moy_w)) {
-    val.appendChild(document.createTextNode(n(s.perte_moy_w, 0)));
-    val.appendChild(el('small', null, ' W'));
-    box.title = neuf
-      ? "Moyenne des " + (has(s.perte_moy_nb) ? i0(s.perte_moy_nb) + ' ' : '')
-        + "mesures de moins de 3 jours : les plus anciennes sortent d'elles-mêmes "
-        + "du calcul, et la moyenne repart de zéro après un redémarrage — jamais de "
-        + "vieille valeur restaurée. Seules les fenêtres CLOSES y entrent : les "
-        + "provisoires du trône (D89) n'y comptent jamais deux fois."
-      : "ATTENTION, ancien programme : cette valeur est un lissage « sur 5 » "
-        + "SANS limite d'âge — une mesure très ancienne pèse encore. Le "
-        + "programme 2308 applique la règle des 3 jours (décision du 23/08).";
-  } else if (has(s.perte_w)) {
-    box.className = 'st attente';
-    val.appendChild(document.createTextNode('—'));
-    box.title = "Aucune mesure de moins de 3 jours : les anciennes sont sorties "
-              + "de la moyenne (règle du 23/08).";
-  } else {
-    box.className = 'st attente';
-    val.appendChild(document.createTextNode('—'));
-    box.title = "Publiée avec les pertes, dès la première fenêtre aboutie.";
-  }
-  box.appendChild(val);
-  return box;
-}
-
-/* Refroidissement ramené à la CUVE PLEINE (demande client du 23/08).
-   Le °C/h brut dépend de la quantité d'ECS présente ; les pertes en watts,
-   elles, intègrent déjà le volume du moment (perte_w = volume × 1,163 ×
-   pente, calcul D62 de l'automate). On les redistribue donc sur la
-   contenance : °C/h pleine = perte_w ÷ (X × 1,163). Dérivation exacte de
-   deux champs publiés — la page ne mesure rien, elle convertit.
-   Hypothèse assumée : les pertes en watts varient peu avec le remplissage
-   (moins de paroi mouillée à cuve basse -> l'estimation est légèrement
-   optimiste quand la mesure a été faite cuve presque vide). */
-function caseRefroidissementPlein(s) {
-  const box = el('div', 'st');
-  box.appendChild(el('div', 'k', 'Refroidissement, cuve pleine'));
-  const val = el('div', 'v');
-  if (has(s.perte_w) && isFinite(s.perte_w) && has(s.X_l) && s.X_l > 0) {
-    const v = s.perte_w / (s.X_l * 1.163);
-    val.appendChild(document.createTextNode(n(v, 2)));
-    val.appendChild(el('small', null, ' °C/h'));
-    box.title = "Estimation à cuve PLEINE (" + i0(s.X_l) + " L) : les pertes mesurées ("
-              + n(s.perte_w, 0) + " W) redistribuées sur toute la contenance — "
-              + n(s.perte_w, 0) + " ÷ (" + i0(s.X_l) + " × 1,163) = " + n(v, 2)
-              + " °C/h. C'est le chiffre comparable d'une mesure à l'autre et d'une "
-              + "cuve à l'autre, contrairement au °C/h mesuré qui dépend du "
-              + "remplissage. Hypothèse : pertes en watts peu sensibles au niveau — "
-              + "légèrement optimiste si la mesure a été faite cuve presque vide.";
-  } else {
-    box.className = 'st attente';
-    val.appendChild(document.createTextNode('—'));
-    box.title = "Calculée dès que l'automate publie des pertes : pertes (W) ÷ "
-              + "(contenance × 1,163). Aucun changement de programme nécessaire.";
-  }
-  box.appendChild(val);
-  return box;
-}
-
-function caseAmbiante(s, d) {
-  const box = el('div', 'st');
-  box.appendChild(el('div', 'k', 'T° ambiante'));
-  const val = el('div', 'v');
-  const mesSat = tempValide(s.temp_amb_c) ? s.temp_amb_c : undefined;
-  const mesCh  = tempValide(lire(d, 'chaufferie.temp_amb_c')) ? lire(d, 'chaufferie.temp_amb_c') : undefined;
-  if (has(mesSat) || has(mesCh)) {
-    val.appendChild(document.createTextNode(n(has(mesSat) ? mesSat : mesCh)));
-    val.appendChild(el('small', null, ' °C' + (has(mesSat) ? '' : ' · chaufferie')));
-    box.title = "Température mesurée autour de la réserve — c'est elle qui sert à ramener "
-              + "les pertes de stockage à un écart de 35 °C.";
-  } else {
-    box.className = 'st attente';
-    val.appendChild(document.createTextNode('—'));
-    box.title = "Volontairement vide tant que la sonde d'ambiance prévue à l'extérieur "
-              + "d'un satellite n'est pas posée (voie 5 du module PT100, libre) : le "
-              + "réglage interne t_amb_defaut n'est pas une mesure, la page ne l'affiche "
-              + "pas (décision client du 21/08).";
   }
   box.appendChild(val);
   return box;
@@ -1981,10 +2193,40 @@ function rendreSats(d) {
       card.appendChild(dbox);
     }
 
-    /* ---- niveau 3 : la grille, par familles ---- */
+    /* ---- Lot 22 (D113) : l'état du remplissage, directement visible ---- */
+    const tAct = ((d && d.trains) || []).find(t => t.sat_actif === s.sat_id);
+    if (tAct && codeEtape(tAct.etape) !== 0) {
+      const fe = el('div', 'sat-fill');
+      let txtF = 'Remplissage en cours — ' + (LIBEL[codeEtape(tAct.etape)] || tAct.etape);
+      if (has(tAct.avancement) && has(tAct.cible) && tAct.cible > 0)
+        txtF += ' · ' + n(tAct.avancement) + ' / ' + n(tAct.cible) + ' '
+              + (tAct.unite || 'L');
+      fe.textContent = txtF;
+      fe.title = "L'étape du train qui sert cette cuve en ce moment — le détail "
+               + "complet vit dans le rail du circuit, en haut de page.";
+      card.appendChild(fe);
+    } else if (s.en_file) {
+      const fe = el('div', 'sat-fill', 'En file d\u2019attente — remplissage à venir');
+      fe.title = "La demande est enregistrée ; le train la servira à son tour "
+               + "(les urgences passent devant).";
+      card.appendChild(fe);
+    } else if (s.sommeil) {
+      const fe = el('div', 'sat-fill somm',
+        'En sommeil — sentinelle d\u2019eau froide, réveil au premier tirage');
+      fe.title = "Personne ne tirait : l'automate a cessé de chauffer (frein R7). "
+               + "Le premier tirage assèche le flotteur bas et déclenche le "
+               + "remplissage chaud prioritaire (D112).";
+      card.appendChild(fe);
+    }
+
+    /* ---- niveau 3 : les familles de detail, repliees (lot 22) ----
+       Visibles au survol de la carte, au clic sur « détails », ou toutes
+       ensemble avec ?detail dans l'adresse. */
+    const det = el('div', 'sat-detail');
+
     const mEau = el('div', 'mini');
     SAT_EAU.forEach(spec => mEau.appendChild(statCase(spec, s, 'st')));
-    card.appendChild(famille('Eau', [bilanEau(s), mEau]));
+    det.appendChild(famille('Eau', [bilanEau(s), mEau]));
 
     const mR = el('div', 'mini');
     SAT_REMPL.forEach(spec => mR.appendChild(statCase(spec, s, 'st')));
@@ -1995,37 +2237,62 @@ function rendreSats(d) {
       absent: "Publié pendant un pompage seulement (moins de 8 s après le dernier "
             + "demi-litre) : absent au repos, c'est normal."}, s, 'st'));
     mR.appendChild(caseTmaxRempl(s));
-    card.appendChild(famille('Remplissage', [mR]));
+    det.appendChild(famille('Remplissage', [mR]));
 
+    /* Lot 21/22 : la famille Réchauffage v5 (D112/D113, programme 3108) */
+    const mRech = el('div', 'mini');
+    SAT_RECH.forEach(spec => mRech.appendChild(statCase(spec, s, 'st')));
+    const notesRech = [];
+    const enSomm = s.sommeil || (has(s.somm_etat) && s.somm_etat);
+    if (enSomm)
+      notesRech.push(el('div', 'peu-fiable-note',
+        s.sommeil
+        ? "EN SOMMEIL : sentinelle d'eau froide en place — personne ne tirait "
+          + "(frein R7). Le premier tirage du retour réveille tout seul, "
+          + "remplissage chaud prioritaire (D112)."
+        : "MISE EN SOMMEIL en cours (séquence " + s.somm_etat + ") — vidange "
+          + "totale, purge, récup puis sentinelle d'eau froide (D112)."));
+    det.appendChild(famille('Réchauffage', [mRech].concat(notesRech),
+                            enSomm ? 'peu-fiable' : ''));
+
+    /* Lot 22 (D113) : pertes — la mesure FIABLE seule, le détail au survol */
     const mP = el('div', 'mini');
-    mP.appendChild(statCase(SAT_PERTES[0], s, 'st'));
+    mP.appendChild(casePerteFiable(s));
+    mP.appendChild(caseRefroidFiable(s));
     mP.appendChild(casePerteNorm35(s, d));
-    mP.appendChild(casePerteMoy(s, d));
-    mP.appendChild(statCase(SAT_PERTES[1], s, 'st'));
-    mP.appendChild(caseRefroidissementPlein(s));
-    mP.appendChild(caseAmbiante(s, d));
     const notesP = [];
     if (s.perte_fiable === false)
       notesP.push(el('div', 'peu-fiable-note',
         "Mesure peu fiable : le compteur de sortie n'a jamais compté, un puisage pourrait "
         + "passer pour une perte."));
     if (has(s.perte_age_s)) {
-      let tP = 'Calculé il y a ' + duree(s.perte_age_s) + '.';
-      /* Lot 14 (D80) : chaque mesure arrive avec son contexte — volume de la
-         fenêtre, T° moyenne, durée. Programme < 2408 : ligne inchangée. */
+      let tP = 'Mesure fiable, calculée il y a ' + duree(s.perte_age_s) + '.';
       if (has(s.perte_vol_l))
-        tP += ' Mesure : à ' + n(s.perte_vol_l) + ' L'
-            + (has(s.perte_tmoy_c) ? ' · T° moy ' + n(s.perte_tmoy_c) + ' °C' : '')
+        tP += ' À ' + n(s.perte_vol_l) + ' L'
+            + (has(s.perte_t0_c) && has(s.perte_t1_c)
+               ? ' · ' + n(s.perte_t0_c) + ' → ' + n(s.perte_t1_c) + ' °C' : '')
             + (has(s.perte_duree_s) ? ' · fenêtre ' + duree(s.perte_duree_s) : '')
-            + (s.perte_etalon === false ? ' · estimatif' : '') + '.';
+            + '.';
+      if (has(s.perte_moy_w))
+        tP += ' Moyenne des fiables (3 j) : ' + n(s.perte_moy_w, 0) + ' W'
+            + (has(s.perte_moy_nb) ? ' sur ' + i0(s.perte_moy_nb) : '') + '.';
       notesP.push(el('div', 'peu-fiable-note', tP));
     }
-    card.appendChild(famille('Pertes de stockage',
+    det.appendChild(famille('Pertes de stockage',
       [mP].concat(notesP), s.perte_fiable === false ? 'peu-fiable' : ''));
 
     const mC = el('div', 'mini');
     SAT_COUTS.forEach(spec => mC.appendChild(statCase(spec, s, 'st')));
-    card.appendChild(famille('Coûts et usure', [mC]));
+    det.appendChild(famille('Coûts et usure', [mC]));
+
+    const hint = el('div', 'sat-detail-hint',
+      '▾ détails — eau, remplissages, réchauffages, pertes, coûts');
+    hint.title = "Les chiffres de détail se déplient au survol de la carte ou "
+               + "d'un clic ici ; ajoutez ?detail à l'adresse pour tout "
+               + "déplier (impression).";
+    hint.addEventListener('click', () => card.classList.toggle('ouvert'));
+    card.appendChild(hint);
+    card.appendChild(det);
 
     box.appendChild(card);
   }));
@@ -2180,7 +2447,9 @@ function rendreMesures(d) {
 function rendreProduction(d) {
   const ch = (d && d.chaufferie) || {};
   remplirStats('#statProdTh', PROD_TH, d);
-  remplirStats('#statProdEl', PROD_EL, d);
+  remplirStats('#statElecPompe', ELEC_POMPE, d);
+  remplirStats('#statElecAux',   ELEC_AUX,   d);
+  remplirStats('#statElecCum',   ELEC_CUM,   d);
   const note = (sel, app, nom) => {
     const b = $(sel); b.textContent = '';
     if (!app) { b.appendChild(el('p', 'peu-fiable-note',
@@ -2192,7 +2461,9 @@ function rendreProduction(d) {
       'Relevé il y a ' + duree(ch.mesures_age_s) + '.'));
   };
   note('#prodThNote', ch.maddalena, 'Maddalena');
-  note('#prodElNote', ch.sdm120, 'SDM120');
+  note('#elecPompeNote', ch.sdm120, 'SDM120');
+  note('#elecAuxNote', ch.elec_aux, 'de l\u2019adresse 5');
+  note('#elecCumNote', ch.elec_cumulus, 'de l\u2019adresse 6');
   const ma = ch.maddalena;
   if (ma && ma.ok) {
     const b = $('#prodThNote');
@@ -2233,8 +2504,22 @@ const CFG_LIBELLE = {
   fermeture_attrib_s:'Fenêtre d\u2019attribution (s)', config_en_attente:'Config en attente',
   d58_seuil:'Seuil D58', pilot_therm:'Pilotage thermique',
   t_amb_defaut:'T° ambiante par défaut (°C)',
-  rech_actif:'Réchauffage sous seuil (D78)', rech_seuil_c:'Seuil de réchauffage (°C)',
-  d88_actif:'Mitigeur (D88)', d88_cible_c:'Cible du mitigeur (°C)',
+  rech_seuil_c:'Seuil de réchauffage (°C)',
+  rech_confirme_min:'Confirmation avant réchauffage (min)',
+  rech_opport_c:'Seuil opportuniste (°C)',
+  rech_amorce_c:'T° d\u2019arrêt de vidange (°C)',
+  rech_tmax_c:'Cuve déjà chaude (°C)',
+  rech_grand_l:'Grande cuve à partir de (L)',
+  rech_place_l:'Place laissée au bouchon (L)',
+  rech_frein_nb:'Frein : sans remplissage',
+  rech_frein_puis:'Frein : sans puisage',
+  rech_vidange_max_s:'Butée de vidange (s)',
+  recup_attente_s:'Attente avant récup (s)',
+  somm_purge_min:'Purge de sommeil (min)',
+  somm_renouv_h:'Renouvellement sentinelle (h)',
+  mes_repos_min:'Repos avant mesure (min)',
+  mes_min_h:'Durée d\u2019une mesure précise (h)',
+  mes_marge_min:'Marge de la mesure de nuit (min)',
   raz_compteurs:'Remise à zéro des compteurs (un coup)',
   acq_defauts:'Acquittement des défauts (un coup)',
 };
@@ -2367,10 +2652,13 @@ const CHAMPS = [
   {k:'nb_sats',           t:'int',   min:1,   max:8,    l:'Satellites circuit A',    u:''},
   {k:'nb_sats_b',         t:'int',   min:0,   max:8,    l:'Satellites circuit B',    u:''},
   {k:'vol_pompe_amont_l', t:'float', min:0,   max:20,   l:'Tronçon commun',          u:'L'},
-  {k:'vol_recup_l',       t:'float', min:0,   max:100,  l:'Récupération A (Z)',      u:'L'},
-  {k:'vol_recup_b_l',     t:'float', min:0,   max:100,  l:'Récupération B (Z)',      u:'L'},
+  {k:'vol_recup_l',       t:'float', min:0,   max:100,  l:'Récupération A (Z)',      u:'L',
+   aide:'litres poussés à la récup, 2 min après le cycle ; 20 L par défaut (D113)'},
+  {k:'vol_recup_b_l',     t:'float', min:0,   max:100,  l:'Récupération B (Z)',      u:'L',
+   aide:'20 L par défaut (D113)'},
   {k:'vitesse_train_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en train',  u:'%'},
-  {k:'vitesse_recup_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en récup',  u:'%'},
+  {k:'vitesse_recup_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en récup',  u:'%',
+   aide:'vitesse douce de la récupération ; 40 % par défaut (D113, était 60)'},
   {k:'t_vanne_s',         t:'int',   min:1,   max:60,   l:'Pause de manœuvre',       u:'s'},
   {k:'temp_addr',         t:'int',   min:1,   max:247,  l:'Adresse sondes PT100',    u:'', aide:"4 — surtout pas 3, c'est le variateur"},
   {k:'pres_fc',           t:'sel',   opts:[['','— inchangé —'],['3','FC03 · registres de maintien'],['4','FC04 · registres d\u2019entrée']], l:'Fonction Modbus pression'},
@@ -2381,14 +2669,56 @@ const CHAMPS = [
   {k:'res_actif',         t:'bool',  l:'Surveillance réserve 300 L'},
   {k:'temp_actif',        t:'bool',  l:'Sondes de température'},
   {k:'pilot_therm',       t:'int',   min:0,   max:2,    l:'Pilotage thermique', u:'', aide:'mode, voir le firmware'},
-  {k:'rech_actif',        t:'bool',  l:'Réchauffage sous seuil (D78)',
-   aide:'livré ÉTEINT — remplissage forcé quand la T° ECS passe sous le seuil (programme 2408)'},
   {k:'rech_seuil_c',      t:'float', min:30,  max:60,   l:'Seuil de réchauffage', u:'°C',
-   aide:'50 °C par défaut ; borné 30-60 par l\u2019automate'},
-  {k:'d88_actif',         t:'bool',  l:'Mitigeur (D88)',
-   aide:'livré ALLUMÉ — vise la cible après chaque remplissage ; commande série « d88 » équivalente'},
-  {k:'d88_cible_c',       t:'float', min:45,  max:60,   l:'Cible du mitigeur', u:'°C',
-   aide:'55 °C par défaut ; borné 45-60 par l\u2019automate'},
+   aide:'à cette température ou dessous, réchauffage OBLIGATOIRE — vidange '
+       +'inverse puis plein très chaud (R1, D112) ; 50 °C par défaut'},
+  {k:'rech_confirme_min', t:'int',   min:0,   max:180,  l:'Confirmation avant réchauffage', u:'min',
+   aide:'la température doit rester sous le seuil sans interruption pendant ce '
+       +'temps avant de lancer le cycle — toute remontée remet le chronomètre à '
+       +'zéro ; 0 = immédiat ; l\u2019opportuniste n\u2019attend pas (D113) ; 30 min par défaut'},
+  {k:'rech_opport_c',     t:'float', min:40,  max:60,   l:'Seuil opportuniste', u:'°C',
+   aide:'pendant un cycle de réchauffage, tout satellite du circuit sous ce seuil '
+       +'est embarqué, sans attendre la confirmation (R1/D113) ; 51,5 °C par défaut'},
+  {k:'rech_amorce_c',     t:'float', min:30,  max:55,   l:'T° d\u2019arrêt de vidange', u:'°C',
+   aide:'la dernière vidange du cycle s\u2019arrête à CNH sec ET cette température à '
+       +'l\u2019embranchement — chemin chauffé, amorçage sauté ; à défaut CNB sec et '
+       +'complément ×1,33 (R3) ; 45 °C par défaut'},
+  {k:'rech_tmax_c',       t:'float', min:50,  max:60,   l:'Cuve déjà chaude', u:'°C',
+   aide:'satellite au-dessus à un remplissage → amorçage SANS majoration (R11) et, '
+       +'sur les grandes cuves, place laissée au bouchon (R11b) ; 54 °C par défaut'},
+  {k:'rech_grand_l',      t:'float', min:20,  max:200,  l:'Grande cuve à partir de', u:'L',
+   aide:'contenance à partir de laquelle la règle R11b s\u2019applique ; 50 L par défaut'},
+  {k:'rech_place_l',      t:'float', min:0.5, max:5,    l:'Place laissée au bouchon', u:'L',
+   aide:'sur une grande cuve déjà chaude, le remplissage ECS s\u2019arrête autant '
+       +'avant la cible — la borne ne change pas, le bouchon remplit la place '
+       +'(R11b) ; 1,5 L par défaut'},
+  {k:'rech_frein_nb',     t:'int',   min:2,   max:10,   l:'Frein : sans remplissage', u:'',
+   aide:'réchauffages consécutifs sans remplissage normal avant la MISE EN '
+       +'SOMMEIL (R7) ; 4 par défaut'},
+  {k:'rech_frein_puis',   t:'int',   min:2,   max:10,   l:'Frein : sans puisage', u:'',
+   aide:'réchauffages consécutifs sans puisage avant la mise en sommeil (cuves à '
+       +'compteur de sortie, R7) ; 3 par défaut'},
+  {k:'rech_vidange_max_s', t:'int',  min:300, max:7200, l:'Butée de vidange', u:'s',
+   aide:'au-delà, vanne refermée et remplissage quand même + défaut — couvre '
+       +'aussi les flotteurs muets (R8) ; 1800 s par défaut'},
+  {k:'recup_attente_s',   t:'int',   min:0,   max:1800, l:'Attente avant récup', u:'s',
+   aide:'la vanne de retour ne rouvre et la pompe ne repart que ce délai après '
+       +'la fin du remplissage + bouchon, TOUS les trains (R5b) ; 120 s par défaut'},
+  {k:'somm_purge_min',    t:'int',   min:5,   max:120,  l:'Purge de sommeil', u:'min',
+   aide:'après CNB sec, la vanne reste ouverte ce temps pour égoutter la cuve '
+       +'(R12) ; 20 min par défaut'},
+  {k:'somm_renouv_h',     t:'int',   min:12,  max:720,  l:'Renouvellement sentinelle', u:'h',
+   aide:'l\u2019eau froide de la sentinelle est remplacée à cette échéance — '
+       +'hygiène (R12b) ; 48 h par défaut'},
+  {k:'mes_repos_min',     t:'int',   min:30,  max:240,  l:'Repos avant mesure', u:'min',
+   aide:'la fenêtre de pertes ne s\u2019ouvre que ce temps après un remplissage '
+       +'(décantation) ; ouvre aussi la qualification ÉTALON (R10) ; 60 min par défaut'},
+  {k:'mes_min_h',         t:'int',   min:3,   max:12,   l:'Durée d\u2019une mesure précise', u:'h',
+   aide:'calme minimal pour qu\u2019une fenêtre étalon compte comme mesure PRÉCISE '
+       +'(R10) ; 5 h par défaut'},
+  {k:'mes_marge_min',     t:'int',   min:5,   max:120,  l:'Marge de la mesure de nuit', u:'min',
+   aide:'le remplissage provoqué vise le repère de la veille + 24 h + cette marge '
+       +'(R10) ; 15 min par défaut'},
   {k:'t_amb_defaut',      t:'float', min:0,   max:40,   l:'Température ambiante par défaut', u:'°C',
    aide:'sert aux pertes ramenées à 35 °C tant qu\u2019il n\u2019y a pas de sonde'},
   {k:'C1',                t:'bool',  l:'Circuit A en service'},
@@ -2841,19 +3171,23 @@ function demo() {
     dernier: [4,5,7].includes(code), attente_efs: code === 10,
     vanne_retour: (code === 0 || code === 8) ? 'FERMEE' : 'OUVERTE', vr_alerte: false,
     debit_l_min: (code === 3 || code === 5) ? 9.6 : undefined,
-    file: [], avancement: (code === 3 || code === 5) ? (59 - 1 - 3.3) + av * 3.3 : av * 10,
-    cible: (code === 3 || code === 5) ? 59 - 1 : 10, unite: 'L',
+    file: [], avancement: (code === 3 || code === 5) ? (59 - 1 - 3.3) + av * 3.3
+                        : av * (code === 7 ? 20 : 10),
+    cible: (code === 3 || code === 5) ? 59 - 1 : (code === 7 ? 20 : 10), unite: 'L',
   });
   const vol1 = 40 + 18 * av;
   const cyc = Math.floor(t) % 45;
   const puise1 = cA === 0 && cyc < 12;               /* puisage visible au repos */
   return {
     device_id: 'chaufferie-01', seq: Math.floor(t / 5), uptime_s: 10049, rssi_dbm: -72,
-    cfg_version: 0, fw_epoch: 5, simulation: false, prog: '2608', nb_sats: 3, nb_sats_b: 0,
+    cfg_version: 0, fw_epoch: 11, simulation: false, prog: '3108', nb_sats: 3, nb_sats_b: 0,
     trains: [train('A', cA, 'SA1', 59, 3.3), train('B', 0, null, 38, 5)],
     chaufferie: {
       vfd: {ok: true, etat: 3, freq_hz: cA === 0 ? 0 : 65, vbus_v: 319, courant_a: cA === 0 ? 0 : 1.4},
-      sdm120: {ok: false},
+      sdm120: {ok: true, tension_v: 233, courant_a: 1.31,
+               puissance_w: 289, energie_kwh: 84.2},
+      elec_aux: {energie_kwh: 12.7, puiss_w: 9},
+      /* elec_cumulus volontairement ABSENT : montre les « — » et la note */
       maddalena: {ok: true, puissance_w: 28, t_depart_c: 25.0, t_retour_c: 24.0,
                   debit_lh: 11, energie_mwh: 2.427, energie_unite: 'MWh',
                   volume_m3: 213.42},
@@ -2878,31 +3212,42 @@ function demo() {
           conso_totale_l: 1271, tiree_l: 58.5,
           tiree_depuis_s: puise1 ? cyc : 60 + cyc, puise: puise1,
           rempl_nb: 21, rempl_moy_l_min: 8.4,
-          perte_w: 58, perte_norm35_w: 49, perte_moy_w: 55, perte_moy_nb: 4, perte_degh: 0.85,
-          perte_vol_l: 57.4, perte_tmoy_c: 57.8, perte_duree_s: 8100,
-          rempl_therm_nb: 2,
-          d88_biais_c: -0.8, d88_dose_l: 2.4,
+          perte_w: 58, perte_moy_w: 55, perte_moy_nb: 4, perte_degh: 0.85,
+          perte_vol_l: 57.4, perte_tmoy_c: 57.8, perte_duree_s: 21600,
+          perte_t0_c: 59.1, perte_t1_c: 56.4,
+          rempl_therm_nb: 2, rempl_duree_cumul_s: 7560, rempl_duree_moy_s: 360,
+          temp_apres_rempl_c: 54.6, rech_dernier_age_s: 9300,
+          rech_nb: 2, rech_avant_c: 49.6,
+          rech_nb_vid: 1, rech_vid_dern_l: 6.2, rech_vid_cumul_l: 6.2,
+          rech_sans_rempl: 1, rech_sans_puis: 0, mes_precise: 1,
           perte_age_s: 1240, perte_fiable: true, perte_etalon: true,
           X_l: 59, Y_l: 3.3, marge_l: 2, cible_l: 57,
           temp_c: 57.8, etalonnage: {bas: 8.2, milieu: 17.3, haut: 26.5},
           defauts: {cnb_muet: false, cnm_muet: false, cnh_muet: false, capteurs_fous: false,
                     vanne_alerte: false, quarantaine_s: 0, abandons: 0, servable: true}},
-        { sat_id: 'SA2', ok: true, cnb: 1, cnm: 1, cnh: 0,
-          niveau: 'MILIEU', vanne: 0, en_file: 0,
-          volume_l: 22.4, volume_qualite: 'ETALONNE',
+        { sat_id: 'SA2', ok: true, cnb: 1, cnm: 0, cnh: 0,
+          niveau: 'BAS', vanne: 0, en_file: 0,
+          volume_l: 8.4, volume_qualite: 'ETALONNE',
           conso_totale_l: 812, tiree_l: 640.2,
-          tiree_depuis_s: 4210, puise: false,
-          rempl_nb: 9, rempl_moy_l_min: 7.9,
-          perte_w: 34, perte_norm35_w: 31, perte_moy_w: 36, perte_moy_nb: 2, perte_degh: 1.32,
-          perte_age_s: 3610, perte_fiable: false,
+          tiree_depuis_s: 191000, puise: false,
+          rempl_nb: 9, rempl_moy_l_min: 7.9, rempl_therm_nb: 5,
+          rempl_duree_cumul_s: 3980, rempl_duree_moy_s: 442,
+          rech_nb: 5, rech_avant_c: 49.5, rech_dernier_age_s: 98000,
+          rech_nb_vid: 4, rech_vid_dern_l: 21.3, rech_vid_cumul_l: 96.4,
+          rech_sans_rempl: 4, rech_sans_puis: 3, mes_precise: 0,
+          sommeil: 1, somm_etat: 0, somm_depuis_s: 90000, somm_renouv_dans_s: 82800,
+          perte_w: 34, perte_moy_w: 36, perte_moy_nb: 2, perte_degh: 1.32,
+          perte_vol_l: 37.1, perte_tmoy_c: 51.2, perte_duree_s: 19800,
+          perte_t0_c: 52.4, perte_t1_c: 49.9,
+          perte_age_s: 96000, perte_fiable: false,
           X_l: 39, Y_l: 4.7, marge_l: 2, cible_l: 37,
-          temp_c: 49.2, etalonnage: {bas: 8.2, milieu: 17.3, haut: 26.5},
+          temp_c: 16.8, etalonnage: {bas: 8.2, milieu: 17.3, haut: 26.5},
           defauts: {cnb_muet: false, cnm_muet: false, cnh_muet: false, capteurs_fous: false,
                     vanne_alerte: false, quarantaine_s: 0, abandons: 0, servable: true}},
         { sat_id: 'SA3', ok: true, cnb: 1, cnm: 0, cnh: 0,
           niveau: 'BAS', vanne: 0, en_file: 0,
           volume_l: 12.1, volume_qualite: 'MESURE',
-          conso_totale_l: 401,
+          conso_totale_l: 401, rech_sans_rempl: 0, mes_precise: 0,
           /* volontairement SANS tiree_l, tiree_depuis_s, rempl_* : l'état
              réel constaté à Épinal, pour voir les « — » et leurs infobulles */
           X_l: 39, Y_l: 5.7, marge_l: 2, cible_l: 37,
@@ -2912,8 +3257,16 @@ function demo() {
       ]},
       {circuit_id: 'C2', actif: false, satellites: []},
     ],
-    config_active: {intervalle_s: 5, vol_pompe_amont_l: 4, vol_recup_l: 10, t_vanne_s: 6,
-                    temp_addr: 4, pres_voie: 5, pres_bar_max: 16, t_amb_defaut: 20,
+    mesure_nuit: {repere_pose: 1, repere_age_s: 46200, prochaine_dans_s: 41300},
+    config_active: {intervalle_s: 5, vol_pompe_amont_l: 4, vol_recup_l: 20,
+                    vitesse_recup_pct: 40, t_vanne_s: 6,
+                    temp_addr: 4, pres_voie: 6, pres_bar_max: 16, t_amb_defaut: 20,
+                    rech_seuil_c: 50, rech_confirme_min: 30,
+                    rech_opport_c: 51.5, rech_amorce_c: 45,
+                    rech_tmax_c: 54, rech_grand_l: 50, rech_place_l: 1.5,
+                    rech_frein_nb: 4, rech_frein_puis: 3, rech_vidange_max_s: 1800,
+                    recup_attente_s: 120, somm_purge_min: 20, somm_renouv_h: 48,
+                    mes_repos_min: 60, mes_min_h: 5, mes_marge_min: 15,
                     config_en_attente: false},
     diag: {tas_libre: 185064, tas_mini: 126308, pile_cloud_libre: 4912, raz_age_s: 7500,
            raz_quoi: 'livree tiree QA/QB rempl. pertes ',
@@ -2926,7 +3279,7 @@ function demo() {
 if (SHOW) document.body.classList.add('presentation');
 construireFormulaire();
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'pupitre — ui ' + LOT + ' · lot 15b — 26/08/2026';
+$('#footVer').textContent = 'enovaQ pupitre 3108 — ui ' + LOT + ' · lot 22 — 31/08/2026';
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
 setInterval(relever, DEMO ? 1000 : PERIODE_MS);
