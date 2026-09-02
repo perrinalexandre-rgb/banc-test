@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · ui 3108c.24 (lot 24, 31/08/2026)
+   enovaQ — pupitre de supervision · ui 0209.25 (lot 25, 02/09/2026)
    Nom officiel du fichier : « enovaQ pupitre 3108b.html » (règle de nommage
    client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
    enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
@@ -221,6 +221,26 @@
    réglage, alerte « échelle ≠ 10 ». (4) Réglage « Adresse compteur
    pompe » ajouté au formulaire (elec_pompe_addr, D114). Démo à jour
    (EFS 14,8 °C, cumulus muet conservé pour montrer la ligne grisée).
+   Lot 25 (02/09/2026, GO client « fournis-moi pilote + pupitre ») —
+   accompagne le pilote 0209 (D118-D123) :
+   (1) MADDALENA parlé métier : « Entrée EFS » (33 °C, le côté froid)
+   et « Sortie ECS » (49 °C, le côté chaud), dans l'ordre du circuit,
+   ici et dans « Températures aux points clés » ; la « T° eau froide
+   source » (sonde V7, rien à voir avec le compteur) quitte l'encadré
+   Maddalena — elle vit dans les organes partagés et les points clés.
+   (2) BILAN D'EAU recentré : la TIRÉE (ce que les résidents ont
+   réellement soutiré) seule en grand ; livrée et écart en petite
+   ligne discrète dessous, infobulles conservées.
+   (3) PHASES DE SOMMEIL nommées : le badge dit « MISE EN SOMMEIL ·
+   VIDANGE / PURGE / ATTENTE / RÉCUP / REMPLISSAGE FROID » (et
+   « RENOUVELLEMENT · … » pour les séquences 11-14) au lieu du
+   libellé unique — idem dans la famille Réchauffage.
+   (4) « L » sur les cotes des capteurs de niveau (8 L / 17 L / 27 L —
+   SA3 passe à 4 / 13 / 23 L, capteurs rabaissés, D123).
+   (5) L'HEURE DE L'AUTOMATE (D119) dans le bandeau, avec « nuit
+   économe » quand la fenêtre est active (D120). (6) Réglages : nuit
+   économe (marche, début, fin), seuil du réveil au mouvement,
+   vitesse du remplissage de réchauffage (D122). Démo à jour.
    ══════════════════════════════════════════════════════════════════════════ */
 :root{
   --ground:#F4F5F3; --panel:#FFFFFF; --panel2:#F2F4F2; --panel3:#FAFBFA;
@@ -647,6 +667,7 @@ body.presentation .brand{font-size:27px}
       <div>wifi <b id="mRssi">—</b></div>
       <div title="Marqueur de build du PROGRAMME de l'automate (champ « prog » du JSON). Vide (—) sur les anciens programmes.">prog <b id="mProg">—</b></div>
       <div>config <b id="mCfg">—</b></div>
+      <div title="Heure locale de l'automate, reçue du cloud (D119). « nuit » = fenêtre de nuit économe active (D120) : libre chute des températures, réveil au moindre puisage, grand réveil à l'heure de fin.">heure <b id="mHeure">—</b></div>
       <div class="ui" title="Version de la page. Après une mise en ligne : Ctrl+F5, puis vérifier ce marqueur.">ui <b id="mUi">—</b></div>
     </div>
   </div>
@@ -819,7 +840,7 @@ const API = {
   config:    '/api/config',   // POST → config servie à l'automate à son prochain envoi
 };
 const DEVICE     = 'chaufferie-01';
-const LOT        = '3108c.24';  // marqueur « ui » — bandeau et pied de page
+const LOT        = '0209.25';   // marqueur « ui » — bandeau et pied de page
 const PERIODE_MS = 3000;      // cadence de tirage de la page
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -917,18 +938,22 @@ const PROD_TH = [
    absent:"Publié par le programme du 23/08 (lecture du registre 33 de la carte "
         +"Modbus, en litres). Si la case reste vide après reflash de l'automate, "
         +"le champ volume_m3 manque dans /api/data — me le signaler."},
-  {k:'Température de départ', champ:'chaufferie.maddalena.t_depart_c', unite:'°C', dec:1,
+  {k:'Entrée EFS', champ:'chaufferie.maddalena.t_retour_c', unite:'°C', dec:1,
+   aide:"Température de l'eau froide sanitaire à l'ENTRÉE de la production, "
+       +"lue par le compteur (sa sonde « retour »). Lot 25 : parlé métier, "
+       +"dans l'ordre du circuit — l'eau entre froide, sort chaude.",
    absent:"Compteur Maddalena sans réponse."},
-  {k:'Température de retour', champ:'chaufferie.maddalena.t_retour_c', unite:'°C', dec:1,
+  {k:'Sortie ECS', champ:'chaufferie.maddalena.t_depart_c', unite:'°C', dec:1,
+   aide:"Température de l'eau chaude sanitaire à la SORTIE de la production, "
+       +"lue par le compteur (sa sonde « départ »).",
    absent:"Compteur Maddalena sans réponse."},
   {k:'Puissance', champ:'chaufferie.maddalena.puissance_w', unite:'W', dec:0,
    absent:"Compteur Maddalena sans réponse."},
   {k:'Débit', champ:'chaufferie.maddalena.debit_lh', unite:'L/h', dec:0,
    absent:"Compteur Maddalena sans réponse."},
-  {k:'T° eau froide source', champ:'chaufferie.temp_efs_c', unite:'°C', dec:1,
-   aide:"Température de l'eau froide à la source (sonde V7, D91). Le minimum "
-       +"glissant 5 h (temp_efs_min5h_c) servira au rendement.",
-   absent:"Publiée dès que la sonde V7 répond sur le module PT100."},
+  /* Lot 25 : la « T° eau froide source » (sonde V7) a quitté cet encadré —
+     c'est une sonde du module PT100, pas une donnée du compteur. Elle vit
+     dans les organes partagés (« Arrivée EFS ») et les points clés. */
 ];
 /* Lot 24 (client 31/08, « regrouper les conso élec dans un seul tableau
    pour prendre moins de place ») : UN tableau, une ligne par compteur.
@@ -1139,7 +1164,7 @@ const SAT_RECH = [
    calc: s => {
      if (s.sommeil) return has(s.somm_depuis_s)
                     ? 'sentinelle · ' + duree(s.somm_depuis_s) : 'sentinelle';
-     if (has(s.somm_etat) && s.somm_etat) return 'séquence ' + s.somm_etat;
+     if (has(s.somm_etat) && s.somm_etat) return sommPhaseCourte(s.somm_etat);  /* lot 25 */
      return undefined;
    },
    aide:"SOMMEIL (R12, D112) : la cuve, chauffée en boucle sans que personne ne "
@@ -1401,6 +1426,9 @@ function rendreBandeau(d) {
   $('#mRssi').textContent = has(r) && r ? r + ' dBm' + (r < -85 ? ' (faible)' : '') : 'hors ligne';
   $('#mCfg').textContent  = 'v' + i0(d.cfg_version);
   $('#mProg').textContent = d.prog || '—';
+  const chh = d.chaufferie || {};                                /* lot 25 */
+  $('#mHeure').textContent = chh.heure
+    ? chh.heure + (chh.nuit_eco ? ' · nuit' : '') : '—';
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1508,7 +1536,7 @@ function rendreAlertes(d) {
         + "— c'est le fonctionnement voulu (D112).");
     else if (has(s.somm_etat) && s.somm_etat)
       ajouterAlerte(box, 'warn', s.sat_id,
-        "Mise en sommeil en cours (séquence " + s.somm_etat + ").",
+        "Mise en sommeil : " + sommPhaseCourte(s.somm_etat) + ".",
         "Vidange totale, purge, récup puis sentinelle d'eau froide — la "
         + "séquence se replie d'elle-même si une demande normale arrive, et un "
         + "puisage sur cette cuve la réveille immédiatement (D112).");
@@ -1691,6 +1719,25 @@ const TIREE_DI = {SA1: 'DI3', SA2: 'DI4', SA3: 'DI5'};
    TIRÉE  = tiree_l, l'eau sortie (compteur de sortie). Champ ABSENT tant que
             la voie n'a pas répondu une première fois : « — », jamais un zéro.
    ÉCART  = livrée − tirée. Purement informatif, aucun seuil. */
+/* Lot 25 : la séquence de sommeil, en toutes lettres (client 02/09 — SA3
+   affichait « mise en sommeil » alors qu'il était en pleine vidange).
+   1-6 = mise en sommeil ; 11-14 = renouvellement de la sentinelle. */
+function sommPhase(e) {
+  const M = {1:'MISE EN SOMMEIL · ATTENTE', 2:'MISE EN SOMMEIL · VIDANGE',
+             3:'MISE EN SOMMEIL · PURGE',   4:'MISE EN SOMMEIL · ATTENTE TRAINS',
+             5:'MISE EN SOMMEIL · RÉCUP',   6:'MISE EN SOMMEIL · REMPL. FROID',
+             11:'RENOUVELLEMENT · ATTENTE', 12:'RENOUVELLEMENT · VIDANGE',
+             13:'RENOUVELLEMENT · PURGE',   14:'RENOUVELLEMENT · REMPL. FROID'};
+  return M[e] || ('MISE EN SOMMEIL · séq. ' + e);
+}
+function sommPhaseCourte(e) {
+  const M = {1:'attente du calme', 2:'vidange en cours', 3:'purge (vanne ouverte)',
+             4:'attente des trains', 5:'récup du tuyau', 6:'remplissage froid',
+             11:'renouvellement · attente', 12:'renouvellement · vidange',
+             13:'renouvellement · purge', 14:'renouvellement · remplissage froid'};
+  return M[e] || ('séquence ' + e);
+}
+
 function caseBilan(cls, titre, valeur, infobulle) {
   const c = el('div', 'c' + (cls ? ' ' + cls : ''));
   c.appendChild(el('div', 'k', titre));
@@ -1702,6 +1749,10 @@ function caseBilan(cls, titre, valeur, infobulle) {
   return c;
 }
 
+/* Lot 25 (client 02/09) : sous une cuve, ce qui parle c'est la TIRÉE — ce
+   que les résidents ont réellement soutiré. Elle reste seule en grand ;
+   livrée et écart, comptabilité de tuyauterie, passent en petite ligne
+   discrète dessous, infobulles conservées. */
 function bilanEau(s) {
   const frag = el('div');
   const box = el('div', 'bilan');
@@ -1709,8 +1760,6 @@ function bilanEau(s) {
   const livree = has(s.conso_totale_l) ? s.conso_totale_l : null;
   const tiree  = has(s.tiree_l) ? s.tiree_l : null;
   const ecart  = (livree !== null && tiree !== null) ? livree - tiree : null;
-  box.appendChild(caseBilan('', 'Livrée', livree,
-    "Eau entrée dans la cuve depuis la mise en service, comptée par le débitmètre du circuit."));
   box.appendChild(caseBilan('', 'Tirée', tiree,
     tiree === null
       ? "ECS prélevée à la cuve, comptée sur la voie " + di + " du ZLAN. La case reste vide "
@@ -1718,18 +1767,29 @@ function bilanEau(s) {
         + "l'automate — si elle reste vide alors que le compteur est câblé, le point est à "
         + "vérifier côté automate."
       : "ECS prélevée à la cuve, comptée par le compteur de sortie (voie " + di + ")."));
-  box.appendChild(caseBilan('ecart', 'Écart', ecart,
-    ecart === null ? "Calculable dès que les deux compteurs sont disponibles."
-                   : "Livrée moins tirée — LE JUGE DE PAIX depuis le programme 3108 (D113) : "
-                     + "toute l'eau vidangée (réchauffages, sommeil, renouvellement) est "
-                     + "retranchée du livré, donc l'écart doit rester proche de zéro, au "
-                     + "stock présent dans la cuve près. N'a de sens que si les deux "
-                     + "compteurs partent du même point zéro — pour les réaligner : RAZ "
-                     + "sélective, cocher « Eau livrée » ET « Eau tirée » ensemble."));
   frag.appendChild(box);
-  frag.appendChild(el('div', 'bilan-note', tiree === null
-    ? "Compteur de sortie (" + di + ") pas encore vu par l'automate."
-    : "Écart théorique : le stock de la cuve (D113) — même point zéro requis."));
+  const lg = el('div', 'bilan-note');
+  const morceau = (txt, aide) => {
+    const sp = el('span', null, txt);
+    sp.title = aide;
+    lg.appendChild(sp);
+  };
+  morceau('livrée ' + (livree === null ? '—' : n(livree) + ' L'),
+    "Eau entrée dans la cuve depuis la mise en service, comptée par le débitmètre du circuit.");
+  lg.appendChild(document.createTextNode(' · '));
+  morceau('écart ' + (ecart === null ? '—' : n(ecart) + ' L'),
+    ecart === null ? "Calculable dès que les deux compteurs sont disponibles."
+                   : "Livrée moins tirée — le juge de paix (D113) : toute l'eau vidangée "
+                     + "(réchauffages, sommeil, renouvellement) est retranchée du livré, "
+                     + "l'écart doit rester proche de zéro, au stock de la cuve près. "
+                     + "N'a de sens que si les deux compteurs partent du même point zéro "
+                     + "(RAZ sélective : « Eau livrée » ET « Eau tirée » ensemble).");
+  if (tiree === null) {
+    lg.appendChild(document.createTextNode(' · '));
+    morceau('sortie pas encore vue',
+      "Compteur de sortie (" + di + ") pas encore vu par l'automate.");
+  }
+  frag.appendChild(lg);
   return frag;
 }
 
@@ -1753,9 +1813,10 @@ function etatSatellite(s, d) {
   if (df.urgence) return {cls: 'urgence', txt: 'URGENCE CNB'};
   const actif = ((d && d.trains) || []).some(t => t.sat_actif === s.sat_id);
   if (actif)      return {cls: 'service', txt: 'EN SERVICE'};
-  if (s.sommeil)  return {cls: 'somm',    txt: 'EN SOMMEIL'};
+  if (s.sommeil && !(has(s.somm_etat) && s.somm_etat >= 11))
+                  return {cls: 'somm',    txt: 'EN SOMMEIL'};
   if (has(s.somm_etat) && s.somm_etat)
-                  return {cls: 'somm',    txt: 'MISE EN SOMMEIL'};
+                  return {cls: 'somm',    txt: sommPhase(s.somm_etat)};
   if (df.inc_basse || df.secours_vol || df.capteurs_fous || df.quarantaine_s > 0 || df.servable === false || df.vanne_alerte)
     return {cls: 'defaut', txt: 'EN DÉFAUT'};
   if (s.en_file) {
@@ -1844,7 +1905,7 @@ function dessinerCuve(s, K) {
   /* graduations : la cote en litres écrite en face de chaque repère */
   [et.bas, et.milieu, et.haut].forEach(v => {
     if (!has(v)) return;
-    const lab = el('div', 'cuve-lab', i0(v));    /* lot 23 : cotes rondes */
+    const lab = el('div', 'cuve-lab', i0(v) + ' L');  /* lots 23/25 : rondes + unité */
     lab.style.bottom = 'calc(' + pct(v, X) + '% + 2px)';
     c.appendChild(lab);
   });
@@ -2277,8 +2338,8 @@ function rendreSats(d) {
         ? "EN SOMMEIL : sentinelle d'eau froide en place — personne ne tirait "
           + "(frein R7). Le premier tirage du retour réveille tout seul, "
           + "remplissage chaud prioritaire (D112)."
-        : "MISE EN SOMMEIL en cours (séquence " + s.somm_etat + ") — vidange "
-          + "totale, purge, récup puis sentinelle d'eau froide (D112)."));
+        : "MISE EN SOMMEIL en cours — " + sommPhaseCourte(s.somm_etat)
+          + ". Vidange totale, purge, récup puis sentinelle d'eau froide (D112)."));
     det.appendChild(famille('Réchauffage', [mRech].concat(notesRech),
                             enSomm ? 'peu-fiable' : ''));
 
@@ -2431,8 +2492,10 @@ function rendreTemp(d) {
     if (s.ok) t('Cuve ' + s.sat_id, s.temp_c);
   }));
   const ma = ch.maddalena || {};
-  t('Départ production', ma.ok ? ma.t_depart_c : undefined, "Compteur d'énergie Maddalena.");
-  t('Retour production', ma.ok ? ma.t_retour_c : undefined);
+  t('Entrée EFS (Maddalena)', ma.ok ? ma.t_retour_c : undefined,
+    "L'eau froide à l'entrée de la production, lue par le compteur (lot 25).");
+  t('Sortie ECS (Maddalena)', ma.ok ? ma.t_depart_c : undefined,
+    "L'eau chaude à la sortie de la production, lue par le compteur.");
   t('Eau froide à la source (V7)', ch.temp_efs_c,
     "Sonde V7 en amont des chauffe-eau (D91) ; le minimum glissant 5 h est la "
     + "référence pour le rendement.");
@@ -2597,6 +2660,9 @@ const CFG_LIBELLE = {
   mes_repos_min:'Repos avant mesure (min)',
   mes_min_h:'Durée d\u2019une mesure précise (h)',
   mes_marge_min:'Marge de la mesure de nuit (min)',
+  nuit_actif:'Nuit économe', nuit_debut_h:'Début de nuit (h)',
+  nuit_fin_h:'Grand réveil (h)', reveil_seuil_l:'Réveil au mouvement (L)',
+  rech_vitesse_pct:'Vitesse pompe en réchauffage (%)',
   raz_compteurs:'Remise à zéro des compteurs (un coup)',
   acq_defauts:'Acquittement des défauts (un coup)',
 };
@@ -2735,7 +2801,24 @@ const CHAMPS = [
    aide:'20 L par défaut (D113)'},
   {k:'vitesse_train_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en train',  u:'%'},
   {k:'vitesse_recup_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en récup',  u:'%',
-   aide:'vitesse douce de la récupération ; 40 % par défaut (D113, était 60)'},
+   aide:'vitesse douce de la récupération ; 40 % par défaut (D113, était 60) — '
+       +'depuis le 0209 elle se fait en 2 passes de 10 L, 2 min entre les deux (D121)'},
+  {k:'rech_vitesse_pct',  t:'int',   min:10,  max:100,  l:'Vitesse pompe en réchauffage', u:'%',
+   aide:'remplissage de RÉCHAUFFAGE à vitesse réduite pour mélanger l\u2019eau très '
+       +'chaude dans la cuve (D122) ; 60 % par défaut — trains normaux inchangés'},
+  {k:'nuit_actif',        t:'bool',  l:'Nuit économe',
+   aide:'de « début de nuit » à « grand réveil » : plus de réchauffage sur la seule '
+       +'température (libre chute) ; un puisage réveille toujours (D120). Sans heure '
+       +'valide du cloud, la fenêtre est inactive.'},
+  {k:'nuit_debut_h',      t:'int',   min:0,   max:23,   l:'Début de nuit', u:'h',
+   aide:'heure locale ; 0 h par défaut'},
+  {k:'nuit_fin_h',        t:'int',   min:0,   max:23,   l:'Grand réveil', u:'h',
+   aide:'à cette heure, toute cuve sous le seuil part en vidange PROFONDE (CNM sec, '
+       +'45 °C mini) + remplissage — chaudes pour les premières douches (D120) ; 6 h par défaut'},
+  {k:'reveil_seuil_l',    t:'float', min:0,   max:50,   l:'Réveil au mouvement', u:'L',
+   aide:'dès ce volume tiré sur une cuve sous le seuil, réchauffage SANS attendre la '
+       +'confirmation (R14, D120) ; 1 L par défaut, une accalmie de 10 min remet le compte '
+       +'à zéro (goutte-à-goutte ignoré) ; 0 = coupé'},
   {k:'t_vanne_s',         t:'int',   min:1,   max:60,   l:'Pause de manœuvre',       u:'s'},
   {k:'temp_addr',         t:'int',   min:1,   max:247,  l:'Adresse sondes PT100',    u:'', aide:"4 — surtout pas 3, c'est le variateur"},
   {k:'pres_fc',           t:'sel',   opts:[['','— inchangé —'],['3','FC03 · registres de maintien'],['4','FC04 · registres d\u2019entrée']], l:'Fonction Modbus pression'},
@@ -3271,6 +3354,8 @@ function demo() {
                   volume_m3: 213.42},
       mesures_age_s: 3,
       temp_efs_c: 14.8, temp_efs_min5h_c: 14.2,
+      /* lot 25 : l'heure de l'automate (D119) et la nuit econome (D120) */
+      heure: '03:12', heure_jour: 3, nuit_eco: true,
       eau: {impulsions: 271, litres: 135.5, zlan_ok: true, source: 'ZLAN6808',
             qa: {voie: 1, impulsions: 271, litres: 135.5, ok: true},
             qb: {voie: 2, impulsions: 0, litres: 0, ok: true}},
@@ -3316,7 +3401,7 @@ function demo() {
           rech_nb: 5, rech_avant_c: 49.5, rech_dernier_age_s: 98000,
           rech_nb_vid: 4, rech_vid_dern_l: 21.3, rech_vid_cumul_l: 96.4,
           rech_sans_rempl: 4, rech_sans_puis: 3, mes_precise: 0,
-          sommeil: 1, somm_etat: 0, somm_depuis_s: 90000, somm_renouv_dans_s: 82800,
+          sommeil: 1, somm_etat: 12, somm_depuis_s: 90000, somm_renouv_dans_s: 0,
           perte_w: 34, perte_moy_w: 36, perte_moy_nb: 2, perte_degh: 1.32,
           perte_vol_l: 37.1, perte_tmoy_c: 51.2, perte_duree_s: 19800,
           perte_t0_c: 52.4, perte_t1_c: 49.9,
@@ -3329,10 +3414,11 @@ function demo() {
           niveau: 'BAS', vanne: 0, en_file: 0,
           volume_l: 12.1, volume_qualite: 'MESURE',
           conso_totale_l: 401, rech_sans_rempl: 0, mes_precise: 0,
+          somm_etat: 2,   /* lot 25 : mise en sommeil, phase VIDANGE (démo) */
           /* volontairement SANS tiree_l, tiree_depuis_s, rempl_* : l'état
              réel constaté à Épinal, pour voir les « — » et leurs infobulles */
           X_l: 39, Y_l: 5.7, marge_l: 2, cible_l: 37,
-          temp_c: 61.3, etalonnage: {bas: 8.2, milieu: 17.3, haut: 26.5},
+          temp_c: 61.3, etalonnage: {bas: 4.2, milieu: 13.3, haut: 22.5},  /* D123 */
           defauts: {cnb_muet: false, cnm_muet: false, cnh_muet: false, capteurs_fous: false,
                     vanne_alerte: false, quarantaine_s: 0, abandons: 0, servable: true}},
       ]},
@@ -3342,6 +3428,8 @@ function demo() {
     config_active: {intervalle_s: 5, vol_pompe_amont_l: 4, vol_recup_l: 20,
                     vitesse_recup_pct: 40, t_vanne_s: 6,
                     temp_addr: 4, pres_voie: 6, pres_bar_max: 10, elec_pompe_addr: 7, t_amb_defaut: 20,
+                    nuit_actif: true, nuit_debut_h: 0, nuit_fin_h: 6,
+                    reveil_seuil_l: 1, rech_vitesse_pct: 60,
                     rech_seuil_c: 50, rech_confirme_min: 30,
                     rech_opport_c: 51.5, rech_amorce_c: 45,
                     rech_tmax_c: 54, rech_grand_l: 50, rech_place_l: 1.5,
@@ -3360,7 +3448,7 @@ function demo() {
 if (SHOW) document.body.classList.add('presentation');
 construireFormulaire();
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 3108c — ui ' + LOT + ' · lot 24 — 31/08/2026';
+$('#footVer').textContent = 'enovaQ pupitre 0209 — ui ' + LOT + ' · lot 25 — 02/09/2026';
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
 setInterval(relever, DEMO ? 1000 : PERIODE_MS);
