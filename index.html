@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · ui 0209.25 (lot 25, 02/09/2026)
+   enovaQ — pupitre de supervision · ui 0309b.28 (lot 28, 03/09/2026)
    Nom officiel du fichier : « enovaQ pupitre 3108b.html » (règle de nommage
    client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
    enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
@@ -241,6 +241,35 @@
    économe » quand la fenêtre est active (D120). (6) Réglages : nuit
    économe (marche, début, fin), seuil du réveil au mouvement,
    vitesse du remplissage de réchauffage (D122). Démo à jour.
+   Lot 26 (03/09/2026, réchauffage v7 — pilote 0309, D124-D129,
+   règles dictées le 02/09 au soir) :
+   (1) LE JOURNAL DES RÉCHAUFFAGES : un seul encadré, façon journal
+   série — une ligne par cycle : heure, cuve, n°, motif (seuil jour /
+   plancher nuit / puisage nocturne / grand réveil), litres vidangés,
+   amorçage préalable, T° avant → +5 min, litres remplis, durée. Les
+   10 dernières fiches publiées par l'automate (rech_fiches, D129).
+   (2) Réglages v7 : plancher de nuit (47 °C — la libre chute totale
+   disparaît), réveil nocturne 2 L (le réveil de jour disparaît),
+   condition d'arrêt de vidange +3 °C, blocage CNH-sec avant la nuit,
+   vague de mélange 30-100 % (min/max/rampe) ; « Seuil opportuniste »
+   et « T° d'arrêt de vidange » retirés du formulaire (obsolètes,
+   D124) ; vitesse des trains 86 % (~60 Hz si P0-10 = 70). Démo à
+   jour (fiches d'exemple).
+   Lot 27 (03/09/2026, pilote 0309a — D130-D134) : (1) une cuve
+   endormie s'affiche « EN SOMMEIL · EFS » et sa température est
+   étiquetée EFS (c'est l'eau froide de la sentinelle, pas de l'ECS).
+   (2) Réglage « Pause avant la 2e récup » (5 min par défaut — la
+   première passe reste à +2 min du bouchon) ; purge de sommeil « 5 min
+   par défaut » (D133) ; températures lues toutes les 2 s côté automate
+   (D131) ; remplissages de réchauffage du plus proche au plus lointain
+   (D132). Démo à jour.
+   Lot 28 (03/09/2026, pilote 0309b — D135-D137) : (1) phases 15/16 du
+   renouvellement nommées (il suit désormais la même mécanique que la
+   mise en sommeil : vanne refermée, recirculation d'EFS, sentinelle
+   CNB + 5 L). (2) Réglages « Recirculation de veille (L) » et
+   « Sentinelle : au-delà de CNB (L) ». (3) Vanne de sortie : fermeture
+   IMMÉDIATE dès CNB sec (la fenêtre de 30 s disparaît — D135), aides
+   à jour. (4) Les six sondes recalées côté pilote (D137). Démo à jour.
    ══════════════════════════════════════════════════════════════════════════ */
 :root{
   --ground:#F4F5F3; --panel:#FFFFFF; --panel2:#F2F4F2; --panel3:#FAFBFA;
@@ -667,7 +696,7 @@ body.presentation .brand{font-size:27px}
       <div>wifi <b id="mRssi">—</b></div>
       <div title="Marqueur de build du PROGRAMME de l'automate (champ « prog » du JSON). Vide (—) sur les anciens programmes.">prog <b id="mProg">—</b></div>
       <div>config <b id="mCfg">—</b></div>
-      <div title="Heure locale de l'automate, reçue du cloud (D119). « nuit » = fenêtre de nuit économe active (D120) : libre chute des températures, réveil au moindre puisage, grand réveil à l'heure de fin.">heure <b id="mHeure">—</b></div>
+      <div title="Heure locale de l'automate, reçue du cloud (D119). « nuit » = fenêtre de nuit économe active (D125) : le seuil descend au plancher de nuit (47°), un puisage ≥ 2 L réveille, grand réveil à l'heure de fin.">heure <b id="mHeure">—</b></div>
       <div class="ui" title="Version de la page. Après une mise en ligne : Ctrl+F5, puis vérifier ce marqueur.">ui <b id="mUi">—</b></div>
     </div>
   </div>
@@ -711,6 +740,13 @@ body.presentation .brand{font-size:27px}
       <h3>Compteurs de remplissage</h3>
       <div class="stats" id="statReserve"></div>
     </div>
+  </section>
+
+  <h2 class="eyebrow">Réchauffages</h2>
+  <section class="card">
+    <h3>Le journal <em>— une ligne par cycle, comme le serial (D129, lot 26)</em></h3>
+    <div class="tabwrap"><table class="sattab" id="rechJournal"></table></div>
+    <div id="rechJournalNote"></div>
   </section>
 
   <h2 class="eyebrow">Production</h2>
@@ -840,7 +876,7 @@ const API = {
   config:    '/api/config',   // POST → config servie à l'automate à son prochain envoi
 };
 const DEVICE     = 'chaufferie-01';
-const LOT        = '0209.25';   // marqueur « ui » — bandeau et pied de page
+const LOT        = '0309b.28';  // marqueur « ui » — bandeau et pied de page
 const PERIODE_MS = 3000;      // cadence de tirage de la page
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -1727,14 +1763,16 @@ function sommPhase(e) {
              3:'MISE EN SOMMEIL · PURGE',   4:'MISE EN SOMMEIL · ATTENTE TRAINS',
              5:'MISE EN SOMMEIL · RÉCUP',   6:'MISE EN SOMMEIL · REMPL. FROID',
              11:'RENOUVELLEMENT · ATTENTE', 12:'RENOUVELLEMENT · VIDANGE',
-             13:'RENOUVELLEMENT · PURGE',   14:'RENOUVELLEMENT · REMPL. FROID'};
+             13:'RENOUVELLEMENT · PURGE',   14:'RENOUVELLEMENT · REMPL. FROID',
+             15:'RENOUVELLEMENT · ATTENTE TRAINS', 16:'RENOUVELLEMENT · RÉCUP'};
   return M[e] || ('MISE EN SOMMEIL · séq. ' + e);
 }
 function sommPhaseCourte(e) {
   const M = {1:'attente du calme', 2:'vidange en cours', 3:'purge (vanne ouverte)',
              4:'attente des trains', 5:'récup du tuyau', 6:'remplissage froid',
              11:'renouvellement · attente', 12:'renouvellement · vidange',
-             13:'renouvellement · purge', 14:'renouvellement · remplissage froid'};
+             13:'renouvellement · purge', 14:'renouvellement · remplissage froid',
+             15:'renouvellement · attente trains', 16:'renouvellement · récup'};
   return M[e] || ('séquence ' + e);
 }
 
@@ -1814,7 +1852,7 @@ function etatSatellite(s, d) {
   const actif = ((d && d.trains) || []).some(t => t.sat_actif === s.sat_id);
   if (actif)      return {cls: 'service', txt: 'EN SERVICE'};
   if (s.sommeil && !(has(s.somm_etat) && s.somm_etat >= 11))
-                  return {cls: 'somm',    txt: 'EN SOMMEIL'};
+                  return {cls: 'somm',    txt: 'EN SOMMEIL · EFS'};  /* lot 27 */
   if (has(s.somm_etat) && s.somm_etat)
                   return {cls: 'somm',    txt: sommPhase(s.somm_etat)};
   if (df.inc_basse || df.secours_vol || df.capteurs_fous || df.quarantaine_s > 0 || df.servable === false || df.vanne_alerte)
@@ -1964,7 +2002,10 @@ function heroNums(s, X, progNeuf) {
 
   const t = s.temp_c;
   const ht = el('div', 'hn tmp');
-  ht.appendChild(el('div', 'hn-k', 'ECS'));
+  /* Lot 27 : une cuve endormie contient l'eau FROIDE de la sentinelle —
+     l'étiqueter « ECS » mentait (client 03/09 : « il faut indiquer
+     sommeil EFS »). */
+  ht.appendChild(el('div', 'hn-k', s.sommeil ? 'EFS' : 'ECS'));
   const tv = el('div', 'hn-v');
   if (tempValide(t)) {
     ht.className = 'hn tmp ' + (t >= SEUIL_ECS_C ? 'chaud' : 'tiede');
@@ -2198,7 +2239,7 @@ function rendreSats(d) {
       const vs = el('div', 'chip' + (s.vanne_sortie === 'OUVERTE' ? ' open' : ''),
                     'sortie ' + String(s.vanne_sortie).toLowerCase());
       vs.title = "Vanne de sortie de la cuve (règle D60) : l'automate la FERME quand le "
-               + "flotteur bas est sec depuis plus de 30 s (protège la réserve d'air si la "
+               + "flotteur bas est sec — fermeture IMMÉDIATE depuis le 0309b, D135 (protège la réserve d'air si la "
                + "cuve se vide), et la rouvre quand il est mouillé. Fermée = les logements "
                + "ne sont plus servis par cette cuve.";
       chips.appendChild(vs);
@@ -2585,10 +2626,69 @@ function rendreElecTable(d) {
     'Relevé il y a ' + duree(ch.mesures_age_s) + '.'));
 }
 
+/* Lot 26 (D129) : le journal des réchauffages — les fiches publiées par
+   l'automate (10 dernières), une ligne par cycle. */
+const RECH_MOTIFS = ['seuil jour', 'plancher nuit', 'puisage nocturne', 'grand réveil'];
+const JOURS_C = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
+function rendreRechJournal(d) {
+  const t = $('#rechJournal'); t.textContent = '';
+  const nb = $('#rechJournalNote'); nb.textContent = '';
+  const fiches = (d && d.rech_fiches) || [];
+  if (!fiches.length) {
+    nb.appendChild(el('p', 'vide-msg',
+      "Aucun réchauffage enregistré depuis le programme 0309 : les fiches "
+      + "apparaîtront ici au premier cycle (heure, motif, vidange, amorçage, "
+      + "températures, litres, durée)."));
+    return;
+  }
+  const thead = document.createElement('thead');
+  const hr = document.createElement('tr');
+  ['Heure', 'Cuve', 'N°', 'Motif', 'Vidangé', 'Amorçage', 'T° avant → +5 min', 'Rempli', 'Durée']
+    .forEach(h => { const th = document.createElement('th'); th.textContent = h; hr.appendChild(th); });
+  thead.appendChild(hr); t.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  fiches.forEach(f => {
+    const tr = document.createElement('tr');
+    const td = (txt, aide) => {
+      const d2 = document.createElement('td');
+      d2.textContent = txt;
+      if (aide) d2.title = aide;
+      tr.appendChild(d2);
+    };
+    td(has(f.h) ? ((has(f.j) ? JOURS_C[f.j] + ' ' : '') + f.h) : '—',
+       "Heure locale de la fin du cycle (D119). « — » : heure du cloud pas encore acquise.");
+    td(f.sat || '—');
+    td(has(f.n) ? f.n : '—', "N° de réchauffage de cette cuve depuis la mise en service.");
+    td(has(f.motif) ? (RECH_MOTIFS[f.motif] || f.motif) : '—',
+       "Ce qui a déclenché le cycle : seuil de jour (50° confirmé 30 min), plancher de "
+       + "nuit (47°), puisage nocturne (≥ 2 L), ou grand réveil du matin.");
+    td(has(f.vid_l) ? n(f.vid_l) + ' L' : 'sans',
+       "Litres d'eau tiède renvoyés à la chaufferie par la vidange inverse — déduits de "
+       + "la livrée (D113).");
+    td(f.amor ? 'préalable' : '—',
+       f.amor ? "La vidange n'a pas donné « T sortie pompe ≤ T cuve + 3° » : le remplissage "
+                + "a payé un amorçage préalable ×1,33 (D124)."
+              : "Chemin au niveau de la cuve à la fin de la vidange : amorçage crédité (D124).");
+    td((has(f.t0) ? n(f.t0) : '—') + ' → ' + (has(f.t1) ? n(f.t1) + ' °C' : 'en attente'),
+       "Température de la cuve au départ du cycle, puis relevée 5 min après le "
+       + "remplissage (D93). « en attente » : le relevé +5 min n'est pas encore fait.");
+    td(has(f.rempl_l) ? n(f.rempl_l) + ' L' : '—',
+       "Litres d'ECS très chaude ajoutés par le remplissage du cycle.");
+    td(has(f.duree_s) ? duree(f.duree_s) : '—', "Durée du remplissage.");
+    tbody.appendChild(tr);
+  });
+  t.appendChild(tbody);
+  nb.appendChild(el('p', 'peu-fiable-note',
+    "Les 10 derniers cycles (l'automate en garde 50). Un cycle = vidange jusqu'à "
+    + "CNM sec + remplissage en vague 30-100 % — un seul à la fois, la plus froide "
+    + "d'abord (D124, lot 26)."));
+}
+
 function rendreProduction(d) {
   const ch = (d && d.chaufferie) || {};
   remplirStats('#statProdTh', PROD_TH, d);
   rendreElecTable(d);
+  rendreRechJournal(d);
   const note = (sel, app, nom) => {
     const b = $(sel); b.textContent = '';
     if (!app) { b.appendChild(el('p', 'peu-fiable-note',
@@ -2656,13 +2756,20 @@ const CFG_LIBELLE = {
   rech_vidange_max_s:'Butée de vidange (s)',
   recup_attente_s:'Attente avant récup (s)',
   somm_purge_min:'Purge de sommeil (min)',
+  recup_pause2_s:'Pause 2e récup (s)',
+  somm_recirc_l:'Recirculation de veille (L)',
+  somm_sent_extra_l:'Sentinelle au-delà de CNB (L)',
   somm_renouv_h:'Renouvellement sentinelle (h)',
   mes_repos_min:'Repos avant mesure (min)',
   mes_min_h:'Durée d\u2019une mesure précise (h)',
   mes_marge_min:'Marge de la mesure de nuit (min)',
   nuit_actif:'Nuit économe', nuit_debut_h:'Début de nuit (h)',
-  nuit_fin_h:'Grand réveil (h)', reveil_seuil_l:'Réveil au mouvement (L)',
-  rech_vitesse_pct:'Vitesse pompe en réchauffage (%)',
+  nuit_fin_h:'Grand réveil (h)', reveil_seuil_l:'Réveil nocturne (L)',
+  nuit_seuil_c:'Plancher de nuit (°C)', rech_delta_c:'Arrêt de vidange (+°C)',
+  cnh_prenuit_min:'Blocage CNH avant la nuit (min)',
+  rech_vague_min_pct:'Vague, creux (%)', rech_vague_max_pct:'Vague, crête (%)',
+  rech_vague_s:'Vague, rampe (s)',
+  rech_vitesse_pct:'Vitesse réchauffage (obsolète, D127)',
   raz_compteurs:'Remise à zéro des compteurs (un coup)',
   acq_defauts:'Acquittement des défauts (un coup)',
 };
@@ -2799,26 +2906,46 @@ const CHAMPS = [
    aide:'litres poussés à la récup, 2 min après le cycle ; 20 L par défaut (D113)'},
   {k:'vol_recup_b_l',     t:'float', min:0,   max:100,  l:'Récupération B (Z)',      u:'L',
    aide:'20 L par défaut (D113)'},
-  {k:'vitesse_train_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en train',  u:'%'},
+  {k:'vitesse_train_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en train',  u:'%',
+   aide:'86 % par défaut depuis le 0309 (D128) : ~60 Hz si le variateur est réglé P0-10 = 70 Hz — mettre 92 s\u2019il est resté à 65 Hz'},
   {k:'vitesse_recup_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en récup',  u:'%',
-   aide:'vitesse douce de la récupération ; 40 % par défaut (D113, était 60) — '
-       +'depuis le 0209 elle se fait en 2 passes de 10 L, 2 min entre les deux (D121)'},
-  {k:'rech_vitesse_pct',  t:'int',   min:10,  max:100,  l:'Vitesse pompe en réchauffage', u:'%',
-   aide:'remplissage de RÉCHAUFFAGE à vitesse réduite pour mélanger l\u2019eau très '
-       +'chaude dans la cuve (D122) ; 60 % par défaut — trains normaux inchangés'},
+   aide:'vitesse douce de la récupération ; 40 % par défaut (D113, était 60) — elle '
+       +'se fait en 2 passes de 10 L (D121)'},
+  {k:'recup_pause2_s',    t:'int',   min:0,   max:1800, l:'Pause avant la 2e récup', u:'s',
+   aide:'la première passe démarre 2 min après le bouchon ; la seconde attend cette '
+       +'pause, pompe coupée, l\u2019eau se pose — 5 min par défaut (D134, client 03/09)'},
+  {k:'rech_vague_min_pct', t:'int',  min:10,  max:100,  l:'Vague de mélange, creux', u:'%',
+   aide:'le remplissage de réchauffage roule en vague : de ce creux à la crête en '
+       +'« rampe » secondes, puis redescend, en continu — le flux brasse la cuve (D127) ; 30 % par défaut'},
+  {k:'rech_vague_max_pct', t:'int',  min:10,  max:100,  l:'Vague de mélange, crête', u:'%',
+   aide:'100 % par défaut (D127)'},
+  {k:'rech_vague_s',      t:'int',   min:2,   max:60,   l:'Vague de mélange, rampe', u:'s',
+   aide:'durée d\u2019une montée (et d\u2019une descente) ; 10 s par défaut (D127)'},
   {k:'nuit_actif',        t:'bool',  l:'Nuit économe',
-   aide:'de « début de nuit » à « grand réveil » : plus de réchauffage sur la seule '
-       +'température (libre chute) ; un puisage réveille toujours (D120). Sans heure '
-       +'valide du cloud, la fenêtre est inactive.'},
+   aide:'de « début de nuit » à « grand réveil » : le seuil descend au plancher de '
+       +'nuit (47°) — au-dessus on laisse filer, en dessous on réchauffe même la nuit '
+       +'(D125). Sans heure valide du cloud, la fenêtre est inactive.'},
   {k:'nuit_debut_h',      t:'int',   min:0,   max:23,   l:'Début de nuit', u:'h',
    aide:'heure locale ; 0 h par défaut'},
   {k:'nuit_fin_h',        t:'int',   min:0,   max:23,   l:'Grand réveil', u:'h',
-   aide:'à cette heure, toute cuve sous le seuil part en vidange PROFONDE (CNM sec, '
-       +'45 °C mini) + remplissage — chaudes pour les premières douches (D120) ; 6 h par défaut'},
-  {k:'reveil_seuil_l',    t:'float', min:0,   max:50,   l:'Réveil au mouvement', u:'L',
-   aide:'dès ce volume tiré sur une cuve sous le seuil, réchauffage SANS attendre la '
-       +'confirmation (R14, D120) ; 1 L par défaut, une accalmie de 10 min remet le compte '
-       +'à zéro (goutte-à-goutte ignoré) ; 0 = coupé'},
+   aide:'à cette heure, toute cuve sous 50° part en vidange (CNM sec) + remplissage — '
+       +'chaudes pour les premières douches (D120) ; 6 h par défaut'},
+  {k:'nuit_seuil_c',      t:'float', min:40,  max:50,   l:'Plancher de nuit', u:'°C',
+   aide:'le seuil de réchauffage pendant la fenêtre de nuit — 47 °C par défaut (D125) ; '
+       +'confirmation 30 min identique'},
+  {k:'reveil_seuil_l',    t:'float', min:0,   max:50,   l:'Réveil nocturne', u:'L',
+   aide:'LA NUIT seulement : dès ce volume tiré sur une cuve sous 50°, cycle sans '
+       +'attendre la confirmation — 2 L par défaut (moins, ce n\u2019est pas une douche, '
+       +'D125) ; une accalmie de 10 min remet le compte à zéro ; 0 = coupé. De jour : '
+       +'pas de réveil, la confirmation de 30 min s\u2019applique toujours.'},
+  {k:'rech_delta_c',      t:'float', min:1,   max:10,   l:'Condition d\u2019arrêt de vidange', u:'°C',
+   aide:'la vidange va jusqu\u2019à CNM sec ; si à l\u2019arrêt la sortie de pompe dépasse '
+       +'« T cuve + ce delta », le remplissage paie un amorçage préalable ×1,33, noté au '
+       +'journal (D124) ; 3 °C par défaut'},
+  {k:'cnh_prenuit_min',   t:'int',   min:0,   max:240,  l:'Blocage CNH avant la nuit', u:'min',
+   aide:'dans cette fenêtre avant le début de nuit (et pendant la nuit), plus de '
+       +'complément opportuniste CNH sec — on ne remplit pas chaud ce qui va refroidir '
+       +'toute la nuit (D126) ; CNM, CNB et urgence toujours servis ; 60 min par défaut'},
   {k:'t_vanne_s',         t:'int',   min:1,   max:60,   l:'Pause de manœuvre',       u:'s'},
   {k:'temp_addr',         t:'int',   min:1,   max:247,  l:'Adresse sondes PT100',    u:'', aide:"4 — surtout pas 3, c'est le variateur"},
   {k:'pres_fc',           t:'sel',   opts:[['','— inchangé —'],['3','FC03 · registres de maintien'],['4','FC04 · registres d\u2019entrée']], l:'Fonction Modbus pression'},
@@ -2836,14 +2963,11 @@ const CHAMPS = [
   {k:'rech_confirme_min', t:'int',   min:0,   max:180,  l:'Confirmation avant réchauffage', u:'min',
    aide:'la température doit rester sous le seuil sans interruption pendant ce '
        +'temps avant de lancer le cycle — toute remontée remet le chronomètre à '
-       +'zéro ; 0 = immédiat ; l\u2019opportuniste n\u2019attend pas (D113) ; 30 min par défaut'},
-  {k:'rech_opport_c',     t:'float', min:40,  max:60,   l:'Seuil opportuniste', u:'°C',
-   aide:'pendant un cycle de réchauffage, tout satellite du circuit sous ce seuil '
-       +'est embarqué, sans attendre la confirmation (R1/D113) ; 51,5 °C par défaut'},
-  {k:'rech_amorce_c',     t:'float', min:30,  max:55,   l:'T° d\u2019arrêt de vidange', u:'°C',
-   aide:'la dernière vidange du cycle s\u2019arrête à CNH sec ET cette température à '
-       +'l\u2019embranchement — chemin chauffé, amorçage sauté ; à défaut CNB sec et '
-       +'complément ×1,33 (R3) ; 45 °C par défaut'},
+       +'zéro ; 0 = immédiat ; seuls le puisage nocturne et le grand réveil '
+       +'passent sans attendre (D124/D125) ; 30 min par défaut'},
+  /* Lot 26 : « Seuil opportuniste » et « T° d'arrêt de vidange » retirés du
+     formulaire — obsolètes depuis le v7 (D124 : un seul réchauffage à la
+     fois ; l'arrêt de vidange est CNM sec + condition « T cuve + delta »). */
   {k:'rech_tmax_c',       t:'float', min:50,  max:60,   l:'Cuve déjà chaude', u:'°C',
    aide:'satellite au-dessus à un remplissage → amorçage SANS majoration (R11) et, '
        +'sur les grandes cuves, place laissée au bouchon (R11b) ; 54 °C par défaut'},
@@ -2865,9 +2989,16 @@ const CHAMPS = [
   {k:'recup_attente_s',   t:'int',   min:0,   max:1800, l:'Attente avant récup', u:'s',
    aide:'la vanne de retour ne rouvre et la pompe ne repart que ce délai après '
        +'la fin du remplissage + bouchon, TOUS les trains (R5b) ; 120 s par défaut'},
-  {k:'somm_purge_min',    t:'int',   min:5,   max:120,  l:'Purge de sommeil', u:'min',
+  {k:'somm_purge_min',    t:'int',   min:1,   max:120,  l:'Purge de sommeil', u:'min',
    aide:'après CNB sec, la vanne reste ouverte ce temps pour égoutter la cuve '
-       +'(R12) ; 20 min par défaut'},
+       +'(R12) ; 5 min par défaut'},
+  {k:'somm_recirc_l',     t:'float', min:0,   max:60,   l:'Recirculation de veille', u:'L',
+   aide:'après la purge, vanne du satellite refermée : ces litres d\u2019EFS recirculent '
+       +'dans l\u2019alimentation + le retour — le chemin devient froid, le tiède part à '
+       +'la réserve (D136) ; 10 L par défaut'},
+  {k:'somm_sent_extra_l', t:'float', min:0,   max:20,   l:'Sentinelle : au-delà de CNB', u:'L',
+   aide:'la sentinelle d\u2019eau froide remplit jusqu\u2019à CNB mouillé PUIS encore ces '
+       +'litres (D136) ; 5 L par défaut'},
   {k:'somm_renouv_h',     t:'int',   min:12,  max:720,  l:'Renouvellement sentinelle', u:'h',
    aide:'l\u2019eau froide de la sentinelle est remplacée à cette échéance — '
        +'hygiène (R12b) ; 48 h par défaut'},
@@ -3424,17 +3555,33 @@ function demo() {
       ]},
       {circuit_id: 'C2', actif: false, satellites: []},
     ],
+    /* lot 26 : le journal des rechauffages (D129) — fiches d'exemple,
+       la plus recente d'abord, une « en attente » de son releve +5 min */
+    rech_fiches: [
+      {sat: 'SA2', n: 6, h: '03:07', j: 3, motif: 2, vid_l: 9.5, amor: false,
+       t0: 48.6, t1: 54.1, rempl_l: 21.5, duree_s: 260},
+      {sat: 'SA3', n: 9, h: '22:41', j: 2, motif: 1, vid_l: 10.0, amor: true,
+       t0: 46.8, rempl_l: 23.0, duree_s: 285},
+      {sat: 'SA1', n: 4, h: '17:55', j: 2, motif: 0, vid_l: 12.5, amor: false,
+       t0: 49.7, t1: 53.6, rempl_l: 30.5, duree_s: 340},
+      {sat: 'SA2', n: 5, h: '06:02', j: 2, motif: 3, vid_l: 8.5, amor: false,
+       t0: 47.9, t1: 54.4, rempl_l: 20.0, duree_s: 250},
+    ],
     mesure_nuit: {repere_pose: 1, repere_age_s: 46200, prochaine_dans_s: 41300},
     config_active: {intervalle_s: 5, vol_pompe_amont_l: 4, vol_recup_l: 20,
                     vitesse_recup_pct: 40, t_vanne_s: 6,
                     temp_addr: 4, pres_voie: 6, pres_bar_max: 10, elec_pompe_addr: 7, t_amb_defaut: 20,
                     nuit_actif: true, nuit_debut_h: 0, nuit_fin_h: 6,
-                    reveil_seuil_l: 1, rech_vitesse_pct: 60,
+                    nuit_seuil_c: 47, reveil_seuil_l: 2, rech_delta_c: 3,
+                    cnh_prenuit_min: 60, rech_vague_min_pct: 30,
+                    rech_vague_max_pct: 100, rech_vague_s: 10,
+                    vitesse_train_pct: 86,
                     rech_seuil_c: 50, rech_confirme_min: 30,
                     rech_opport_c: 51.5, rech_amorce_c: 45,
                     rech_tmax_c: 54, rech_grand_l: 50, rech_place_l: 1.5,
                     rech_frein_nb: 4, rech_frein_puis: 3, rech_vidange_max_s: 1800,
-                    recup_attente_s: 120, somm_purge_min: 20, somm_renouv_h: 48,
+                    recup_attente_s: 120, recup_pause2_s: 300, somm_purge_min: 5,
+                    somm_recirc_l: 10, somm_sent_extra_l: 5, somm_renouv_h: 48,
                     mes_repos_min: 60, mes_min_h: 5, mes_marge_min: 15,
                     config_en_attente: false},
     diag: {tas_libre: 185064, tas_mini: 126308, pile_cloud_libre: 4912, raz_age_s: 7500,
@@ -3448,7 +3595,7 @@ function demo() {
 if (SHOW) document.body.classList.add('presentation');
 construireFormulaire();
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 0209 — ui ' + LOT + ' · lot 25 — 02/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 0309b — ui ' + LOT + ' · lot 28 — 03/09/2026';
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
 setInterval(relever, DEMO ? 1000 : PERIODE_MS);
