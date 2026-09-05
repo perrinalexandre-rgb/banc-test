@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · ui 0509a.33 (lot 33, 05/09/2026)
+   enovaQ — pupitre de supervision · ui 0509b.34 (lot 34, 05/09/2026)
    Nom officiel du fichier : « enovaQ pupitre 3108b.html » (règle de nommage
    client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
    enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
@@ -264,6 +264,16 @@
    mises à jour par les RAZ sélectives. (3) Réglages : fusion des
    puisages (5 min, D139), câblage satellite v2 + registre compteur
    (D140/D141). Démo à jour.
+   Lot 34 (05/09/2026, pupitre seul — « juste a cliquer », client) :
+   (1) la CLE est retenue par le navigateur des le premier depot reussi
+   (et demandee par une petite fenetre si elle manque au moment du
+   clic) — plus jamais besoin d'aller la taper en bas. (2) La reponse
+   du bouton Vidanger s'affiche SOUS LE BOUTON : armement, envoi,
+   « Envoye — attente de l'automate… » (bouton grise), confirmation par
+   l'automate (badge + bouton « Reactiver »), refus en toutes lettres
+   (clé, programme trop ancien, automate muet apres 90 s). (3) L'etat
+   de la vanne d'ENTREE est affiche en permanence (« entree ouverte /
+   fermee »), comme la sortie.
    Lot 33 (05/09/2026, pilote 0509a — D152-D153) : un BOUTON de
    VIDANGE MANUELLE par satellite (deux clics : armer puis confirmer,
    envoi comme une config — vid_manu_mask). Bouton enfoncé : vidange
@@ -702,6 +712,10 @@ table.sattab tr.elec-muet td{opacity:.45}
 .btnvid.arme{border-color:var(--alert);color:var(--alert);font-weight:600}
 .chip.vidmanu{background:color-mix(in srgb, var(--alert) 12%, transparent);
   border:1px solid var(--alert);color:var(--alert)}
+.btnvid:disabled{opacity:.6;cursor:default}
+.vidmsg{margin-top:6px;font-size:12.5px;line-height:1.45;color:var(--ink2);
+  border-left:3px solid var(--line);padding-left:8px}
+.vidmsg.err{color:var(--alert);border-left-color:var(--alert)}
 .actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:18px}
 .btn{padding:9px 16px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);
   color:var(--ink);font-family:var(--fs-cond);font-weight:600;font-size:13.5px;letter-spacing:.05em;cursor:pointer}
@@ -923,7 +937,7 @@ const API = {
   config:    '/api/config',   // POST → config servie à l'automate à son prochain envoi
 };
 const DEVICE     = 'chaufferie-01';
-const LOT        = '0509a.33';  // marqueur « ui » — bandeau et pied de page
+const LOT        = '0509b.34';  // marqueur « ui » — bandeau et pied de page
 const PERIODE_MS = 3000;      // cadence de tirage de la page
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -2319,7 +2333,13 @@ function rendreSats(d) {
         + "litre près (D67). Il s'ancrera au premier franchissement d'un flotteur.";
       chips.appendChild(cq);
     }
-    if (s.vanne) chips.appendChild(el('div', 'chip open', "vanne d'entrée ouverte"));
+    {   /* Lot 34 : l'etat de la vanne d'ENTREE toujours visible (client) */
+      const ve = el('div', 'chip' + (s.vanne ? ' open' : ''),
+                    s.vanne ? "entrée ouverte" : "entrée fermée");
+      ve.title = "Vanne d'entrée (remplissage) de la cuve — ouverte seulement "
+               + "pendant un remplissage ou une vidange par gravité.";
+      chips.appendChild(ve);
+    }
     if (has(s.vanne_sortie)) {
       const vs = el('div', 'chip' + (s.vanne_sortie === 'OUVERTE' ? ' open' : ''),
                     'sortie ' + String(s.vanne_sortie).toLowerCase());
@@ -2348,18 +2368,42 @@ function rendreSats(d) {
       chips.appendChild(cv);
     }
     card.appendChild(chips);
-    /* Lot 33 (D153) : le bouton vidange activée / désactivée */
+    /* Lot 33/34 (D153) : le bouton vidange — un clic, confirmer, et la
+       reponse s'affiche ICI, sous le bouton. */
     {
       const bit = (s.sat_id && s.sat_id[1] === 'B' ? 8 : 0)
                 + (parseInt((s.sat_id || 'SA1').slice(2), 10) - 1);
-      const arme = state.vidArm && state.vidArm.bit === bit;
+      /* l'automate a confirme ? le masque actif porte (ou non) notre bit */
+      const ca = (state.data && state.data.config_active) || null;
+      if (state.vidPending && state.vidPending.bit === bit) {
+        const maskOk = ca && 'vid_manu_mask' in ca &&
+                       ca.vid_manu_mask === state.vidPending.mask;
+        if (maskOk || !!s.vid_manu === !!((state.vidPending.mask >> bit) & 1)) {
+          state.vidPending = null;                       /* confirme */
+          if (state.vidMsg && state.vidMsg.bit === bit) state.vidMsg = null;
+        } else if (Date.now() - state.vidPending.t > 90000) {
+          state.vidPending = null;
+          state.vidMsg = {bit, cls: 'err',
+            txt: "L'automate n'a pas confirmé au bout de 90 s — pilote 0509a "
+               + "ou plus récent requis, ou automate injoignable.", t: Date.now()};
+        }
+      }
+      const attente = state.vidPending && state.vidPending.bit === bit;
+      const arme = !attente && state.vidArm && state.vidArm.bit === bit;
       const bv = el('button', 'btnvid' + (arme ? ' arme' : ''),
-        arme ? (s.vid_manu ? 'Confirmer la réactivation de ' + s.sat_id
-                           : 'Confirmer la vidange de ' + s.sat_id)
-             : (s.vid_manu ? 'Réactiver ' + s.sat_id + ' (fin de vidange)'
-                           : 'Vidanger ' + s.sat_id));
+        attente ? 'Envoyé — attente de l\u2019automate…'
+        : arme ? (s.vid_manu ? 'Confirmer la réactivation de ' + s.sat_id
+                             : 'Confirmer la vidange de ' + s.sat_id)
+               : (s.vid_manu ? 'Réactiver ' + s.sat_id + ' (fin de vidange)'
+                             : 'Vidanger ' + s.sat_id));
+      if (attente) bv.disabled = true;
       bv.addEventListener('click', () => vidangeClic(bit, !s.vid_manu, s.sat_id));
       card.appendChild(bv);
+      if (state.vidMsg && state.vidMsg.bit === bit) {
+        const m = el('div', 'vidmsg' + (state.vidMsg.cls ? ' ' + state.vidMsg.cls : ''),
+                     state.vidMsg.txt);
+        card.appendChild(m);
+      }
     }
 
     /* ---- pastilles capteurs : ÉTAT (pleine/vide) + DÉFAUT (liseré + « ! »),
@@ -3363,12 +3407,28 @@ function annulerDepot() {
   $('#btnSend').textContent = "Envoyer à l'automate";
 }
 
+/* Lot 34 : la cle, UNE fois pour toutes — memorisee dans ce navigateur des
+   qu'un depot reussit, re-remplie au chargement, demandee par une petite
+   fenetre si elle manque au moment d'un clic. Zero navigation. */
+function cleConfig(demander) {
+  let k = $('#cfgKey').value.trim();
+  if (!k) { try { k = localStorage.getItem('enovaq_cle') || ''; } catch (_) {} }
+  if (!k && demander) {
+    k = (window.prompt("Clé de configuration (CONFIG_API_KEY — la même que pour "
+                     + "les réglages et les RAZ). Elle sera retenue sur ce "
+                     + "navigateur :") || '').trim();
+  }
+  if (k) $('#cfgKey').value = k;
+  return k;
+}
+try { if (localStorage.getItem('enovaq_cle')) $('#cfgKey').value = localStorage.getItem('enovaq_cle'); } catch (_) {}
 async function deposer(cfg, cle) {
   const corps = corpsDepot(cfg);
   const entetes = {'Content-Type': 'application/json'};
   if (cle) entetes['x-api-key'] = cle;
   try {
     const r = await fetch(API.config, {method: 'POST', headers: entetes, body: JSON.stringify(corps)});
+    if (r.ok && cle) { try { localStorage.setItem('enovaq_cle', cle); } catch (_) {} }
     if (!r.ok) {
       let texte = '';
       try { texte = (await r.text()).trim().slice(0, 500); } catch (_) {}
@@ -3511,33 +3571,57 @@ $('#btnRaz').addEventListener('click', async () => {
 });
 /* Lot 33 (D153) : boutons de vidange manuelle — deux clics (armer puis
    confirmer), l'ordre part comme une config (vid_manu_mask, bit par cuve). */
+function vidMsgPoser(bit, txt, cls) {
+  state.vidMsg = {bit, txt, cls: cls || '', t: Date.now()};
+  rendre(true);
+}
 async function vidangeClic(bit, engage, nom) {
+  if (state.vidPending && state.vidPending.bit === bit) return;   /* deja envoye */
   const armePareil = state.vidArm && state.vidArm.bit === bit &&
                      state.vidArm.engage === engage;
   if (!armePareil) {
     state.vidArm = {bit, engage};
-    rendre(true);
-    sortie(engage
-      ? ("VIDANGE MANUELLE de " + nom + " : la cuve sera vidée par gravité vers la "
-       + "production (V3 sur ECS), jusqu'à CNB sec + 5 min de purge, puis restera "
-       + "VIDE et ISOLÉE — aucun remplissage tant que le bouton n'est pas relâché, "
-       + "et les logements de cette cuve ne seront PAS servis (sortie fermée).\n\n"
-       + "Cliquez de nouveau sur le MÊME bouton pour confirmer.")
-      : ("RÉACTIVATION de " + nom + " : la cuve redevient normale — CNB sec = "
-       + "remplissage d'urgence immédiat, avec amorçage raccourci si la vidange "
-       + "était totale (l'eau chaude arrive quand CNB se mouille).\n\n"
-       + "Cliquez de nouveau sur le MÊME bouton pour confirmer."), 'err');
+    vidMsgPoser(bit, engage
+      ? ("La cuve sera vidée par gravité vers la production, jusqu'à CNB sec "
+       + "+ 5 min de purge, puis restera VIDE et ISOLÉE — les logements de "
+       + "cette cuve ne seront plus servis tant que le bouton n'est pas "
+       + "relâché. Cliquez de nouveau sur le MÊME bouton pour confirmer.")
+      : ("La cuve redevient normale : remplissage d'urgence immédiat (amorçage "
+       + "raccourci si la vidange était totale). Cliquez de nouveau sur le "
+       + "MÊME bouton pour confirmer."), '');
     return;
   }
   state.vidArm = null;
-  const actuel = (state.data && state.data.config_active &&
-                  state.data.config_active.vid_manu_mask) || 0;
+  const cle = cleConfig(true);
+  if (!cle) { vidMsgPoser(bit, "Envoi annulé : il faut la clé de configuration.", 'err'); return; }
+  /* garde : le pilote doit connaitre la vidange manuelle (0509a ou plus) */
+  const ca = (state.data && state.data.config_active) || null;
+  if (ca && !('vid_manu_mask' in ca)) {
+    vidMsgPoser(bit, "Le programme de l'automate ne connaît pas la vidange "
+              + "manuelle : il faut le pilote 0509a ou plus récent.", 'err');
+    return;
+  }
+  const actuel = (ca && ca.vid_manu_mask) || 0;
   const nouveau = engage ? (actuel | (1 << bit)) : (actuel & ~(1 << bit));
   const cfg = {vid_manu_mask: nouveau,
                cfg_version: ((state.data && state.data.cfg_version) || 0) + 1};
-  sortie('Envoi en cours…');
-  await deposer(cfg, $('#cfgKey').value.trim());
-  rendre(true);
+  vidMsgPoser(bit, 'Envoi en cours…');
+  try {
+    const corps = corpsDepot(cfg);
+    const r = await fetch(API.config, {method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-api-key': cle},
+      body: JSON.stringify(corps)});
+    if (!r.ok) {
+      let texte = ''; try { texte = (await r.text()).trim().slice(0, 300); } catch (_) {}
+      vidMsgPoser(bit, "REFUSÉ : " + expliquerRefus(r.status, texte), 'err');
+      return;
+    }
+    try { localStorage.setItem('enovaq_cle', cle); } catch (_) {}
+    state.vidPending = {bit, mask: nouveau, t: Date.now()};
+    vidMsgPoser(bit, "Envoyé — en attente de l'automate (quelques secondes)…", '');
+  } catch (e) {
+    vidMsgPoser(bit, "ÉCHEC d'envoi : " + (e && e.message ? e.message : e), 'err');
+  }
 }
 brancherAction('#btnAcq', 'acq_defauts', 'Acquitter les défauts',
   "ACQUITTEMENT : efface les défauts mémorisés (capteurs déclarés muets, capteurs "
@@ -3794,7 +3878,7 @@ function demo() {
 if (SHOW) document.body.classList.add('presentation');
 construireFormulaire();
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 0509a — ui ' + LOT + ' · lot 33 — 05/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 0509b — ui ' + LOT + ' · lot 34 — 05/09/2026';
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
 setInterval(relever, DEMO ? 1000 : PERIODE_MS);
