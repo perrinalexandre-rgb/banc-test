@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>enovaQ — extraction</title>
+<style>
+:root{--ink:#15201E;--ink2:#5B6A66;--line:#D8DEDC;--fond:#F6F5F2;--accent:#1F6F5C;--alert:#B4452B}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fond);color:var(--ink);
+  font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:18px 22px;border-bottom:1px solid var(--line);background:#fff}
+h1{margin:0;font-size:17px}
+h1 em{font-style:normal;color:var(--ink2);font-weight:400;font-size:13px}
+main{max-width:760px;margin:0 auto;padding:22px}
+.carte{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px}
+label{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin:10px 0 4px}
+input{padding:8px 10px;border:1px solid var(--line);border-radius:6px;font:inherit;background:#fff}
+.ligne{display:flex;gap:14px;flex-wrap:wrap}
+.ligne>div{flex:1;min-width:210px}
+button{margin-top:16px;padding:10px 18px;border-radius:8px;border:1px solid var(--accent);
+  background:var(--accent);color:#fff;font:inherit;font-size:14px;cursor:pointer}
+button:disabled{opacity:.55;cursor:default}
+#etat{margin-top:14px;font-size:13.5px;color:var(--ink2);white-space:pre-line;
+  border-left:3px solid var(--line);padding-left:10px}
+#etat.err{color:var(--alert);border-left-color:var(--alert)}
+.note{font-size:12.5px;color:var(--ink2);margin-top:10px;line-height:1.55}
+</style>
+</head>
+<body>
+<header><h1>enovaQ — extraction de l'historique <em>· un fichier Excel, une feuille par jour · v0509</em></h1></header>
+<main>
+  <div class="carte">
+    <div class="ligne">
+      <div>
+        <label for="d1">Début — date</label>
+        <input id="d1" type="date">
+        <label for="h1">Début — heure</label>
+        <input id="h1" type="time" value="00:00">
+      </div>
+      <div>
+        <label for="d2">Fin — date</label>
+        <input id="d2" type="date">
+        <label for="h2">Fin — heure</label>
+        <input id="h2" type="time" value="23:59">
+      </div>
+    </div>
+    <button id="go">Extraire vers Excel</button>
+    <div id="etat">L'historique commence au jour de la mise en service de l'historisation.
+Une heure = 720 lignes (un envoi toutes les 5 s) ; une journée entière = ~17 000 lignes.</div>
+    <div class="note">Heures de Paris (été/hiver réglés d'avance). Le fichier contient une feuille
+par jour couvert, toutes les grandeurs publiées par l'automate en colonnes : volumes,
+températures, tirée/livrée par cuve, états, pompe, V3, réserve, pression…
+Les jours sans historique sont simplement sautés.</div>
+  </div>
+</main>
+<script>
+"use strict";
+/* Bibliotheque Excel (SheetJS) : cdnjs d'abord, jsdelivr en secours. */
+function assurerXLSX() {
+  return new Promise((resoudre, rejeter) => {
+    if (typeof XLSX !== 'undefined') { resoudre(); return; }
+    const sources = [
+      'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+      'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+    ];
+    let i = 0;
+    (function suivant() {
+      if (i >= sources.length) {
+        rejeter(new Error("impossible de charger la bibliotheque Excel "
+          + "(reseau ?) — reessayez, ou dites-le a Claude"));
+        return;
+      }
+      const s = document.createElement('script');
+      s.src = sources[i++];
+      s.onload = () => resoudre();
+      s.onerror = () => suivant();
+      document.head.appendChild(s);
+    })();
+  });
+}
+const $ = s => document.querySelector(s);
+function etat(msg, err) { const e = $('#etat'); e.textContent = msg; e.className = err ? 'err' : ''; }
+
+/* dates par defaut : hier 00:00 -> hier 23:59 */
+(function () {
+  const h = new Date(Date.now() - 86400000);
+  const j = h.toLocaleDateString('sv-SE');            /* AAAA-MM-JJ local */
+  $('#d1').value = j; $('#d2').value = j;
+})();
+
+function joursEntre(j1, j2) {
+  const out = []; let d = new Date(j1 + 'T12:00:00Z');
+  const fin = new Date(j2 + 'T12:00:00Z');
+  while (d <= fin) { out.push(d.toISOString().slice(0, 10)); d = new Date(+d + 86400000); }
+  return out;
+}
+
+/* aplatissement : objets -> "a.b", tableaux -> sat_id/lettre/indice */
+function aplatir(o, prefixe, dest) {
+  if (o === null || o === undefined) return;
+  if (typeof o !== 'object') { dest[prefixe] = o; return; }
+  if (Array.isArray(o)) {
+    o.forEach((v, i) => {
+      let cle = String(i);
+      if (v && typeof v === 'object') {
+        if (v.sat_id) cle = v.sat_id;
+        else if (v.lettre) cle = v.lettre;
+      }
+      aplatir(v, prefixe ? prefixe + '.' + cle : cle, dest);
+    });
+    return;
+  }
+  for (const k of Object.keys(o)) {
+    if (k === 'sat_id' || k === 'lettre') continue;
+    aplatir(o[k], prefixe ? prefixe + '.' + k : k, dest);
+  }
+}
+
+async function extraire() {
+  const j1 = $('#d1').value, j2 = $('#d2').value;
+  const h1 = $('#h1').value || '00:00', h2 = $('#h2').value || '23:59';
+  if (!j1 || !j2 || j1 > j2) { etat("Choisissez une plage de dates valide.", true); return; }
+  const jours = joursEntre(j1, j2);
+  if (jours.length > 14 &&
+      !confirm(jours.length + " jours a extraire — le fichier sera tres gros. Continuer ?")) return;
+  $('#go').disabled = true;
+  try { etat("Preparation…"); await assurerXLSX(); }
+  catch (e) { etat("Echec : " + e.message, true); $('#go').disabled = false; return; }
+  const classeur = XLSX.utils.book_new();
+  let totalLignes = 0, joursOk = 0;
+  try {
+    for (const jour of jours) {
+      const de = (jour === j1) ? h1 : '00:00';
+      const a  = (jour === j2) ? (h2 === '23:59' ? '24:00' : h2) : '24:00';
+      etat("Lecture du " + jour + " (" + de + " → " + (a === '24:00' ? 'minuit' : a) + ")…");
+      /* une journee entiere se lit en 4 morceaux de 6 h (fichiers volumineux) */
+      const tranches = (de === '00:00' && a === '24:00')
+        ? [['00:00','06:00'],['06:00','12:00'],['12:00','18:00'],['18:00','24:00']]
+        : [[de, a]];
+      let texte = '';
+      let absent = false;
+      for (const [t1, t2] of tranches) {
+        const r = await fetch('/api/histo?jour=' + jour + '&de=' + t1 + '&a=' + t2);
+        if (r.status === 404) { absent = true; break; }
+        if (!r.ok) throw new Error("le serveur repond " + r.status + " sur " + jour);
+        texte += await r.text();
+      }
+      if (absent) { etat("Pas d'historique le " + jour + " — jour saute."); continue; }
+      const lignes = [];
+      for (const l of texte.split('\n')) {
+        if (!l.trim()) continue;
+        try {
+          const brut = JSON.parse(l);
+          const plat0 = {};
+          aplatir(brut, '', plat0);
+          delete plat0.tl;
+          /* colonnes lisibles : SA1.volume_l plutot que circuits.A.satellites.SA1... */
+          const plat = { 'heure (Paris)': brut.tl || '' };
+          for (const k of Object.keys(plat0)) {
+            const k2 = k.replace(/^circuits\.([AB])\.satellites\./, '')
+                        .replace(/^circuits\.([AB])\./, 'circuit $1.');
+            plat[k2] = plat0[k];
+          }
+          lignes.push(plat);
+        } catch (_) { /* ligne abimee : sautee */ }
+      }
+      if (!lignes.length) { etat("Le " + jour + " est vide sur cette plage — saute."); continue; }
+      lignes.sort((x, y) => (x['heure (Paris)'] < y['heure (Paris)'] ? -1 : 1));
+      const colonnes = ['heure (Paris)', 't'];
+      for (const l of lignes) for (const k of Object.keys(l))
+        if (!colonnes.includes(k)) colonnes.push(k);
+      const aoa = [colonnes];
+      for (const l of lignes) aoa.push(colonnes.map(c => (c in l ? l[c] : '')));
+      const feuille = XLSX.utils.aoa_to_sheet(aoa);
+      XLSX.utils.book_append_sheet(classeur, feuille, jour);
+      totalLignes += lignes.length; joursOk++;
+      etat(jour + " : " + lignes.length + " lignes ajoutees.");
+    }
+    if (!joursOk) { etat("Rien a extraire sur cette plage (aucun jour historise).", true); }
+    else {
+      const nom = "enovaQ extraction " + j1 + " " + h1.replace(':', 'h')
+                + " - " + j2 + " " + h2.replace(':', 'h') + ".xlsx";
+      XLSX.writeFile(classeur, nom);
+      etat("Termine : " + joursOk + " feuille(s), " + totalLignes
+         + " lignes au total.\nFichier telecharge : " + nom);
+    }
+  } catch (e) {
+    etat("Echec : " + (e && e.message ? e.message : e), true);
+  }
+  $('#go').disabled = false;
+}
+$('#go').addEventListener('click', extraire);
+</script>
+</body>
+</html>
