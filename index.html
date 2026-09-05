@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · ui 0309b.28 (lot 28, 03/09/2026)
+   enovaQ — pupitre de supervision · ui 0509a.33 (lot 33, 05/09/2026)
    Nom officiel du fichier : « enovaQ pupitre 3108b.html » (règle de nommage
    client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
    enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
@@ -255,6 +255,47 @@
    et « T° d'arrêt de vidange » retirés du formulaire (obsolètes,
    D124) ; vitesse des trains 86 % (~60 Hz si P0-10 = 70). Démo à
    jour (fiches d'exemple).
+   Lot 29 (04/09/2026, pilote 0409 — D138-D141) : (1) MADDALENA
+   INVERSÉ (client 04/09) : « Entrée EFS » lit la sonde « départ » du
+   compteur et « Sortie ECS » la sonde « retour » — l'inverse du lot
+   25, le montage réel étant dans ce sens. (2) DATES DE DÉBUT DE
+   COMPTAGE (dates_deb, D138) : « depuis le 20/08/2026 » sous le bilan
+   d'eau, les volumes cumulés, la famille Remplissage et les pertes —
+   mises à jour par les RAZ sélectives. (3) Réglages : fusion des
+   puisages (5 min, D139), câblage satellite v2 + registre compteur
+   (D140/D141). Démo à jour.
+   Lot 33 (05/09/2026, pilote 0509a — D152-D153) : un BOUTON de
+   VIDANGE MANUELLE par satellite (deux clics : armer puis confirmer,
+   envoi comme une config — vid_manu_mask). Bouton enfoncé : vidange
+   par gravité vers la production (V3 ECS), CNB sec + purge 5 min,
+   cuve VIDE et ISOLÉE (badge dans la carte, états : attente du calme /
+   vidange / purge / vidangée) ; relâché : remplissage d'urgence,
+   amorçage raccourci si la vidange était totale. D152 côté pilote :
+   SA1/SA3 remis aux dernières valeurs saines (3350,5 / 674,0 L),
+   livrée := tirée. Démo à jour.
+   Lot 32 (05/09/2026, pilote 0509 — D148-D151) : « Les trois
+   compteurs » devient « Consommation électrique » (client). La mesure
+   provoquée passe à MINUIT, pour TOUS les satellites, UNE SEULE fois
+   par cuve et par nuit (D148 — fin du bug de la relance toutes les
+   heures) ; fourchette de mesure 30 min + 4 h (D149) ; compteurs de
+   réchauffages remis à zéro au premier démarrage (D150, fiches au
+   n° 1, journal conservé) ; recirculation de repos 10 L / 2 h de calme
+   et V3 garée sur EFS au repos (D151). Réglages ad hoc, aides et
+   textes des pertes à jour, démo à jour.
+   Lot 31 (04/09/2026, pilote 0409b — D145) : le câblage v2 est CÂBLÉ
+   EN DUR côté pilote (les trois satellites sont recâblés : DI1 =
+   compteur de conso, DI2 = CNH, DI3 = CNM, DI4 = CNB, TOR supprimé) —
+   la case « Câblage satellite v2 » disparaît des réglages (plus rien
+   à cocher), le registre compteur (sat_cpt_reg) reste réglable et
+   vérifiable par la commande série « cpts ».
+   Lot 30 (04/09/2026, pilote 0409a — D142-D144) : (1) pastilles « au
+   débitmètre » / « étalonné » SUPPRIMÉES (client : le volume est
+   juste, point — seule reste « niveau inconnu » au démarrage).
+   (2) Remplissages « Aujourd'hui / Hier » par cuve (D143). (3) Pertes
+   à DEUX étages : la mesure fiable (protocole inchangé + T d'arrivée
+   > 50°) et l'ESTIMATION assumée (segment calme, chute ≥ 1°), avec
+   ses données en infobulle et sa moyenne séparée ; la mesure
+   provoquée passe à 23 h (D144). Réglages ad hoc. Démo à jour.
    Lot 27 (03/09/2026, pilote 0309a — D130-D134) : (1) une cuve
    endormie s'affiche « EN SOMMEIL · EFS » et sa température est
    étiquetée EFS (c'est l'eau froide de la sentinelle, pas de l'ECS).
@@ -655,6 +696,12 @@ table.sattab input.bad{border-color:var(--alert)}
    grisée quand le compteur ne répond pas. */
 .elec-adr{display:block;font-family:var(--fs-mono);font-size:10.5px;color:var(--ink3);margin-top:1px}
 table.sattab tr.elec-muet td{opacity:.45}
+.btnvid{margin-top:8px;padding:6px 12px;border-radius:6px;border:1px solid var(--line);
+  background:transparent;color:var(--ink);font:inherit;font-size:12.5px;cursor:pointer}
+.btnvid:hover{border-color:var(--ink)}
+.btnvid.arme{border-color:var(--alert);color:var(--alert);font-weight:600}
+.chip.vidmanu{background:color-mix(in srgb, var(--alert) 12%, transparent);
+  border:1px solid var(--alert);color:var(--alert)}
 .actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:18px}
 .btn{padding:9px 16px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);
   color:var(--ink);font-family:var(--fs-cond);font-weight:600;font-size:13.5px;letter-spacing:.05em;cursor:pointer}
@@ -758,7 +805,7 @@ body.presentation .brand{font-size:27px}
 
   <h2 class="eyebrow">Électricité</h2>
   <section class="card">
-    <h3>Les trois compteurs <em>— WDM120-M sur le bus, un tableau (lot 24)</em></h3>
+    <h3>Consommation électrique <em>— les trois WDM120-M sur le bus, un tableau (lot 24, renommé lot 32)</em></h3>
     <div class="tabwrap"><table class="sattab" id="elecTable"></table></div>
     <div id="elecNote"></div>
   </section>
@@ -876,7 +923,7 @@ const API = {
   config:    '/api/config',   // POST → config servie à l'automate à son prochain envoi
 };
 const DEVICE     = 'chaufferie-01';
-const LOT        = '0309b.28';  // marqueur « ui » — bandeau et pied de page
+const LOT        = '0509a.33';  // marqueur « ui » — bandeau et pied de page
 const PERIODE_MS = 3000;      // cadence de tirage de la page
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -974,14 +1021,15 @@ const PROD_TH = [
    absent:"Publié par le programme du 23/08 (lecture du registre 33 de la carte "
         +"Modbus, en litres). Si la case reste vide après reflash de l'automate, "
         +"le champ volume_m3 manque dans /api/data — me le signaler."},
-  {k:'Entrée EFS', champ:'chaufferie.maddalena.t_retour_c', unite:'°C', dec:1,
+  {k:'Entrée EFS', champ:'chaufferie.maddalena.t_depart_c', unite:'°C', dec:1,
    aide:"Température de l'eau froide sanitaire à l'ENTRÉE de la production, "
-       +"lue par le compteur (sa sonde « retour »). Lot 25 : parlé métier, "
-       +"dans l'ordre du circuit — l'eau entre froide, sort chaude.",
+       +"lue par le compteur (sa sonde « départ », montage réel — inversé au "
+       +"lot 29). L'eau entre froide, sort chaude.",
    absent:"Compteur Maddalena sans réponse."},
-  {k:'Sortie ECS', champ:'chaufferie.maddalena.t_depart_c', unite:'°C', dec:1,
+  {k:'Sortie ECS', champ:'chaufferie.maddalena.t_retour_c', unite:'°C', dec:1,
    aide:"Température de l'eau chaude sanitaire à la SORTIE de la production, "
-       +"lue par le compteur (sa sonde « départ »).",
+       +"lue par le compteur (sa sonde « retour », montage réel — inversé au "
+       +"lot 29).",
    absent:"Compteur Maddalena sans réponse."},
   {k:'Puissance', champ:'chaufferie.maddalena.puissance_w', unite:'W', dec:0,
    absent:"Compteur Maddalena sans réponse."},
@@ -1081,6 +1129,13 @@ const SAT_REMPL = [
        +"déménagé d'EAU au lot 15 : c'est un fait de remplissage.",
    absent:"Publié par le programme 2408b après le premier remplissage mesuré depuis le "
         +"démarrage de l'automate (« — » après un redémarrage, jusqu'au suivant)."},
+  {k:'Aujourd\u2019hui', champ:'rempl_jour_n', dec:0,
+   aide:"Remplissages de cette cuve depuis minuit (heure de l'automate, D143). "
+       +"Bascule dans « Hier » au changement de jour.",
+   absent:"Publié dès que l'automate a l'heure du cloud (D119)."},
+  {k:'Hier', champ:'rempl_hier_n', dec:0,
+   aide:"Remplissages de la journée d'hier (D143).",
+   absent:"Publié après la première bascule de minuit."},
   {k:'Nb remplissages', champ:'rempl_nb', dec:0,
    aide:"Nombre de remplissages complets mesurés par l'automate (mémorisé entre les redémarrages).",
    absent:"L'automate ne publie ce compteur qu'après un premier remplissage complet "
@@ -1255,15 +1310,43 @@ function titrePertes(s) {
   return t;
 }
 const PERTE_ABSENT =
-  "Aucune mesure fiable pour l'instant : il faut une cuve PLEINE, 1 h de "
-  + "repos après le remplissage, puis au moins 5 h de calme jusqu'au puisage "
-  + "suivant (D113). Si les conditions ne se présentent pas d'elles-mêmes, "
-  + "la MESURE DE NUIT provoque le remplissage qu'il faut (R10). Sonde de "
-  + "température en service exigée.";
+  "Aucune mesure fiable pour l'instant : il faut une cuve PLEINE, 30 min de "
+  + "décantation après le remplissage, au moins 4 h de calme jusqu'au puisage "
+  + "suivant, et une T d'ARRIVÉE encore > 50 °C (D142/D149). Chaque nuit à "
+  + "MINUIT, la mesure provoquée fait le nécessaire pour CHAQUE cuve — "
+  + "vidange à CNH, plein, fenêtre — une seule fois par nuit, renouvelée "
+  + "seulement si un tirage la casse (D148). Sonde de température exigée.";
 function casePerteFiable(s) {
   const box = statCase({k:'Pertes', champ:'perte_w', unite:'W', dec:0,
                         absent: PERTE_ABSENT}, s, 'st');
   if (has(s.perte_w)) box.title = titrePertes(s);
+  return box;
+}
+/* Lot 30 (D142) : l'ESTIMATION — segment de calme a n'importe quel niveau,
+   chute >= 1 degC. Jamais melangee a la mesure : etiquette et moyenne a part. */
+function casePerteEstim(s) {
+  const box = statCase({k:'Estimation', champ:'perte_est_w', unite:'W', dec:0,
+    absent:"Pas encore d'estimation : il faut un segment de calme (niveau ≥ CNB, "
+         + "30 min de repos) avec une chute d'au moins 1 °C (réglable). Elle vient "
+         + "vite — chaque nuit en donne plusieurs."}, s, 'st');
+  if (has(s.perte_est_w)) {
+    let t = "ESTIMATION (D142) — pas une mesure : segment de calme à niveau "
+          + "quelconque, la sonde lit sa couche et une cuve partielle perd "
+          + "moins qu'une pleine. Les données :";
+    const car = [];
+    if (has(s.perte_est_vol_l))   car.push(n(s.perte_est_vol_l) + " L à bord");
+    if (has(s.perte_est_t0_c) && has(s.perte_est_t1_c))
+      car.push(n(s.perte_est_t0_c) + " → " + n(s.perte_est_t1_c) + " °C");
+    if (has(s.perte_est_duree_s)) car.push("en " + duree(s.perte_est_duree_s));
+    if (has(s.perte_est_degh))    car.push(n(s.perte_est_degh, 2) + " °C/h");
+    if (has(s.perte_est_age_s))   car.push("il y a " + duree(s.perte_est_age_s));
+    t += "\n" + car.join(" · ") + ".";
+    if (has(s.perte_est_moy_w))
+      t += "\nMoyenne des estimations (8 dernières) : " + n(s.perte_est_moy_w, 0)
+         + " W" + (has(s.perte_est_nb) ? " — " + i0(s.perte_est_nb) + " au total" : "") + ".";
+    t += "\nLa MESURE fiable (cuve pleine + 30 min + 4 h + arrivée > 50°) reste le juge.";
+    box.title = t;
+  }
   return box;
 }
 function caseRefroidFiable(s) {
@@ -1812,6 +1895,13 @@ function bilanEau(s) {
     sp.title = aide;
     lg.appendChild(sp);
   };
+  const dDeb = (state.datesDeb || {}).tiree;
+  if (dDeb && dDeb !== '?') {
+    morceau('depuis le ' + dDeb,
+      "Date de début du comptage livrée/tirée — 20/08/2026 pour l'existant, "
+      + "puis la date de chaque RAZ sélective (D138).");
+    lg.appendChild(document.createTextNode(' · '));
+  }
   morceau('livrée ' + (livree === null ? '—' : n(livree) + ' L'),
     "Eau entrée dans la cuve depuis la mise en service, comptée par le débitmètre du circuit.");
   lg.appendChild(document.createTextNode(' · '));
@@ -2216,24 +2306,19 @@ function rendreSats(d) {
 
     /* ---- niveau 2 : chips (des faits, aucun diagnostic de la page) ---- */
     const chips = el('div', 'chips');
+    /* Lot 30 (client 04/09) : les pastilles « au débitmètre » / « étalonné »
+       sont SUPPRIMÉES — le volume calculé et étalonné est juste, point.
+       Seul le cas utile reste visible : « niveau inconnu » au démarrage,
+       tant qu'aucun flotteur n'a été franchi. */
     const q = (s.volume_qualite || '').toLowerCase();
-    const cq = el('div', 'chip ' + (q === 'etalonne' ? 'etal' : q === 'mesure' ? 'mesure' : 'inconnu'),
-      q === 'etalonne' ? 'étalonné' : q === 'mesure' ? 'au débitmètre' : 'niveau inconnu');
-    cq.title = q === 'etalonne'
-      ? "ANCRÉ : recalé sur le dernier franchissement de flotteur, puis suivi au "
-        + "litre près en entrées − sorties (D67). Le plus sûr."
-      : q === 'mesure'
-      ? "Ancré une fois sur un flotteur, puis suivi au litre près en entrées − "
-        + "sorties (D67)."
-      : "PAS ENCORE ANCRÉ : aucun flotteur franchi depuis le démarrage de "
+    if (q !== 'etalonne' && q !== 'mesure') {
+      const cq = el('div', 'chip inconnu', 'niveau inconnu');
+      cq.title = "PAS ENCORE ANCRÉ : aucun flotteur franchi depuis le démarrage de "
         + "l'automate. Le point de départ du chiffre est le MILIEU de la fourchette "
-        + "donnée par les flotteurs (jusqu'à ±16 L ici) ; depuis, les entrées − "
-        + "sorties sont suivies au litre près (D67) — le chiffre évolue juste, il "
-        + "n'est pas ancré. Il le sera au premier franchissement d'un flotteur. "
-        + "Prévu (D73, sous le coude) : mémoriser volume et ancrage à travers les "
-        + "redémarrages, pour ne plus repartir du milieu de fourchette à chaque "
-        + "reboot.";
-    chips.appendChild(cq);
+        + "donnée par les flotteurs ; depuis, les entrées − sorties sont suivies au "
+        + "litre près (D67). Il s'ancrera au premier franchissement d'un flotteur.";
+      chips.appendChild(cq);
+    }
     if (s.vanne) chips.appendChild(el('div', 'chip open', "vanne d'entrée ouverte"));
     if (has(s.vanne_sortie)) {
       const vs = el('div', 'chip' + (s.vanne_sortie === 'OUVERTE' ? ' open' : ''),
@@ -2247,7 +2332,35 @@ function rendreSats(d) {
     if (s.en_file) chips.appendChild(el('div', 'chip', 'en file'));
     if (df.abandons > 0) chips.appendChild(el('div', 'chip',
       df.abandons + ' abandon' + (df.abandons > 1 ? 's' : '')));
+    /* Lot 33 (D153) : vidange manuelle — badge d'etat */
+    if (s.vid_manu) {
+      const et3 = s.vid_manu_etat;
+      const lib = et3 === 1 ? 'VIDANGE MANUELLE · attente du calme'
+                : et3 === 2 ? 'VIDANGE MANUELLE · vidange en cours'
+                : et3 === 3 ? 'VIDANGE MANUELLE · purge (vidange totale)'
+                            : 'VIDANGE MANUELLE · cuve vidangée';
+      const cv = el('div', 'chip vidmanu', lib);
+      cv.title = "VIDANGE MANUELLE (D153) : bouton enfoncé — la cuve est ISOLÉE "
+               + "(aucun remplissage, aucun réchauffage, aucune mesure de nuit) tant "
+               + "que le bouton n'est pas relâché. L'eau part à la production (V3 sur "
+               + "ECS), jusqu'à CNB sec + purge 5 min. Vanne de sortie fermée dès CNB "
+               + "sec : les logements ne sont pas servis par cette cuve.";
+      chips.appendChild(cv);
+    }
     card.appendChild(chips);
+    /* Lot 33 (D153) : le bouton vidange activée / désactivée */
+    {
+      const bit = (s.sat_id && s.sat_id[1] === 'B' ? 8 : 0)
+                + (parseInt((s.sat_id || 'SA1').slice(2), 10) - 1);
+      const arme = state.vidArm && state.vidArm.bit === bit;
+      const bv = el('button', 'btnvid' + (arme ? ' arme' : ''),
+        arme ? (s.vid_manu ? 'Confirmer la réactivation de ' + s.sat_id
+                           : 'Confirmer la vidange de ' + s.sat_id)
+             : (s.vid_manu ? 'Réactiver ' + s.sat_id + ' (fin de vidange)'
+                           : 'Vidanger ' + s.sat_id));
+      bv.addEventListener('click', () => vidangeClic(bit, !s.vid_manu, s.sat_id));
+      card.appendChild(bv);
+    }
 
     /* ---- pastilles capteurs : ÉTAT (pleine/vide) + DÉFAUT (liseré + « ! »),
             deux choses distinctes (acquis du lot 1) ---- */
@@ -2366,6 +2479,12 @@ function rendreSats(d) {
       absent: "Publié pendant un pompage seulement (moins de 8 s après le dernier "
             + "demi-litre) : absent au repos, c'est normal."}, s, 'st'));
     mR.appendChild(caseTmaxRempl(s));
+    if (state.datesDeb && state.datesDeb.rempl && state.datesDeb.rempl !== '?')
+      mR.appendChild(statCase({k: 'Comptage depuis', champ: 'x',
+        calc: () => 'le ' + state.datesDeb.rempl,
+        aide: "Date de début des compteurs de remplissage et de réchauffage — "
+            + "20/08/2026 pour l'existant, puis la date de chaque RAZ "
+            + "sélective (D138)."}, s, 'st'));
     det.appendChild(famille('Remplissage', [mR]));
 
     /* Lot 21/22 : la famille Réchauffage v5 (D112/D113, programme 3108) */
@@ -2388,6 +2507,7 @@ function rendreSats(d) {
     const mP = el('div', 'mini');
     mP.appendChild(casePerteFiable(s));
     mP.appendChild(caseRefroidFiable(s));
+    mP.appendChild(casePerteEstim(s));                      /* lot 30, D142 */
     mP.appendChild(casePerteNorm35(s, d));
     const notesP = [];
     if (s.perte_fiable === false)
@@ -2503,6 +2623,10 @@ function rendreEau(d) {
   const ch = (d && d.chaufferie) || {};
   const eau = ch.eau || {};
   const box = $('#eauBox'); box.textContent = '';
+  if (state.datesDeb && state.datesDeb.qaqb && state.datesDeb.qaqb !== '?')
+    ligne(box, 'Comptage depuis', 'le ' + state.datesDeb.qaqb, false,
+      "Date de début des compteurs d'eau QA/QB — 20/08/2026 pour l'existant, "
+      + "puis la date de chaque RAZ sélective (D138).");
   [['QA', 'A', eau.qa], ['QB', 'B', eau.qb]].forEach(([nom, lettre, q]) => {
     if (!q) { ligne(box, nom + ' · entrée circuit ' + lettre, '—', true); return; }
     ligne(box, nom + ' · entrée circuit ' + lettre + ' (DI' + i0(q.voie) + ')',
@@ -2533,9 +2657,9 @@ function rendreTemp(d) {
     if (s.ok) t('Cuve ' + s.sat_id, s.temp_c);
   }));
   const ma = ch.maddalena || {};
-  t('Entrée EFS (Maddalena)', ma.ok ? ma.t_retour_c : undefined,
+  t('Entrée EFS (Maddalena)', ma.ok ? ma.t_depart_c : undefined,   /* lot 29 : inversé */
     "L'eau froide à l'entrée de la production, lue par le compteur (lot 25).");
-  t('Sortie ECS (Maddalena)', ma.ok ? ma.t_depart_c : undefined,
+  t('Sortie ECS (Maddalena)', ma.ok ? ma.t_retour_c : undefined,   /* lot 29 : inversé */
     "L'eau chaude à la sortie de la production, lue par le compteur.");
   t('Eau froide à la source (V7)', ch.temp_efs_c,
     "Sonde V7 en amont des chauffe-eau (D91) ; le minimum glissant 5 h est la "
@@ -2628,7 +2752,7 @@ function rendreElecTable(d) {
 
 /* Lot 26 (D129) : le journal des réchauffages — les fiches publiées par
    l'automate (10 dernières), une ligne par cycle. */
-const RECH_MOTIFS = ['seuil jour', 'plancher nuit', 'puisage nocturne', 'grand réveil'];
+const RECH_MOTIFS = ['seuil jour', 'plancher nuit', 'puisage nocturne', 'grand réveil', 'mesure de nuit'];
 const JOURS_C = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
 function rendreRechJournal(d) {
   const t = $('#rechJournal'); t.textContent = '';
@@ -2758,6 +2882,13 @@ const CFG_LIBELLE = {
   somm_purge_min:'Purge de sommeil (min)',
   recup_pause2_s:'Pause 2e récup (s)',
   somm_recirc_l:'Recirculation de veille (L)',
+  puis_gap_s:'Fusion des puisages (s)',
+  sat_cpt_reg:'Registre compteur satellite',
+  mes_t1_min_c:'Mesure : T arrivée mini (°C)',
+  est_dt_min_c:'Estimation : chute mini (°C)',
+  mes_prov_h:'Mesure provoquée à (h)',
+  repos_recirc_l:'Recirculation de repos (L)',
+  repos_recirc_min:'Période de recirculation (min)',
   somm_sent_extra_l:'Sentinelle au-delà de CNB (L)',
   somm_renouv_h:'Renouvellement sentinelle (h)',
   mes_repos_min:'Repos avant mesure (min)',
@@ -2770,6 +2901,7 @@ const CFG_LIBELLE = {
   rech_vague_min_pct:'Vague, creux (%)', rech_vague_max_pct:'Vague, crête (%)',
   rech_vague_s:'Vague, rampe (s)',
   rech_vitesse_pct:'Vitesse réchauffage (obsolète, D127)',
+  vid_manu_mask:'Vidange manuelle (masque, bit par satellite)',
   raz_compteurs:'Remise à zéro des compteurs (un coup)',
   acq_defauts:'Acquittement des défauts (un coup)',
 };
@@ -2999,18 +3131,44 @@ const CHAMPS = [
   {k:'somm_sent_extra_l', t:'float', min:0,   max:20,   l:'Sentinelle : au-delà de CNB', u:'L',
    aide:'la sentinelle d\u2019eau froide remplit jusqu\u2019à CNB mouillé PUIS encore ces '
        +'litres (D136) ; 5 L par défaut'},
+  {k:'puis_gap_s',        t:'int',   min:10,  max:3600, l:'Fusion des puisages', u:'s',
+   aide:'deux tirages espacés de moins de ce délai ne comptent que pour UN puisage '
+       +'(volume cumulé) — 300 s = 5 min par défaut (D139, était 15 s)'},
+  {k:'sat_cpt_reg',       t:'int',   min:0,   max:65535, l:'Registre compteur satellite', u:'',
+   aide:'registre FC03 du compteur d\u2019impulsions DI1 du module Ebyte MA01 — le '
+       +'câblage v2 (DI1 = compteur, DI2 = CNH, DI3 = CNM, DI4 = CNB) est le SEUL '
+       +'câblage depuis le pilote 0409b (D145) ; 2527 (0x09DF) d\u2019après la doc, '
+       +'à CONFIRMER sur site avec « cpts » (D141)'},
   {k:'somm_renouv_h',     t:'int',   min:12,  max:720,  l:'Renouvellement sentinelle', u:'h',
    aide:'l\u2019eau froide de la sentinelle est remplacée à cette échéance — '
        +'hygiène (R12b) ; 48 h par défaut'},
   {k:'mes_repos_min',     t:'int',   min:30,  max:240,  l:'Repos avant mesure', u:'min',
    aide:'la fenêtre de pertes ne s\u2019ouvre que ce temps après un remplissage '
-       +'(décantation) ; ouvre aussi la qualification ÉTALON (R10) ; 60 min par défaut'},
+       +'(décantation) ; ouvre aussi la qualification ÉTALON (R10) ; 30 min par défaut '
+       +'(D149, était 60)'},
   {k:'mes_min_h',         t:'int',   min:3,   max:12,   l:'Durée d\u2019une mesure précise', u:'h',
    aide:'calme minimal pour qu\u2019une fenêtre étalon compte comme mesure PRÉCISE '
-       +'(R10) ; 5 h par défaut'},
+       +'(R10) ; 4 h par défaut (D149, était 5)'},
   {k:'mes_marge_min',     t:'int',   min:5,   max:120,  l:'Marge de la mesure de nuit', u:'min',
    aide:'le remplissage provoqué vise le repère de la veille + 24 h + cette marge '
        +'(R10) ; 15 min par défaut'},
+  {k:'mes_t1_min_c',      t:'float', min:0,   max:55,   l:'Mesure : T d\u2019arrivée mini', u:'°C',
+   aide:'une mesure n\u2019est FIABLE que si la température de fin de fenêtre reste '
+       +'au-dessus (la fenêtre se clôt au passage) — 50 °C par défaut (D142) ; 0 = coupé'},
+  {k:'est_dt_min_c',      t:'float', min:0.3, max:5,    l:'Estimation : chute mini', u:'°C',
+   aide:'un segment de calme ne donne une estimation que si la cuve a perdu au moins '
+       +'cette chute (D142) ; 1 °C par défaut'},
+  {k:'mes_prov_h',        t:'int',   min:0,   max:23,   l:'Mesure provoquée à', u:'h',
+   aide:'chaque nuit à cette heure, au calme : vidange à CNH + plein pour CHAQUE '
+       +'cuve, la fenêtre étalon suit — UNE SEULE opération par cuve et par nuit, '
+       +'renouvelée seulement si un tirage la casse (D148) ; 0 = minuit, le défaut'},
+  {k:'repos_recirc_l',    t:'float', min:0,   max:60,   l:'Recirculation de repos', u:'L',
+   aide:'litres d\u2019eau froide recirculés dans le tronçon commun quand le site est '
+       +'au repos depuis la période ci-dessous — V3 reste garée sur EFS au repos '
+       +'(D151) ; 10 L par défaut, 0 = coupée'},
+  {k:'repos_recirc_min',  t:'int',   min:30,  max:720,  l:'Période de recirculation', u:'min',
+   aide:'temps sans aucun mouvement de pompe avant une recirculation de repos '
+       +'(D151) ; 120 min par défaut'},
   {k:'t_amb_defaut',      t:'float', min:0,   max:40,   l:'Température ambiante par défaut', u:'°C',
    aide:'sert aux pertes ramenées à 35 °C tant qu\u2019il n\u2019y a pas de sonde'},
   {k:'C1',                t:'bool',  l:'Circuit A en service'},
@@ -3351,6 +3509,36 @@ $('#btnRaz').addEventListener('click', async () => {
        + "exécution au repos des deux trains ; le périmètre exécuté s'affiche "
        + "ensuite dans Santé.", 'err');
 });
+/* Lot 33 (D153) : boutons de vidange manuelle — deux clics (armer puis
+   confirmer), l'ordre part comme une config (vid_manu_mask, bit par cuve). */
+async function vidangeClic(bit, engage, nom) {
+  const armePareil = state.vidArm && state.vidArm.bit === bit &&
+                     state.vidArm.engage === engage;
+  if (!armePareil) {
+    state.vidArm = {bit, engage};
+    rendre(true);
+    sortie(engage
+      ? ("VIDANGE MANUELLE de " + nom + " : la cuve sera vidée par gravité vers la "
+       + "production (V3 sur ECS), jusqu'à CNB sec + 5 min de purge, puis restera "
+       + "VIDE et ISOLÉE — aucun remplissage tant que le bouton n'est pas relâché, "
+       + "et les logements de cette cuve ne seront PAS servis (sortie fermée).\n\n"
+       + "Cliquez de nouveau sur le MÊME bouton pour confirmer.")
+      : ("RÉACTIVATION de " + nom + " : la cuve redevient normale — CNB sec = "
+       + "remplissage d'urgence immédiat, avec amorçage raccourci si la vidange "
+       + "était totale (l'eau chaude arrive quand CNB se mouille).\n\n"
+       + "Cliquez de nouveau sur le MÊME bouton pour confirmer."), 'err');
+    return;
+  }
+  state.vidArm = null;
+  const actuel = (state.data && state.data.config_active &&
+                  state.data.config_active.vid_manu_mask) || 0;
+  const nouveau = engage ? (actuel | (1 << bit)) : (actuel & ~(1 << bit));
+  const cfg = {vid_manu_mask: nouveau,
+               cfg_version: ((state.data && state.data.cfg_version) || 0) + 1};
+  sortie('Envoi en cours…');
+  await deposer(cfg, $('#cfgKey').value.trim());
+  rendre(true);
+}
 brancherAction('#btnAcq', 'acq_defauts', 'Acquitter les défauts',
   "ACQUITTEMENT : efface les défauts mémorisés (capteurs déclarés muets, capteurs "
   + "fous, quarantaines, alertes de vanne). Si un capteur est réellement défaillant, "
@@ -3362,6 +3550,7 @@ brancherAction('#btnAcq', 'acq_defauts', 'Acquitter les défauts',
    15. Boucle
    ══════════════════════════════════════════════════════════════════════════ */
 function rendre(force) {
+  state.datesDeb = (state.data && state.data.dates_deb) || {};  /* lot 29 */
   const d = state.data;
   /* Tirer toutes les 3 s ne veut pas dire redessiner toutes les 3 s : on ne
      reconstruit que sur un vrai changement, sinon la page clignote. */
@@ -3529,6 +3718,10 @@ function demo() {
           tiree_depuis_s: 191000, puise: false,
           rempl_nb: 9, rempl_moy_l_min: 7.9, rempl_therm_nb: 5,
           rempl_duree_cumul_s: 3980, rempl_duree_moy_s: 442,
+          rempl_jour_n: 3, rempl_hier_n: 5,
+          perte_est_w: 31, perte_est_degh: 0.62, perte_est_vol_l: 22.4,
+          perte_est_t0_c: 52.1, perte_est_t1_c: 50.4, perte_est_duree_s: 9900,
+          perte_est_age_s: 4200, perte_est_moy_w: 33, perte_est_nb: 4,
           rech_nb: 5, rech_avant_c: 49.5, rech_dernier_age_s: 98000,
           rech_nb_vid: 4, rech_vid_dern_l: 21.3, rech_vid_cumul_l: 96.4,
           rech_sans_rempl: 4, rech_sans_puis: 3, mes_precise: 0,
@@ -3567,6 +3760,9 @@ function demo() {
       {sat: 'SA2', n: 5, h: '06:02', j: 2, motif: 3, vid_l: 8.5, amor: false,
        t0: 47.9, t1: 54.4, rempl_l: 20.0, duree_s: 250},
     ],
+    /* lot 29 (D138) : dates de debut de comptage */
+    dates_deb: {livree: '20/08/2026', tiree: '20/08/2026', qaqb: '20/08/2026',
+                rempl: '20/08/2026', pertes: '01/09/2026'},
     mesure_nuit: {repere_pose: 1, repere_age_s: 46200, prochaine_dans_s: 41300},
     config_active: {intervalle_s: 5, vol_pompe_amont_l: 4, vol_recup_l: 20,
                     vitesse_recup_pct: 40, t_vanne_s: 6,
@@ -3582,7 +3778,10 @@ function demo() {
                     rech_frein_nb: 4, rech_frein_puis: 3, rech_vidange_max_s: 1800,
                     recup_attente_s: 120, recup_pause2_s: 300, somm_purge_min: 5,
                     somm_recirc_l: 10, somm_sent_extra_l: 5, somm_renouv_h: 48,
-                    mes_repos_min: 60, mes_min_h: 5, mes_marge_min: 15,
+                    puis_gap_s: 300, sat_cpt_reg: 2527,
+                    mes_t1_min_c: 50, est_dt_min_c: 1, mes_prov_h: 0,
+                    repos_recirc_l: 10, repos_recirc_min: 120, vid_manu_mask: 0,
+                    mes_repos_min: 30, mes_min_h: 4, mes_marge_min: 15,
                     config_en_attente: false},
     diag: {tas_libre: 185064, tas_mini: 126308, pile_cloud_libre: 4912, raz_age_s: 7500,
            raz_quoi: 'livree tiree QA/QB rempl. pertes ',
@@ -3595,7 +3794,7 @@ function demo() {
 if (SHOW) document.body.classList.add('presentation');
 construireFormulaire();
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 0309b — ui ' + LOT + ' · lot 28 — 03/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 0509a — ui ' + LOT + ' · lot 33 — 05/09/2026';
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
 setInterval(relever, DEMO ? 1000 : PERIODE_MS);
