@@ -1,3 +1,57 @@
+
+Aucun élément sélectionné
+
+Aller au contenu
+Utiliser Gmail avec un lecteur d'écran
+2 sur 11 008
+Nouveau html
+Boîte de réception
+David Perrin
+	
+Pièces jointes14:38 (il y a 1 heure)
+	
+	
+À moi
+
+Nouveau html à pousser STP
+
+et Icône zip le lien ZIP
+
+	
+
+ 
+
+David PERRIN
+
+Président & Fondateur
+
+ 
+
+Téléphone : +33 6 30 60 95 27
+
+E-mail : david.perrin@hwqconcept.com
+
+ 
+
+ 
+
+SAS HWQ Concept
+
+34 route de Gérardmer - 88250 La Bresse
+
+Web : hwqconcept.com
+
+Titre : YouTube - Description : Icône YouTubeTitre : LinkedIn - Description : Image de l’icône LinkedIn
+
+ 
+
+ 
+…
+
+[Message tronqué]  Afficher l'intégralité du message
+ Une pièce jointe
+  •  Analysé par Gmail
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -9,7 +63,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · ui 0509b.34 (lot 34, 05/09/2026)
+   enovaQ — pupitre de supervision · ui 0509d.36 (lot 36, 05/09/2026)
    Nom officiel du fichier : « enovaQ pupitre 3108b.html » (règle de nommage
    client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
    enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
@@ -264,6 +318,23 @@
    mises à jour par les RAZ sélectives. (3) Réglages : fusion des
    puisages (5 min, D139), câblage satellite v2 + registre compteur
    (D140/D141). Démo à jour.
+   Lot 36 (05/09/2026) : fin du « REFUSE 409 cfg_version » (capture
+   client) — la page comptait la version depuis la telemetrie de
+   l'automate alors que le serveur peut avoir UNE config d'avance
+   (deposee, pas encore appliquee). Desormais : version = max(automate,
+   serveur) + 1 (les configs du serveur sont lues au meme tirage), et
+   si un 409 survient quand meme, la reponse donne la version courante
+   et l'envoi est REJOUE une fois automatiquement. Vaut pour la
+   vidange, les RAZ, l'acquittement et tous les depots de reglages.
+   Lot 35 (05/09/2026, pilote 0509b — D154) : la vidange manuelle
+   VISIBLE. Le pilote publiait vid_manu dans le bloc sommeil du JSON
+   (jamais envoye pour une cuve en vidange) — repare cote pilote ; le
+   pupitre affiche desormais l'ETAT en haut a droite (« VIDANGE
+   MANUELLE · attente / vidange / purge »), le bouton CLIGNOTE
+   (« VIDANGE ACTIVE — Reactiver SAx ») tant que le bouton est
+   enfonce, et la desactivation arrete la vidange immediatement
+   (CNM sec -> remplissage, CNM mouille -> rien). Demo : SA3 en
+   vidange pour voir l'affichage.
    Lot 34 (05/09/2026, pupitre seul — « juste a cliquer », client) :
    (1) la CLE est retenue par le navigateur des le premier depot reussi
    (et demandee par une petite fenetre si elle manque au moment du
@@ -710,6 +781,10 @@ table.sattab tr.elec-muet td{opacity:.45}
   background:transparent;color:var(--ink);font:inherit;font-size:12.5px;cursor:pointer}
 .btnvid:hover{border-color:var(--ink)}
 .btnvid.arme{border-color:var(--alert);color:var(--alert);font-weight:600}
+@keyframes vidclign{0%,100%{opacity:1}50%{opacity:.4}}
+.btnvid.encours{border-color:var(--alert);color:var(--alert);font-weight:700;
+  animation:vidclign 1.1s ease-in-out infinite}
+.sat-etat.vidm{color:#fff;background:var(--alert);animation:vidclign 1.6s ease-in-out infinite}
 .chip.vidmanu{background:color-mix(in srgb, var(--alert) 12%, transparent);
   border:1px solid var(--alert);color:var(--alert)}
 .btnvid:disabled{opacity:.6;cursor:default}
@@ -937,7 +1012,7 @@ const API = {
   config:    '/api/config',   // POST → config servie à l'automate à son prochain envoi
 };
 const DEVICE     = 'chaufferie-01';
-const LOT        = '0509b.34';  // marqueur « ui » — bandeau et pied de page
+const LOT        = '0509d.36';  // marqueur « ui » — bandeau et pied de page
 const PERIODE_MS = 3000;      // cadence de tirage de la page
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -1952,6 +2027,13 @@ function etatSatellite(s, d) {
   }
   const df = s.defauts || {};
   if (!s.ok)      return {cls: 'defaut',  txt: 'SANS RÉPONSE'};
+  if (s.vid_manu) {                                      /* lot 35 (D154) */
+    const e3 = s.vid_manu_etat;
+    return {cls: 'vidm', txt: e3 === 1 ? 'VIDANGE MANUELLE · ATTENTE'
+                             : e3 === 2 ? 'VIDANGE MANUELLE · VIDANGE'
+                             : e3 === 3 ? 'VIDANGE MANUELLE · PURGE'
+                                        : 'VIDANGE MANUELLE'};
+  }
   if (df.urgence) return {cls: 'urgence', txt: 'URGENCE CNB'};
   const actif = ((d && d.trains) || []).some(t => t.sat_actif === s.sat_id);
   if (actif)      return {cls: 'service', txt: 'EN SERVICE'};
@@ -2390,11 +2472,12 @@ function rendreSats(d) {
       }
       const attente = state.vidPending && state.vidPending.bit === bit;
       const arme = !attente && state.vidArm && state.vidArm.bit === bit;
-      const bv = el('button', 'btnvid' + (arme ? ' arme' : ''),
+      const bv = el('button',
+        'btnvid' + (arme ? ' arme' : '') + (!arme && !attente && s.vid_manu ? ' encours' : ''),
         attente ? 'Envoyé — attente de l\u2019automate…'
         : arme ? (s.vid_manu ? 'Confirmer la réactivation de ' + s.sat_id
                              : 'Confirmer la vidange de ' + s.sat_id)
-               : (s.vid_manu ? 'Réactiver ' + s.sat_id + ' (fin de vidange)'
+               : (s.vid_manu ? '■ VIDANGE ACTIVE — Réactiver ' + s.sat_id
                              : 'Vidanger ' + s.sat_id));
       if (attente) bv.disabled = true;
       bv.addEventListener('click', () => vidangeClic(bit, !s.vid_manu, s.sat_id));
@@ -3422,12 +3505,39 @@ function cleConfig(demander) {
   return k;
 }
 try { if (localStorage.getItem('enovaq_cle')) $('#cfgKey').value = localStorage.getItem('enovaq_cle'); } catch (_) {}
+/* Lot 36 : la BONNE version de depot = 1 de plus que la plus grande des
+   deux — celle que l'automate a appliquee (telemetrie) ET celle stockee
+   au serveur (une config peut attendre). C'etait la cause du REFUSE 409
+   « cfg_version doit etre superieure a N ». */
+function versionSuivante() {
+  let v = (state.data && state.data.cfg_version) || 0;
+  const c = state.cfgServeur;
+  if (c && Number.isFinite(c.cfg_version) && c.cfg_version > v) v = c.cfg_version;
+  return v + 1;
+}
+/* En dernier recours, un 409 DONNE la version courante : on rejoue UNE fois. */
+function versionDans409(texte) {
+  try {
+    const o = JSON.parse(texte);
+    if (Number.isFinite(o.current)) return o.current + 1;
+  } catch (_) {}
+  const m = /"current"\s*:\s*(\d+)/.exec(texte || '');
+  return m ? parseInt(m[1], 10) + 1 : null;
+}
 async function deposer(cfg, cle) {
   const corps = corpsDepot(cfg);
   const entetes = {'Content-Type': 'application/json'};
   if (cle) entetes['x-api-key'] = cle;
   try {
-    const r = await fetch(API.config, {method: 'POST', headers: entetes, body: JSON.stringify(corps)});
+    let r = await fetch(API.config, {method: 'POST', headers: entetes, body: JSON.stringify(corps)});
+    if (r.status === 409) {
+      let texte409 = ''; try { texte409 = await r.text(); } catch (_) {}
+      const v2 = versionDans409(texte409);
+      if (v2) {
+        corps.cfg_version = v2;
+        r = await fetch(API.config, {method: 'POST', headers: entetes, body: JSON.stringify(corps)});
+      }
+    }
     if (r.ok && cle) { try { localStorage.setItem('enovaq_cle', cle); } catch (_) {} }
     if (!r.ok) {
       let texte = '';
@@ -3515,7 +3625,7 @@ function brancherAction(idBtn, champ, libelle, avertissement) {
       btn.disabled = true;
       const cfg = {};
       cfg[champ] = 1;
-      cfg.cfg_version = ((state.data && state.data.cfg_version) || 0) + 1;
+      cfg.cfg_version = versionSuivante();
       sortie('Envoi en cours…');
       await deposer(cfg, $('#cfgKey').value.trim());
       btn.disabled = false;
@@ -3547,7 +3657,7 @@ $('#btnRaz').addEventListener('click', async () => {
       : {livree: choix.livree ? 1 : 0, tiree: choix.tiree ? 1 : 0,
          qaqb: choix.qaqb ? 1 : 0, rempl: choix.rempl ? 1 : 0,
          pertes: choix.pertes ? 1 : 0};
-    cfg.cfg_version = ((state.data && state.data.cfg_version) || 0) + 1;
+    cfg.cfg_version = versionSuivante();
     sortie('Envoi en cours…');
     await deposer(cfg, $('#cfgKey').value.trim());
     btn.disabled = false;
@@ -3604,13 +3714,23 @@ async function vidangeClic(bit, engage, nom) {
   const actuel = (ca && ca.vid_manu_mask) || 0;
   const nouveau = engage ? (actuel | (1 << bit)) : (actuel & ~(1 << bit));
   const cfg = {vid_manu_mask: nouveau,
-               cfg_version: ((state.data && state.data.cfg_version) || 0) + 1};
+               cfg_version: versionSuivante()};
   vidMsgPoser(bit, 'Envoi en cours…');
   try {
     const corps = corpsDepot(cfg);
-    const r = await fetch(API.config, {method: 'POST',
+    let r = await fetch(API.config, {method: 'POST',
       headers: {'Content-Type': 'application/json', 'x-api-key': cle},
       body: JSON.stringify(corps)});
+    if (r.status === 409) {                       /* lot 36 : version en avance */
+      let texte409 = ''; try { texte409 = await r.text(); } catch (_) {}
+      const v2 = versionDans409(texte409);
+      if (v2) {
+        corps.cfg_version = v2;
+        r = await fetch(API.config, {method: 'POST',
+          headers: {'Content-Type': 'application/json', 'x-api-key': cle},
+          body: JSON.stringify(corps)});
+      }
+    }
     if (!r.ok) {
       let texte = ''; try { texte = (await r.text()).trim().slice(0, 300); } catch (_) {}
       vidMsgPoser(bit, "REFUSÉ : " + expliquerRefus(r.status, texte), 'err');
@@ -3686,6 +3806,9 @@ async function relever() {
     const r = await fetch(API.telemetry, {cache: 'no-store'});
     if (!r.ok) throw new Error('réponse ' + r.status);
     const j = await r.json();
+    /* lot 36 : la version de config STOCKEE au serveur (peut etre en avance
+       sur celle que l'automate a deja appliquee) */
+    state.cfgServeur = (j && j.configs && j.configs[DEVICE]) || null;
     const d = extraire(j);
     if (!d || !d.device_id) throw new Error('payload non reconnu');
 
@@ -3819,7 +3942,8 @@ function demo() {
           defauts: {cnb_muet: false, cnm_muet: false, cnh_muet: false, capteurs_fous: false,
                     vanne_alerte: false, quarantaine_s: 0, abandons: 0, servable: true}},
         { sat_id: 'SA3', ok: true, cnb: 1, cnm: 0, cnh: 0,
-          niveau: 'BAS', vanne: 0, en_file: 0,
+          niveau: 'BAS', vanne: 1, en_file: 0,
+          vid_manu: 1, vid_manu_etat: 2,               /* demo lot 35 */
           volume_l: 12.1, volume_qualite: 'MESURE',
           conso_totale_l: 401, rech_sans_rempl: 0, mes_precise: 0,
           somm_etat: 2,   /* lot 25 : mise en sommeil, phase VIDANGE (démo) */
@@ -3878,7 +4002,7 @@ function demo() {
 if (SHOW) document.body.classList.add('presentation');
 construireFormulaire();
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 0509b — ui ' + LOT + ' · lot 34 — 05/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 0509d — ui ' + LOT + ' · lot 36 — 05/09/2026';
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
 setInterval(relever, DEMO ? 1000 : PERIODE_MS);
@@ -3888,3 +4012,6 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) rele
 </script>
 </body>
 </html>
+
+enovaQ pupitre 0509d.html
+Affichage de enovaQ pupitre 0509d.html en cours...
