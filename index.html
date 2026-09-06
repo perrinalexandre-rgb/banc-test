@@ -1,37 +1,3 @@
-
-
-Aller au contenu
-Utiliser Gmail avec un lecteur d'écran
-1 sur 11 002
-Nouveau html
-Boîte de réception
-David Perrin
-	
-	Pièces jointessam. 5 sept. 14:38 (il y a 21 heures)
-Nouveau html à pousser STP et le lien ZIP David PERRIN Président & Fondateur Téléphone : +33 6 30 60 95 27 E-mail : david.perrin@hwqconcept.com SAS HWQ Concept
-David Perrin
-	
-Pièces jointes11:28 (il y a 14 minutes)
-	
-	
-À moi
-
-Yo,
-Tu peux poster STP.
-l’extraction de données déraient théoriquement fonctionner via ce nouveau HTML si tu veux essayer.
-
- 
-
-De : David Perrin
-Envoyé : samedi 5 septembre 2026 14:38
-À : Alexandre PERRIN <perrin.alexandre@gmail.com>
-Objet : Nouveau html
-…
-
-[Message tronqué]  Afficher l'intégralité du message
- Une pièce jointe
-  •  Analysé par Gmail
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -43,7 +9,7 @@ Objet : Nouveau html
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · ui 0609.40 (lot 40, 06/09/2026)
+   enovaQ — pupitre de supervision · ui 0509d.36 (lot 36, 05/09/2026)
    Nom officiel du fichier : « enovaQ pupitre 3108b.html » (règle de nommage
    client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
    enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
@@ -298,40 +264,6 @@ Objet : Nouveau html
    mises à jour par les RAZ sélectives. (3) Réglages : fusion des
    puisages (5 min, D139), câblage satellite v2 + registre compteur
    (D140/D141). Démo à jour.
-   Lot 40 (06/09/2026, pilote 0609 — D160-D163) : (1) la mesure des
-   pertes SUR DEMANDE (option B, client) — plus d'automatique : un
-   bouton « Mesurer les pertes cette nuit » par cuve (deux clics,
-   ordre un coup mesurer_mask, cle memorisee), etat « programmee pour
-   cette nuit » renvoye par l'automate (mes_demandee) ; a minuit :
-   vidange CNH + plein + fenetre 30 min + 4 h de calme MINIMUM. Et les
-   attentes de la recup en toutes lettres sous la barre E7 (« pause —
-   2e passe dans m:ss », D161). Textes des pertes a jour. Phase 2
-   notee : choix automatique du meilleur creneau par habitudes.
-   (2) Le bouton VIDANGE est de retour (D163) — tous les correctifs en
-   place (publication D154, clignotants lot 35, cle/retour/409 lots
-   34-36, recup 10/2min/10 D156). (3) EXTRACTION INTEGREE : panneau
-   « Extraction de donnees » dans la page (dates + heures -> Excel une
-   feuille/jour, meme moteur que extraction.html). (4) D162 cote
-   pilote : ecarts remis a zero, rechauffages a 0.
-   Lot 39 (05/09/2026, pilote 0509e — D159) : boutons de VIDANGE
-   RETIRES (client — la fonction est desactivee cote pilote, les cuves
-   isolees sont liberees au boot ; on y reviendra sur nouvelle spec).
-   Demo : SA3 redevenue normale.
-   Lot 38 (05/09/2026, pilote 0509d — D158) : l'identification
-   AUTOMATIQUE du compteur — « rien a taper » (client). Le pilote
-   scrute lui-meme les registres du module et adopte celui qui compte ;
-   pastilles par cuve : « identification en cours » (neutre, disparait
-   toute seule), « comptage du module INACTIF » ou « aucune impulsion
-   (cablage DI1) » (rouges, seuls cas ou une intervention materielle
-   est necessaire). Demo : SA3 en identification.
-   Lot 37 (05/09/2026, pilote 0509c — D155-D157) : les flotteurs
-   juges. Etats de RECUPERATION de la vidange manuelle (recup 1 /
-   pause / recup 2) en haut a droite et dans la pastille ; pastille
-   rouge « compteur conso douteux : -X L hier » quand le bilan
-   quotidien D157 denonce un compteur de module (entres au debitmetre
-   vs sortis comptes vs stock) avec le mode d'emploi du seau en
-   infobulle ; reglages Recup apres vidange (L) et Pause entre recups
-   (s). Demo : SA1 porte la pastille douteux.
    Lot 36 (05/09/2026) : fin du « REFUSE 409 cfg_version » (capture
    client) — la page comptait la version depuis la telemetrie de
    l'automate alors que le serveur peut avoir UNE config d'avance
@@ -805,13 +737,6 @@ table.sattab tr.elec-muet td{opacity:.45}
 .vidmsg{margin-top:6px;font-size:12.5px;line-height:1.45;color:var(--ink2);
   border-left:3px solid var(--line);padding-left:8px}
 .vidmsg.err{color:var(--alert);border-left-color:var(--alert)}
-.recup-attente{margin-top:6px;font-size:12.5px;color:var(--ink2);
-  border-left:3px solid var(--line);padding-left:8px;font-style:italic}
-.ex-ligne{display:flex;gap:18px;flex-wrap:wrap}
-.ex-ligne>div{flex:1;min-width:220px}
-.ex-ligne label{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;
-  color:var(--ink2);margin:8px 0 3px}
-.ex-ligne input{padding:7px 9px;border:1px solid var(--line);border-radius:6px;font:inherit}
 .actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:18px}
 .btn{padding:9px 16px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);
   color:var(--ink);font-family:var(--fs-cond);font-weight:600;font-size:13.5px;letter-spacing:.05em;cursor:pointer}
@@ -966,36 +891,6 @@ body.presentation .brand{font-size:27px}
     </div>
   </section>
 
-  <h2 class="eyebrow">Extraction de données</h2>
-  <details class="cfg" id="extractionPanel">
-    <summary>Extraire l'historique vers Excel</summary>
-    <div class="cfg-body">
-      <p class="note">
-        Une ligne toutes les 5 secondes, toutes les grandeurs en colonnes, une
-        feuille Excel par jour couvert. Heures de Paris. L'historique commence
-        au jour de la mise en service de l'archivage — les jours absents sont
-        simplement sautés.
-      </p>
-      <div class="ex-ligne">
-        <div>
-          <label for="ex_d1">Début — date</label>
-          <input id="ex_d1" type="date">
-          <label for="ex_h1">Début — heure</label>
-          <input id="ex_h1" type="time" value="00:00">
-        </div>
-        <div>
-          <label for="ex_d2">Fin — date</label>
-          <input id="ex_d2" type="date">
-          <label for="ex_h2">Fin — heure</label>
-          <input id="ex_h2" type="time" value="23:59">
-        </div>
-      </div>
-      <button id="ex_go" class="btnvid" style="margin-top:12px">Extraire vers Excel</button>
-      <div id="ex_etat" class="vidmsg" style="margin-top:10px">Choisissez la plage, puis « Extraire ».
-Exemple : hier 10:00 → hier 11:00 = 720 lignes.</div>
-    </div>
-  </details>
-
   <h2 class="eyebrow reglages">Réglages</h2>
   <details class="cfg">
     <summary>Modifier la configuration de l'automate</summary>
@@ -1063,7 +958,7 @@ const API = {
   config:    '/api/config',   // POST → config servie à l'automate à son prochain envoi
 };
 const DEVICE     = 'chaufferie-01';
-const LOT        = '0609.40';   // marqueur « ui » — bandeau et pied de page
+const LOT        = '0509d.36';  // marqueur « ui » — bandeau et pied de page
 const PERIODE_MS = 3000;      // cadence de tirage de la page
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -1452,11 +1347,10 @@ function titrePertes(s) {
 const PERTE_ABSENT =
   "Aucune mesure fiable pour l'instant : il faut une cuve PLEINE, 30 min de "
   + "décantation après le remplissage, au moins 4 h de calme jusqu'au puisage "
-  + "suivant, et une T d'ARRIVÉE encore > 50 °C (D142/D149). La mesure se "
-  + "lance UNIQUEMENT à la demande : bouton « Mesurer les pertes cette "
-  + "nuit » sur la carte de la cuve — à minuit, vidange à CNH, plein, "
-  + "fenêtre ; renouvelée dans la nuit si un tirage la casse (D160). "
-  + "Sonde de température exigée.";
+  + "suivant, et une T d'ARRIVÉE encore > 50 °C (D142/D149). Chaque nuit à "
+  + "MINUIT, la mesure provoquée fait le nécessaire pour CHAQUE cuve — "
+  + "vidange à CNH, plein, fenêtre — une seule fois par nuit, renouvelée "
+  + "seulement si un tirage la casse (D148). Sonde de température exigée.";
 function casePerteFiable(s) {
   const box = statCase({k:'Pertes', champ:'perte_w', unite:'W', dec:0,
                         absent: PERTE_ABSENT}, s, 'st');
@@ -1867,20 +1761,6 @@ function rendreRail(node, t, lettre, bus, d) {
   fill.style.width = (has(t.cible) && t.cible > 0 ? pct(t.avancement, t.cible) : 0) + '%';
   bar.id = 'progBar-' + lettre; fill.id = 'progFill-' + lettre;
   bar.appendChild(fill); pr.appendChild(bar); node.appendChild(pr);
-  /* Lot 40 (D161) : les attentes de la recup en toutes lettres */
-  if (code === 7 && has(t.recup_phase)) {
-    const ph = t.recup_phase;
-    const txt = ph === 2
-      ? ('pause entre les deux passes — 2\u1D49 passe dans '
-         + (has(t.recup_reprise_s) ? duree(t.recup_reprise_s) : 'quelques instants'))
-      : ph === 3 ? '2\u1D49 passe de récupération en cours'
-      : '1\u02B3\u1D49 passe de récupération en cours';
-    const at = el('div', 'recup-attente', txt);
-    at.title = "La récupération se fait en DEUX passes de 10 L, séparées d'une pause "
-             + "(réglage « 2e récup après », 5 min par défaut — règle D134). Pendant la "
-             + "pause, la pompe est volontairement à l'arrêt : ce n'est pas un blocage.";
-    node.appendChild(at);
-  }
 
   const ft = el('div', 'rail-foot');
   const f1 = el('div'); f1.appendChild(document.createTextNode("front d'ECS "));
@@ -2093,14 +1973,11 @@ function etatSatellite(s, d) {
   }
   const df = s.defauts || {};
   if (!s.ok)      return {cls: 'defaut',  txt: 'SANS RÉPONSE'};
-  if (s.vid_manu) {                                      /* lot 35/37 */
+  if (s.vid_manu) {                                      /* lot 35 (D154) */
     const e3 = s.vid_manu_etat;
     return {cls: 'vidm', txt: e3 === 1 ? 'VIDANGE MANUELLE · ATTENTE'
                              : e3 === 2 ? 'VIDANGE MANUELLE · VIDANGE'
                              : e3 === 3 ? 'VIDANGE MANUELLE · PURGE'
-                             : e3 === 4 ? 'VIDANGE MANUELLE · RÉCUP 1'
-                             : e3 === 5 ? 'VIDANGE MANUELLE · PAUSE RÉCUP'
-                             : e3 === 6 ? 'VIDANGE MANUELLE · RÉCUP 2'
                                         : 'VIDANGE MANUELLE'};
   }
   if (df.urgence) return {cls: 'urgence', txt: 'URGENCE CNB'};
@@ -2509,9 +2386,6 @@ function rendreSats(d) {
       const lib = et3 === 1 ? 'VIDANGE MANUELLE · attente du calme'
                 : et3 === 2 ? 'VIDANGE MANUELLE · vidange en cours'
                 : et3 === 3 ? 'VIDANGE MANUELLE · purge (vidange totale)'
-                : et3 === 4 ? 'VIDANGE MANUELLE · récupération 1 (10 L)'
-                : et3 === 5 ? 'VIDANGE MANUELLE · pause avant récup 2'
-                : et3 === 6 ? 'VIDANGE MANUELLE · récupération 2 (10 L)'
                             : 'VIDANGE MANUELLE · cuve vidangée';
       const cv = el('div', 'chip vidmanu', lib);
       cv.title = "VIDANGE MANUELLE (D153) : bouton enfoncé — la cuve est ISOLÉE "
@@ -2521,75 +2395,9 @@ function rendreSats(d) {
                + "sec : les logements ne sont pas servis par cette cuve.";
       chips.appendChild(cv);
     }
-    if (has(s.cpt_diag) && s.cpt_diag !== 1) {     /* lot 38 (D158) */
-      const cd = s.cpt_diag;
-      const ci = el('div', 'chip' + (cd >= 2 ? ' bad' : ''),
-        cd === 2 ? 'compteur : comptage du module INACTIF'
-      : cd === 3 ? 'compteur : aucune impulsion (câblage DI1)'
-                 : 'compteur : identification en cours');
-      ci.title = cd === 2
-        ? "L'impulsion du débitmètre ARRIVE au module (DI1 bascule) mais aucun de "
-        + "ses registres ne compte : la fonction de comptage du module Ebyte est "
-        + "désactivée — à activer dans la configuration du module. Le programme ne "
-        + "peut pas le faire par le bus."
-        : cd === 3
-        ? "Des remplissages ont eu lieu mais l'entrée DI1 du module n'a JAMAIS "
-        + "bougé : le fil du débitmètre n'arrive pas sur DI1 — câblage à reprendre."
-        : "Le programme cherche TOUT SEUL le registre qui compte (16 registres "
-        + "scrutés toutes les 10 s pendant que DI1 bascule). Dès qu'il le trouve, "
-        + "il l'adopte et cette pastille disparaît — rien à faire.";
-      chips.appendChild(ci);
-    }
-    if (has(s.cpt_manque_l)) {                     /* lot 37 (D157) */
-      const m = s.cpt_manque_l;
-      const cc = el('div', 'chip bad', m > 0
-        ? ('compteur conso douteux : −' + n(m, 0) + ' L hier')
-        : ('compteur conso douteux : +' + n(-m, 0) + ' L hier'));
-      cc.title = "BILAN QUOTIDIEN (D157) : sur la journée d'hier, litres ENTRÉS "
-               + "(débitmètre de la chaufferie, fiable) = litres SORTIS (compteur du "
-               + "module satellite) + variation du stock. Ici l'équation ne tombe pas "
-               + "juste : le compteur du module " + (m > 0 ? "SOUS-compte" : "SUR-compte")
-               + ". Identification sur site : commande série « cpts », tirer 10 L au "
-               + "seau à un robinet de cette cuve, re-« cpts » — le bon registre monte "
-               + "de 20 impulsions exactement.";
-      chips.appendChild(cc);
-    }
     card.appendChild(chips);
-    /* Lot 40 (D160) : le bouton « Mesurer les pertes cette nuit » —
-       ordre un coup, envoye comme une config (mesurer_mask), meme
-       mecanique deux clics + retour sous le bouton que le lot 34. */
-    {
-      const bit = (s.sat_id && s.sat_id[1] === 'B' ? 8 : 0)
-                + (parseInt((s.sat_id || 'SA1').slice(2), 10) - 1);
-      const deja = !!s.mes_demandee;
-      const attente = state.mesPending && state.mesPending.bit === bit;
-      const arme = !attente && !deja && state.mesArm === bit;
-      if (state.mesPending && state.mesPending.bit === bit) {
-        if (deja) state.mesPending = null;             /* confirme par l'automate */
-        else if (Date.now() - state.mesPending.t > 90000) {
-          state.mesPending = null;
-          state.mesMsg = {bit, cls: 'err', txt: "L'automate n'a pas confirmé "
-            + "au bout de 90 s — pilote 0609 ou plus récent requis."};
-        }
-      }
-      const bm = el('button', 'btnvid' + (arme ? ' arme' : ''),
-        deja ? '\u23F1 Mesure programmée pour cette nuit'
-        : attente ? 'Envoyé — attente de l\u2019automate…'
-        : arme ? 'Confirmer la mesure de ' + s.sat_id + ' cette nuit'
-               : 'Mesurer les pertes de ' + s.sat_id + ' cette nuit');
-      if (deja || attente) bm.disabled = true;
-      if (deja) bm.title = "À minuit, au calme : vidange jusqu'à CNH, remplissage à "
-        + "neuf, puis la fenêtre de mesure (30 min + 4 h de calme minimum). Résultat "
-        + "au matin dans la famille Pertes.";
-      bm.addEventListener('click', () => mesurerClic(bit, s.sat_id));
-      card.appendChild(bm);
-      if (state.mesMsg && state.mesMsg.bit === bit) {
-        card.appendChild(el('div', 'vidmsg' + (state.mesMsg.cls ? ' ' + state.mesMsg.cls : ''),
-                            state.mesMsg.txt));
-      }
-    }
-    /* Lot 40 (D163) : le bouton vidange EST DE RETOUR — tous les
-       correctifs (D154, lots 34-36) sont en place. */
+    /* Lot 33/34 (D153) : le bouton vidange — un clic, confirmer, et la
+       reponse s'affiche ICI, sous le bouton. */
     {
       const bit = (s.sat_id && s.sat_id[1] === 'B' ? 8 : 0)
                 + (parseInt((s.sat_id || 'SA1').slice(2), 10) - 1);
@@ -3154,8 +2962,6 @@ const CFG_LIBELLE = {
   mes_prov_h:'Mesure provoquée à (h)',
   repos_recirc_l:'Recirculation de repos (L)',
   repos_recirc_min:'Période de recirculation (min)',
-  vid_recup_l:'Récup après vidange (L)',
-  vid_recup_pause_s:'Pause entre récups (s)',
   somm_sent_extra_l:'Sentinelle au-delà de CNB (L)',
   somm_renouv_h:'Renouvellement sentinelle (h)',
   mes_repos_min:'Repos avant mesure (min)',
@@ -3436,11 +3242,6 @@ const CHAMPS = [
   {k:'repos_recirc_min',  t:'int',   min:30,  max:720,  l:'Période de recirculation', u:'min',
    aide:'temps sans aucun mouvement de pompe avant une recirculation de repos '
        +'(D151) ; 120 min par défaut'},
-  {k:'vid_recup_l',       t:'float', min:0,   max:30,   l:'Récup après vidange', u:'L',
-   aide:'après une vidange manuelle totale : ces litres vers la réserve, une pause, '
-       +'puis les mêmes litres à nouveau (D156) ; 10 L par défaut, 0 = coupée'},
-  {k:'vid_recup_pause_s', t:'int',   min:30,  max:600,  l:'Pause entre les deux récups', u:'s',
-   aide:'la pause entre les deux passes de récupération (D156) ; 120 s par défaut'},
   {k:'t_amb_defaut',      t:'float', min:0,   max:40,   l:'Température ambiante par défaut', u:'°C',
    aide:'sert aux pertes ramenées à 35 °C tant qu\u2019il n\u2019y a pas de sonde'},
   {k:'C1',                t:'bool',  l:'Circuit A en service'},
@@ -3826,184 +3627,6 @@ $('#btnRaz').addEventListener('click', async () => {
 });
 /* Lot 33 (D153) : boutons de vidange manuelle — deux clics (armer puis
    confirmer), l'ordre part comme une config (vid_manu_mask, bit par cuve). */
-/* Lot 40 (D160) : bouton « Mesurer cette nuit » — deux clics, ordre un coup */
-async function mesurerClic(bit, nom) {
-  if (state.mesArm !== bit) {
-    state.mesArm = bit;
-    state.mesMsg = {bit, cls: '', txt: "La cuve sera vidée jusqu'à CNH et remplie à "
-      + "neuf CETTE NUIT à minuit, au calme, puis la mesure des pertes se fait "
-      + "toute seule (30 min + 4 h de calme minimum). Cliquez de nouveau sur le "
-      + "MÊME bouton pour confirmer."};
-    rendre(true);
-    return;
-  }
-  state.mesArm = null;
-  const cle = cleConfig(true);
-  if (!cle) { state.mesMsg = {bit, cls: 'err', txt: "Envoi annulé : il faut la clé."}; rendre(true); return; }
-  const cfg = {mesurer_mask: (1 << bit), cfg_version: versionSuivante()};
-  state.mesMsg = {bit, cls: '', txt: 'Envoi en cours…'}; rendre(true);
-  try {
-    const corps = corpsDepot(cfg);
-    let r = await fetch(API.config, {method: 'POST',
-      headers: {'Content-Type': 'application/json', 'x-api-key': cle},
-      body: JSON.stringify(corps)});
-    if (r.status === 409) {
-      let t409 = ''; try { t409 = await r.text(); } catch (_) {}
-      const v2 = versionDans409(t409);
-      if (v2) {
-        corps.cfg_version = v2;
-        r = await fetch(API.config, {method: 'POST',
-          headers: {'Content-Type': 'application/json', 'x-api-key': cle},
-          body: JSON.stringify(corps)});
-      }
-    }
-    if (!r.ok) {
-      let texte = ''; try { texte = (await r.text()).trim().slice(0, 300); } catch (_) {}
-      state.mesMsg = {bit, cls: 'err', txt: 'REFUSÉ : ' + expliquerRefus(r.status, texte)};
-      rendre(true); return;
-    }
-    try { localStorage.setItem('enovaq_cle', cle); } catch (_) {}
-    state.mesPending = {bit, t: Date.now()};
-    state.mesMsg = {bit, cls: '', txt: 'Envoyé — en attente de l\u2019automate…'};
-    rendre(true);
-  } catch (e) {
-    state.mesMsg = {bit, cls: 'err', txt: "ÉCHEC d'envoi : " + (e && e.message ? e.message : e)};
-    rendre(true);
-  }
-}
-/* ================= Lot 40 : EXTRACTION INTEGREE AU PUPITRE =================
-   Le meme moteur que la page extraction.html (testee) : /api/histo par jour
-   et par tranche d'heures, aplatissement, un classeur Excel une feuille/jour. */
-function exEtat(msg, err) {
-  const e = $('#ex_etat'); if (!e) return;
-  e.textContent = msg; e.className = 'vidmsg' + (err ? ' err' : '');
-}
-function exAssurerXLSX() {
-  return new Promise((resoudre, rejeter) => {
-    if (typeof XLSX !== 'undefined') { resoudre(); return; }
-    const sources = [
-      'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-      'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
-    ];
-    let i = 0;
-    (function suivant() {
-      if (i >= sources.length) {
-        rejeter(new Error('impossible de charger la bibliothèque Excel (réseau ?)'));
-        return;
-      }
-      const sc = document.createElement('script');
-      sc.src = sources[i++];
-      sc.onload = () => resoudre();
-      sc.onerror = () => suivant();
-      document.head.appendChild(sc);
-    })();
-  });
-}
-function exJoursEntre(j1, j2) {
-  const out = []; let d = new Date(j1 + 'T12:00:00Z');
-  const fin = new Date(j2 + 'T12:00:00Z');
-  while (d <= fin) { out.push(d.toISOString().slice(0, 10)); d = new Date(+d + 86400000); }
-  return out;
-}
-function exAplatir(o, prefixe, dest) {
-  if (o === null || o === undefined) return;
-  if (typeof o !== 'object') { dest[prefixe] = o; return; }
-  if (Array.isArray(o)) {
-    o.forEach((v, i) => {
-      let cle = String(i);
-      if (v && typeof v === 'object') {
-        if (v.sat_id) cle = v.sat_id;
-        else if (v.lettre) cle = v.lettre;
-      }
-      exAplatir(v, prefixe ? prefixe + '.' + cle : cle, dest);
-    });
-    return;
-  }
-  for (const k of Object.keys(o)) {
-    if (k === 'sat_id' || k === 'lettre') continue;
-    exAplatir(o[k], prefixe ? prefixe + '.' + k : k, dest);
-  }
-}
-async function exExtraire() {
-  const j1 = $('#ex_d1').value, j2 = $('#ex_d2').value;
-  const h1 = $('#ex_h1').value || '00:00', h2 = $('#ex_h2').value || '23:59';
-  if (!j1 || !j2 || j1 > j2) { exEtat('Choisissez une plage de dates valide.', true); return; }
-  const jours = exJoursEntre(j1, j2);
-  if (jours.length > 14 &&
-      !confirm(jours.length + ' jours à extraire — le fichier sera très gros. Continuer ?')) return;
-  $('#ex_go').disabled = true;
-  try {
-    exEtat('Préparation…');
-    await exAssurerXLSX();
-    const classeur = XLSX.utils.book_new();
-    let totalLignes = 0, joursOk = 0;
-    for (const jour of jours) {
-      const de = (jour === j1) ? h1 : '00:00';
-      const a  = (jour === j2) ? (h2 === '23:59' ? '24:00' : h2) : '24:00';
-      exEtat('Lecture du ' + jour + ' (' + de + ' → ' + (a === '24:00' ? 'minuit' : a) + ')…');
-      const tranches = (de === '00:00' && a === '24:00')
-        ? [['00:00','06:00'],['06:00','12:00'],['12:00','18:00'],['18:00','24:00']]
-        : [[de, a]];
-      let texte = '', absent = false;
-      for (const [t1, t2] of tranches) {
-        const r = await fetch('/api/histo?jour=' + jour + '&de=' + t1 + '&a=' + t2);
-        if (r.status === 404) { absent = true; break; }
-        if (!r.ok) {
-          let det = ''; try { det = (await r.text()).slice(0, 200); } catch (_) {}
-          throw new Error('le serveur répond ' + r.status + ' sur ' + jour +
-                          (det ? ' — ' + det : ''));
-        }
-        texte += await r.text();
-      }
-      if (absent) { exEtat("Pas d'historique le " + jour + ' — jour sauté.'); continue; }
-      const lignes = [];
-      for (const l of texte.split('\n')) {
-        if (!l.trim()) continue;
-        try {
-          const brut = JSON.parse(l);
-          const plat0 = {};
-          exAplatir(brut, '', plat0);
-          delete plat0.tl;
-          const plat = { 'heure (Paris)': brut.tl || '' };
-          for (const k of Object.keys(plat0)) {
-            const k2 = k.replace(/^circuits\.([AB])\.satellites\./, '')
-                        .replace(/^circuits\.([AB])\./, 'circuit $1.');
-            plat[k2] = plat0[k];
-          }
-          lignes.push(plat);
-        } catch (_) { /* ligne abîmée : sautée */ }
-      }
-      if (!lignes.length) { exEtat('Le ' + jour + ' est vide sur cette plage — sauté.'); continue; }
-      lignes.sort((x, y) => (x['heure (Paris)'] < y['heure (Paris)'] ? -1 : 1));
-      const colonnes = ['heure (Paris)', 't'];
-      for (const l of lignes) for (const k of Object.keys(l))
-        if (!colonnes.includes(k)) colonnes.push(k);
-      const aoa = [colonnes];
-      for (const l of lignes) aoa.push(colonnes.map(cc => (cc in l ? l[cc] : '')));
-      XLSX.utils.book_append_sheet(classeur, XLSX.utils.aoa_to_sheet(aoa), jour);
-      totalLignes += lignes.length; joursOk++;
-      exEtat(jour + ' : ' + lignes.length + ' lignes ajoutées.');
-    }
-    if (!joursOk) exEtat('Rien à extraire sur cette plage (aucun jour archivé).', true);
-    else {
-      const nom = 'enovaQ extraction ' + j1 + ' ' + h1.replace(':', 'h')
-                + ' - ' + j2 + ' ' + h2.replace(':', 'h') + '.xlsx';
-      XLSX.writeFile(classeur, nom);
-      exEtat('Terminé : ' + joursOk + ' feuille(s), ' + totalLignes
-           + ' lignes.\nFichier téléchargé : ' + nom);
-    }
-  } catch (e) {
-    exEtat('Échec : ' + (e && e.message ? e.message : e), true);
-  }
-  $('#ex_go').disabled = false;
-}
-(function () {
-  const b = $('#ex_go'); if (!b) return;
-  const hier = new Date(Date.now() - 86400000).toLocaleDateString('sv-SE');
-  $('#ex_d1').value = hier; $('#ex_d2').value = hier;
-  b.addEventListener('click', exExtraire);
-})();
-
 function vidMsgPoser(bit, txt, cls) {
   state.vidMsg = {bit, txt, cls: cls || '', t: Date.now()};
   rendre(true);
@@ -4223,7 +3846,6 @@ function demo() {
     circuits: [
       {circuit_id: 'C1', actif: true, satellites: [
         { sat_id: 'SA1', ok: true, cnb: 1, cnm: 1, cnh: vol1 > 26.5 ? 1 : 0,
-          cpt_manque_l: 28,                          /* demo lot 37 (D157) */
           niveau: vol1 > 26.5 ? 'HAUT' : 'MILIEU', vanne: [2,3,5].includes(cA) ? 1 : 0, en_file: 0,
           volume_l: Math.round(vol1 * 10) / 10, volume_qualite: 'MESURE',
           conso_totale_l: 1271, tiree_l: 58.5,
@@ -4267,7 +3889,7 @@ function demo() {
                     vanne_alerte: false, quarantaine_s: 0, abandons: 0, servable: true}},
         { sat_id: 'SA3', ok: true, cnb: 1, cnm: 0, cnh: 0,
           niveau: 'BAS', vanne: 1, en_file: 0,
-          cpt_diag: 0,                                 /* demo lot 38 */
+          vid_manu: 1, vid_manu_etat: 2,               /* demo lot 35 */
           volume_l: 12.1, volume_qualite: 'MESURE',
           conso_totale_l: 401, rech_sans_rempl: 0, mes_precise: 0,
           somm_etat: 2,   /* lot 25 : mise en sommeil, phase VIDANGE (démo) */
@@ -4313,7 +3935,6 @@ function demo() {
                     puis_gap_s: 300, sat_cpt_reg: 2527,
                     mes_t1_min_c: 50, est_dt_min_c: 1, mes_prov_h: 0,
                     repos_recirc_l: 10, repos_recirc_min: 120, vid_manu_mask: 0,
-                    vid_recup_l: 10, vid_recup_pause_s: 120,
                     mes_repos_min: 30, mes_min_h: 4, mes_marge_min: 15,
                     config_en_attente: false},
     diag: {tas_libre: 185064, tas_mini: 126308, pile_cloud_libre: 4912, raz_age_s: 7500,
@@ -4327,7 +3948,7 @@ function demo() {
 if (SHOW) document.body.classList.add('presentation');
 construireFormulaire();
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 0609 — ui ' + LOT + ' · lot 40 — 06/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 0509d — ui ' + LOT + ' · lot 36 — 05/09/2026';
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
 setInterval(relever, DEMO ? 1000 : PERIODE_MS);
@@ -4337,6 +3958,3 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) rele
 </script>
 </body>
 </html>
-
-enovaQ pupitre 0609.html
-Affichage de enovaQ pupitre 0609.html en cours...
