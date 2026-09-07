@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · ui 0609a.41 (lot 41, 06/09/2026)
+   enovaQ — pupitre de supervision · ui 0709b.44 (lot 44, 07/09/2026)
    Nom officiel du fichier : « enovaQ pupitre 3108b.html » (règle de nommage
    client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
    enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
@@ -264,6 +264,53 @@
    mises à jour par les RAZ sélectives. (3) Réglages : fusion des
    puisages (5 min, D139), câblage satellite v2 + registre compteur
    (D140/D141). Démo à jour.
+   Lot 44 (07/09/2026, « enovaQ pupitre 0709b », pilote 0709a D171) : LA
+   RECUP ASSERVIE EN PRESSION. La recuperation (E7), la recirculation de
+   repos et la recup de vidange manuelle deviennent UNE methode : statique
+   relevee pompe eteinte, montee progressive jusqu'a statique + 0,5 bar
+   (reglable), comptage du volume (40 L recup / 15 L repos), vitesse
+   atteinte APPRISE (repli si capteur muet). Pupitre : ligne sous la barre
+   E7 « montee en vitesse — X %% · p bar -> cible » puis « palier tenu » ;
+   reglage « Récup : pression au-dessus de la statique » ; retires du
+   formulaire : pause 2e recup, recup apres vidange (10 L) et sa pause —
+   morts depuis D171 ; aides recup/attente/repos reecrites (40 L, 10 s,
+   15 L) ; badge vidange manuelle etat 4 = « RECUP (40 L) ». Compat
+   pilotes anterieurs conservee (phases 2/3 encore affichees).
+   Lot 43 (07/09/2026, « enovaQ pupitre 0709a », pilote 0709 D169-D170) :
+   LE JEU COMPLET. (1) COMPTAGE ZLAN : le comptage de tiree est revenu
+   sur le ZLAN (DI3 = SA1, DI4 = SA2, DI5 = SA3, compteurs 32 bits
+   NVRAM) — pastilles d'identification du module RETIREES, reglage
+   « registre compteur satellite » RETIRE, textes du bilan D157 passes
+   aux voies ZLAN, DI1 des modules libre. (2) RELEVE 2 s (etait 3) et
+   reglage « Periode d'envoi » borne a 3 s mini (D170, defaut pilote
+   3 s) : fraicheur typique 2-4 s avec l'anti-recul du lot 42.
+   (3) LIBELLES SOUS LE COUDE (client 06/09) : le bandeau sous la jauge
+   dit « Amorcage en cours » / « Recup en cours » / « Depart du train »
+   selon l'etape reelle — plus jamais « remplissage » pour une recup ;
+   phases de sommeil parlantes (« ATTEND LA FIN DES TRAINS », « POSE LA
+   SENTINELLE ») ; CHAQUE etat de cuve porte sa phrase complete en
+   infobulle (pourquoi cet etat, ce qui va suivre, ce qui reveille).
+   (4) MODE SALON : ?salon dans l'adresse -> vitrine plein ecran (trois
+   cuves en grand, jauges animees, temperatures, phrases grand public,
+   pied chaufferie), AUCUN bouton d'action ; bouton discret en haut a
+   droite pour basculer vitrine <-> vue complete ; ?salon&demo pour un
+   stand sans site reel. Couche d'affichage pure, mecanique intacte.
+   Lot 42 (07/09/2026, « enovaQ pupitre 0709 ») : L'ANTI-RECUL — LE FILM
+   NE RECULE JAMAIS. Constat client (vidange manuelle SA2 du 07/09) :
+   pendant et apres la sequence, l'affichage oscillait — vanne
+   ouverte/fermee avec un faux « attente du calme », PAUSE RECUP <->
+   CUVE VIDANGEE une dizaine de fois, puis cuve pleine/vide qui
+   clignote apres le remplissage. La MECANIQUE etait irreprochable (une
+   seule sequence, dans l'ordre) : c'est le serveur (instantane EN
+   MEMOIRE, plusieurs instances Azure) qui ressert par moments un envoi
+   plus ancien, et le pupitre affichait chaque reponse telle quelle.
+   Desormais : un envoi plus ancien que celui affiche (numero inferieur,
+   horodatage serveur pas plus frais) est ECARTE — pastille discrete,
+   l'affichage garde le plus recent ; redemarrage de l'automate (numero
+   repart, horodatage plus frais) accepte immediatement ; filet 45 s de
+   refus continus -> realignement. La version de config du serveur ne
+   recule plus non plus (meme defaut). Pastille reecrite : « vieil
+   instantane ecarte », les valeurs affichees restent les bonnes.
    Lot 41 (06/09/2026, « enovaQ pupitre 0609a ») : LA CONFIRMATION DIT
    VRAI. Constat client : « L'automate n'a pas confirme au bout de
    90 s... ou automate injoignable » affiche alors que la vidange ETAIT
@@ -819,6 +866,44 @@ body.presentation .wrap{max-width:1380px}
 body.presentation .hn-v{font-size:40px}
 body.presentation .organ .v{font-size:29px}
 body.presentation .brand{font-size:27px}
+/* ── MODE SALON (lot 43) : la vitrine plein écran, zéro jargon ─────────── */
+body.salon > header, body.salon > main, body.salon > footer {display:none}
+#salonVue{display:none}
+body.salon #salonVue{display:flex;flex-direction:column;min-height:100vh;
+  background:linear-gradient(180deg,var(--bg) 0%,#f4efe7 100%);padding:4vh 5vw 3vh}
+.salon-tete{display:flex;align-items:baseline;gap:18px;margin-bottom:4vh}
+.salon-marque{font-family:var(--fs-cond);font-weight:700;font-size:44px;letter-spacing:.02em}
+.salon-marque small{font-weight:600;font-size:17px;color:var(--ink2);margin-left:14px;letter-spacing:.06em}
+.salon-tete .fin{margin-left:auto;text-align:right;font-family:var(--fs-mono);font-size:15px;color:var(--ink2)}
+.salon-tete .fin .liveS{display:inline-block;width:10px;height:10px;border-radius:50%;
+  background:#2a7a4b;margin-right:7px;animation:salonpulse 2.4s ease-in-out infinite}
+.salon-tete .fin .liveS.off{background:var(--alert);animation:none}
+@keyframes salonpulse{0%,100%{opacity:1}50%{opacity:.35}}
+.salon-cuves{display:flex;gap:4vw;justify-content:center;align-items:stretch;flex:1}
+.salon-cuve{flex:1;max-width:360px;background:var(--card,#fff);border:1px solid rgba(0,0,0,.08);
+  border-radius:18px;padding:3vh 2vw;display:flex;flex-direction:column;align-items:center;
+  box-shadow:0 10px 30px rgba(60,40,10,.06)}
+.salon-nom{font-family:var(--fs-cond);font-weight:700;font-size:26px}
+.salon-lieu{font-size:14px;color:var(--ink2);margin:2px 0 2.4vh}
+.salon-jauge{width:110px;flex:1;min-height:180px;border:2px solid rgba(0,0,0,.18);
+  border-radius:10px 10px 14px 14px;position:relative;overflow:hidden;background:#fbf8f3}
+.salon-eau{position:absolute;left:0;right:0;bottom:0;height:0;
+  background:linear-gradient(180deg,#e9a13b,#c06712);transition:height 1.2s ease}
+.salon-eau.froide{background:linear-gradient(180deg,#7fb6c9,#1c7767)}
+.salon-temp{font-family:var(--fs-cond);font-weight:700;font-size:42px;margin-top:2.4vh}
+.salon-temp small{font-size:20px;font-weight:600;color:var(--ink2)}
+.salon-etat{font-family:var(--fs-cond);font-weight:600;font-size:17px;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--ok);margin-top:8px;text-align:center}
+.salon-etat.actif{color:var(--ecs)}
+.salon-etat.veille{color:var(--verdigris,#1c7767)}
+.salon-etat.gris{color:var(--ink2)}
+.salon-pied{display:flex;gap:4vw;justify-content:center;margin-top:4vh;
+  font-family:var(--fs-mono);font-size:15px;color:var(--ink2)}
+.salon-pied b{color:var(--ink);font-weight:600}
+#salonBtn{position:fixed;right:14px;top:12px;z-index:60;font-family:var(--fs-cond);
+  font-weight:600;font-size:12px;letter-spacing:.06em;padding:7px 12px;border-radius:8px;
+  border:1px solid rgba(0,0,0,.22);background:rgba(255,255,255,.85);cursor:pointer;opacity:.55}
+#salonBtn:hover{opacity:1}
 </style>
 </head>
 <body>
@@ -1045,8 +1130,8 @@ const API = {
   config:    '/api/config',   // POST → config servie à l'automate à son prochain envoi
 };
 const DEVICE     = 'chaufferie-01';
-const LOT        = '0609a.41';  // marqueur « ui » — bandeau et pied de page
-const PERIODE_MS = 3000;      // cadence de tirage de la page
+const LOT        = '0709b.44';  // marqueur « ui » — bandeau et pied de page
+const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
 const FIGE_MS    = 60000;     // seq inchangé plus longtemps que ça = données figées
@@ -1571,6 +1656,7 @@ const state = {
   interp: [null, null],
   resJamaisSec: true,
   seqVu: -1, seqMax: -1, seqDepuis: 0, seqRecule: false,
+  reculDepuis: 0,       // lot 42 : depuis quand on refuse des instantanés reculés
   histo: [],            // étapes achevées, depuis l'ouverture de la page
   etapeEnCours: [null, null],
   tmaxEnCours: {},      // T° sortie de pompe maxi, remplissage en cours (par sat)
@@ -1648,11 +1734,11 @@ function rendreFraicheur() {
   const bloque = d && state.seqDepuis && (Date.now() - state.seqDepuis > FIGE_MS);
   if (state.seqRecule) {
     fige.className = 'on';
-    fige.appendChild(el('b', null, 'Instantané périmé. '));
+    fige.appendChild(el('b', null, 'Vieil instantané écarté. '));
     fige.appendChild(document.createTextNode(
-      "Le serveur vient de renvoyer un envoi plus ancien que le précédent (n° " + i0(d.seq)
-      + " après n° " + i0(state.seqMax) + "). C'est le défaut connu du stockage en mémoire : "
-      + "les valeurs affichées peuvent dater. Rechargez dans quelques secondes."));
+      "Le serveur ressert un envoi plus ancien que celui affiché (défaut connu du "
+      + "stockage en mémoire, plusieurs instances) : il est ÉCARTÉ, l'affichage garde "
+      + "le plus récent (n° " + i0(state.seqMax) + "). Rien à faire — lot 42."));
   } else if (bloque) {
     fige.className = 'on';
     fige.appendChild(el('b', null, 'Données figées. '));
@@ -1856,19 +1942,34 @@ function rendreRail(node, t, lettre, bus, d) {
   fill.style.width = (has(t.cible) && t.cible > 0 ? pct(t.avancement, t.cible) : 0) + '%';
   bar.id = 'progBar-' + lettre; fill.id = 'progFill-' + lettre;
   bar.appendChild(fill); pr.appendChild(bar); node.appendChild(pr);
-  /* Lot 40 (D161) : les attentes de la recup en toutes lettres */
-  if (code === 7 && has(t.recup_phase)) {
-    const ph = t.recup_phase;
-    const txt = ph === 2
-      ? ('pause entre les deux passes — 2\u1D49 passe dans '
-         + (has(t.recup_reprise_s) ? duree(t.recup_reprise_s) : 'quelques instants'))
-      : ph === 3 ? '2\u1D49 passe de récupération en cours'
-      : '1\u02B3\u1D49 passe de récupération en cours';
-    const at = el('div', 'recup-attente', txt);
-    at.title = "La récupération se fait en DEUX passes de 10 L, séparées d'une pause "
-             + "(réglage « 2e récup après », 5 min par défaut — règle D134). Pendant la "
-             + "pause, la pompe est volontairement à l'arrêt : ce n'est pas un blocage.";
-    node.appendChild(at);
+  /* Lot 40 (D161) -> lot 44 (D171) : la récup est ASSERVIE en pression —
+     la ligne dit la montée (consigne, pression, cible). Compat pilotes
+     antérieurs au 0709a : les phases 2/3 s'affichent encore. */
+  if (code === 7) {
+    let txt = null, aide = null;
+    if (has(t.recup_pct)) {
+      txt = (t.recup_tenu ? 'palier tenu — ' : 'montée en vitesse — ')
+          + i0(t.recup_pct) + ' % de pompe'
+          + (has(t.recup_bar) ? ' · ' + n(t.recup_bar) + ' bar' : '')
+          + (has(t.recup_vise_bar) ? ' → cible ' + n(t.recup_vise_bar) + ' bar'
+                                   : ' (capteur muet : vitesse apprise)');
+      aide = "Récupération D171 : pression statique relevée pompe éteinte, puis la "
+           + "vitesse monte progressivement jusqu'à statique + 0,5 bar (réglable) et "
+           + "s'y tient pendant le comptage des litres. La vitesse atteinte est "
+           + "mémorisée : elle sert de repli si le capteur de pression se tait.";
+    } else if (has(t.recup_phase) && t.recup_phase >= 2) {
+      txt = t.recup_phase === 2
+        ? ('pause entre les deux passes — 2\u1D49 passe dans '
+           + (has(t.recup_reprise_s) ? duree(t.recup_reprise_s) : 'quelques instants'))
+        : '2\u1D49 passe de récupération en cours';
+      aide = "Ancien pilote (avant 0709a) : récupération en deux passes avec pause "
+           + "(D134). Le pilote 0709a la remplace par la montée asservie D171.";
+    }
+    if (txt) {
+      const at = el('div', 'recup-attente', txt);
+      if (aide) at.title = aide;
+      node.appendChild(at);
+    }
   }
 
   const ft = el('div', 'rail-foot');
@@ -1986,13 +2087,38 @@ const TIREE_DI = {SA1: 'DI3', SA2: 'DI4', SA3: 'DI5'};
    affichait « mise en sommeil » alors qu'il était en pleine vidange).
    1-6 = mise en sommeil ; 11-14 = renouvellement de la sentinelle. */
 function sommPhase(e) {
-  const M = {1:'MISE EN SOMMEIL · ATTENTE', 2:'MISE EN SOMMEIL · VIDANGE',
-             3:'MISE EN SOMMEIL · PURGE',   4:'MISE EN SOMMEIL · ATTENTE TRAINS',
-             5:'MISE EN SOMMEIL · RÉCUP',   6:'MISE EN SOMMEIL · REMPL. FROID',
-             11:'RENOUVELLEMENT · ATTENTE', 12:'RENOUVELLEMENT · VIDANGE',
-             13:'RENOUVELLEMENT · PURGE',   14:'RENOUVELLEMENT · REMPL. FROID',
-             15:'RENOUVELLEMENT · ATTENTE TRAINS', 16:'RENOUVELLEMENT · RÉCUP'};
+  /* Lot 43 : « ATTENTE TRAINS » ne parlait pas (client 06/09) — chaque
+     phase dit ce qu'elle attend ou ce qu'elle fait, l'infobulle détaille. */
+  const M = {1:'MISE EN SOMMEIL · ATTEND LE CALME', 2:'MISE EN SOMMEIL · VIDANGE',
+             3:'MISE EN SOMMEIL · PURGE',   4:'MISE EN SOMMEIL · ATTEND LA FIN DES TRAINS',
+             5:'MISE EN SOMMEIL · RECIRC. FROIDE', 6:'MISE EN SOMMEIL · POSE LA SENTINELLE',
+             11:'RENOUVELLEMENT · ATTEND LE CALME', 12:'RENOUVELLEMENT · VIDANGE',
+             13:'RENOUVELLEMENT · PURGE',   14:'RENOUVELLEMENT · POSE LA SENTINELLE',
+             15:'RENOUVELLEMENT · ATTEND LA FIN DES TRAINS', 16:'RENOUVELLEMENT · RECIRC. FROIDE'};
   return M[e] || ('MISE EN SOMMEIL · séq. ' + e);
+}
+/* Lot 43 : l'infobulle complète de chaque phase de sommeil — une phrase qui
+   dit POURQUOI la cuve est dans cet état et CE QUI VA SUIVRE. */
+function sommPhraseComplete(e) {
+  const renouv = e >= 11;
+  const tete = renouv
+    ? "Renouvellement d'hygiène de la sentinelle (48 h, R12b) : l'eau froide est remplacée. "
+    : "Personne ne tirait sur cette cuve (frein R7) : l'automate arrête de la chauffer pour rien. ";
+  const M = {
+    1: "La cuve est encore pleine — rien n'est ouvert. L'automate attend un moment calme "
+     + "(aucun train, pompe arrêtée) pour la vider proprement. Un tirage d'usager ANNULE tout.",
+    2: "Vidange totale par gravité vers la production, jusqu'à flotteur bas sec. "
+     + "Un tirage d'usager interrompt et réveille immédiatement.",
+    3: "Flotteur bas sec : purge de quelques minutes, vanne encore ouverte, pour vider le fond.",
+    4: "Cuve vidée, tout est refermé. Les trains en cours profitent du circuit encore chaud ; "
+     + "au premier moment calme : recirculation d'eau froide puis sentinelle (eau froide "
+     + "jusqu'à CNB + 5 L). Un tirage d'usager réveille immédiatement (remplissage chaud d'urgence).",
+    5: "Recirculation d'eau froide dans l'alimentation et le retour : le chemin redevient froid, "
+     + "le tiède part à la réserve.",
+    6: "Pose de la SENTINELLE : eau froide jusqu'à CNB mouillé + 5 L. Ensuite la cuve dort — "
+     + "le premier tirage assèche CNB et déclenche le remplissage chaud prioritaire."
+  };
+  return tete + (M[renouv ? e - 10 : e] || ("séquence " + e + "."));
 }
 function sommPhaseCourte(e) {
   const M = {1:'attente du calme', 2:'vidange en cours', 3:'purge (vanne ouverte)',
@@ -2071,6 +2197,7 @@ function bilanEau(s) {
    publie son champ « etat », il devient la source unique — la déduction
    locale s'efface d'elle-même. */
 function etatSatellite(s, d) {
+  /* Lot 43 : chaque état porte sa PHRASE complète en infobulle (aide). */
   if (typeof s.etat === 'string' && s.etat) {
     const e = s.etat.toUpperCase();
     const cls = e.indexOf('URGENCE') >= 0 ? 'urgence'
@@ -2081,36 +2208,61 @@ function etatSatellite(s, d) {
     return {cls, txt: e, auto: true};
   }
   const df = s.defauts || {};
-  if (!s.ok)      return {cls: 'defaut',  txt: 'SANS RÉPONSE'};
+  if (!s.ok)      return {cls: 'defaut',  txt: 'SANS RÉPONSE',
+    aide: "Le module de la cuve ne répond plus sur le bus — niveaux et vanne inconnus. "
+        + "L'automate réessaie sans cesse ; vérifier alimentation et câble RS485 si ça dure."};
   if (s.vid_manu) {                                      /* lot 35/37 */
     const e3 = s.vid_manu_etat;
+    const AV = {1: "Bouton vidange enfoncé — la cuve attend un moment calme pour ouvrir la vidange.",
+                2: "Vidange par gravité vers la production, jusqu'à flotteur bas sec.",
+                3: "Flotteur bas sec : purge de 5 min, vanne encore ouverte (vidange totale).",
+                4: "Récupération : 40 L en une passe, montée asservie en pression "
+                 + "(statique + 0,5 bar), vers la réserve — puis tout est refermé (D171).",
+                5: "Pause de récupération (ancien pilote, avant 0709a).",
+                6: "Seconde passe de récupération (ancien pilote, avant 0709a)."};
     return {cls: 'vidm', txt: e3 === 1 ? 'VIDANGE MANUELLE · ATTENTE'
                              : e3 === 2 ? 'VIDANGE MANUELLE · VIDANGE'
                              : e3 === 3 ? 'VIDANGE MANUELLE · PURGE'
-                             : e3 === 4 ? 'VIDANGE MANUELLE · RÉCUP 1'
+                             : e3 === 4 ? 'VIDANGE MANUELLE · RÉCUP (40 L)'
                              : e3 === 5 ? 'VIDANGE MANUELLE · PAUSE RÉCUP'
                              : e3 === 6 ? 'VIDANGE MANUELLE · RÉCUP 2'
-                                        : 'VIDANGE MANUELLE'};
+                                        : 'VIDANGE MANUELLE',
+            aide: (AV[e3] || "Cuve vidangée, VIDE et ISOLÉE tant que le bouton est enfoncé.")
+                + " La cuve ne sert plus les logements tant que le bouton n'est pas relâché."};
   }
-  if (df.urgence) return {cls: 'urgence', txt: 'URGENCE CNB'};
+  if (df.urgence) return {cls: 'urgence', txt: 'URGENCE CNB',
+    aide: "Flotteur bas sec = cuve presque vide : remplissage PRIORITAIRE, tête de file, "
+        + "quarantaine et défauts outrepassés (D59). Levée quand le flotteur haut se mouille."};
   const actif = ((d && d.trains) || []).some(t => t.sat_actif === s.sat_id);
-  if (actif)      return {cls: 'service', txt: 'EN SERVICE'};
+  if (actif)      return {cls: 'service', txt: 'EN SERVICE',
+    aide: "Un train sert cette cuve en ce moment — l'étape précise est dans le rail du "
+        + "circuit, en haut de page, et sous la jauge."};
   if (s.sommeil && !(has(s.somm_etat) && s.somm_etat >= 11))
-                  return {cls: 'somm',    txt: 'EN SOMMEIL · EFS'};  /* lot 27 */
+                  return {cls: 'somm',    txt: 'EN SOMMEIL · EFS',   /* lot 27 */
+    aide: "Cuve endormie : sentinelle d'EAU FROIDE en place (personne ne tirait, frein R7). "
+        + "Le premier tirage assèche le flotteur bas et déclenche le remplissage chaud "
+        + "prioritaire — réveil automatique, rien à faire."};
   if (has(s.somm_etat) && s.somm_etat)
-                  return {cls: 'somm',    txt: sommPhase(s.somm_etat)};
+                  return {cls: 'somm',    txt: sommPhase(s.somm_etat),
+                          aide: sommPhraseComplete(s.somm_etat)};
   if (df.inc_basse || df.secours_vol || df.capteurs_fous || df.quarantaine_s > 0 || df.servable === false || df.vanne_alerte)
-    return {cls: 'defaut', txt: 'EN DÉFAUT'};
+    return {cls: 'defaut', txt: 'EN DÉFAUT',
+      aide: "Un défaut est actif (détail dans les pastilles de la carte) — la cuve peut "
+          + "être écartée du service le temps que l'automate revalide ses capteurs."};
   if (s.en_file) {
     let rang = 0;
     ((d && d.trains) || []).forEach(t => {
       const p = (t.file || []).indexOf(s.sat_id);
       if (p >= 0) rang = p + 1;
     });
-    return {cls: 'file', txt: rang ? 'EN FILE n°' + rang : 'EN FILE'};
+    return {cls: 'file', txt: rang ? 'EN FILE n°' + rang : 'EN FILE',
+      aide: "La demande de remplissage est enregistrée — le train la servira à son tour "
+          + "(les urgences passent devant)."};
   }
-  if (s.puise) return {cls: 'pui', txt: 'PUISE'};
-  return {cls: '', txt: 'AU REPOS'};
+  if (s.puise) return {cls: 'pui', txt: 'PUISE',
+    aide: "Un usager tire de l'eau sur cette cuve en ce moment (compteur de sortie)."};
+  return {cls: '', txt: 'AU REPOS',
+    aide: "Rien à faire : niveaux corrects, température correcte, aucun train sur cette cuve."};
 }
 
 /* URGENCE CNB (D59) : le texte dépend de ce que disent les AUTRES flotteurs.
@@ -2419,11 +2571,12 @@ function rendreSats(d) {
       top.appendChild(pt);
     }
     const eb = el('div', 'sat-etat ' + etat.cls, etat.txt);
-    eb.title = etat.auto
+    /* Lot 43 : chaque état porte SA phrase (survol du badge). */
+    eb.title = etat.aide
+      || (etat.auto
       ? "État calculé par l'automate (champ « etat » du JSON) — source unique."
       : "État déduit des seuls champs de l'automate (satellite actif, file, drapeaux "
-        + "de défaut, puisage). Quand l'automate publiera son champ « etat », il "
-        + "deviendra la source unique.";
+        + "de défaut, puisage).");
     top.appendChild(eb);
     card.appendChild(top);
 
@@ -2510,37 +2663,22 @@ function rendreSats(d) {
                + "sec : les logements ne sont pas servis par cette cuve.";
       chips.appendChild(cv);
     }
-    if (has(s.cpt_diag) && s.cpt_diag !== 1) {     /* lot 38 (D158) */
-      const cd = s.cpt_diag;
-      const ci = el('div', 'chip' + (cd >= 2 ? ' bad' : ''),
-        cd === 2 ? 'compteur : comptage du module INACTIF'
-      : cd === 3 ? 'compteur : aucune impulsion (câblage DI1)'
-                 : 'compteur : identification en cours');
-      ci.title = cd === 2
-        ? "L'impulsion du débitmètre ARRIVE au module (DI1 bascule) mais aucun de "
-        + "ses registres ne compte : la fonction de comptage du module Ebyte est "
-        + "désactivée — à activer dans la configuration du module. Le programme ne "
-        + "peut pas le faire par le bus."
-        : cd === 3
-        ? "Des remplissages ont eu lieu mais l'entrée DI1 du module n'a JAMAIS "
-        + "bougé : le fil du débitmètre n'arrive pas sur DI1 — câblage à reprendre."
-        : "Le programme cherche TOUT SEUL le registre qui compte (16 registres "
-        + "scrutés toutes les 10 s pendant que DI1 bascule). Dès qu'il le trouve, "
-        + "il l'adopte et cette pastille disparaît — rien à faire.";
-      chips.appendChild(ci);
-    }
+    /* lot 38 (D158) -> retiré lot 43 (D169) : le comptage de tirée est
+       revenu sur le ZLAN — plus de pastilles d'identification du module
+       (le pilote 0709 ne publie plus cpt_diag). */
     if (has(s.cpt_manque_l)) {                     /* lot 37 (D157) */
       const m = s.cpt_manque_l;
       const cc = el('div', 'chip bad', m > 0
         ? ('compteur conso douteux : −' + n(m, 0) + ' L hier')
         : ('compteur conso douteux : +' + n(-m, 0) + ' L hier'));
       cc.title = "BILAN QUOTIDIEN (D157) : sur la journée d'hier, litres ENTRÉS "
-               + "(débitmètre de la chaufferie, fiable) = litres SORTIS (compteur du "
-               + "module satellite) + variation du stock. Ici l'équation ne tombe pas "
-               + "juste : le compteur du module " + (m > 0 ? "SOUS-compte" : "SUR-compte")
-               + ". Identification sur site : commande série « cpts », tirer 10 L au "
-               + "seau à un robinet de cette cuve, re-« cpts » — le bon registre monte "
-               + "de 20 impulsions exactement.";
+               + "(débitmètre de la chaufferie, fiable) = litres SORTIS (compteur de "
+               + "tirée, voie " + (TIREE_DI[s.sat_id] || 'DI') + " du ZLAN depuis le "
+               + "0709, D169) + variation du stock. Ici l'équation ne tombe pas "
+               + "juste : le compteur de tirée " + (m > 0 ? "SOUS-compte" : "SUR-compte")
+               + ". Vérification sur site : commande série « cpts », tirer 10 L au "
+               + "seau à un robinet de cette cuve, re-« cpts » — le compteur de la "
+               + "voie monte de 20 impulsions exactement.";
       chips.appendChild(cc);
     }
     card.appendChild(chips);
@@ -2732,7 +2870,15 @@ function rendreSats(d) {
     const tAct = ((d && d.trains) || []).find(t => t.sat_actif === s.sat_id);
     if (tAct && codeEtape(tAct.etape) !== 0) {
       const fe = el('div', 'sat-fill');
-      let txtF = 'Remplissage en cours — ' + (LIBEL[codeEtape(tAct.etape)] || tAct.etape);
+      /* Lot 43 (client 06/09, gardé sous le coude) : « ne pas marquer
+         remplissage en cours si c'est une récup, mais récup en cours et
+         amorçage » — le préfixe suit l'étape réelle du train. */
+      const ce = codeEtape(tAct.etape);
+      const prefixe = ce === 7 ? 'Récup en cours'
+                    : ce === 1 ? 'Amorçage en cours'
+                    : ce === 9 ? 'Départ du train'
+                               : 'Remplissage en cours';
+      let txtF = prefixe + ' — ' + (LIBEL[ce] || tAct.etape);
       if (has(tAct.avancement) && has(tAct.cible) && tAct.cible > 0)
         txtF += ' · ' + n(tAct.avancement) + ' / ' + n(tAct.cible) + ' '
               + (tAct.unite || 'L');
@@ -3171,6 +3317,7 @@ const CFG_LIBELLE = {
   rech_frein_puis:'Frein : sans puisage',
   rech_vidange_max_s:'Butée de vidange (s)',
   recup_attente_s:'Attente avant récup (s)',
+  recup_delta_bar:'Récup : delta pression (bar)',
   somm_purge_min:'Purge de sommeil (min)',
   recup_pause2_s:'Pause 2e récup (s)',
   somm_recirc_l:'Recirculation de veille (L)',
@@ -3324,22 +3471,27 @@ function majInterpolation() {
    14. Formulaire de réglage — n'envoie QUE ce qui a été rempli
    ══════════════════════════════════════════════════════════════════════════ */
 const CHAMPS = [
-  {k:'intervalle_s',      t:'int',   min:5,   max:3600, l:"Période d'envoi",         u:'s'},
+  {k:'intervalle_s',      t:'int',   min:3,   max:3600, l:"Période d'envoi",         u:'s'},  /* D170 */
   {k:'nb_sats',           t:'int',   min:1,   max:8,    l:'Satellites circuit A',    u:''},
   {k:'nb_sats_b',         t:'int',   min:0,   max:8,    l:'Satellites circuit B',    u:''},
   {k:'vol_pompe_amont_l', t:'float', min:0,   max:20,   l:'Tronçon commun',          u:'L'},
   {k:'vol_recup_l',       t:'float', min:0,   max:100,  l:'Récupération A (Z)',      u:'L',
-   aide:'litres poussés à la récup, 2 min après le cycle ; 20 L par défaut (D113)'},
+   aide:'litres de la recirculation de récup, en UNE passe asservie en pression '
+       +'(D171) ; 40 L par défaut, 0 = coupée'},
   {k:'vol_recup_b_l',     t:'float', min:0,   max:100,  l:'Récupération B (Z)',      u:'L',
-   aide:'20 L par défaut (D113)'},
+   aide:'40 L par défaut (D171)'},
+  {k:'recup_delta_bar',   t:'float', min:0.1, max:3,    l:'Récup : pression au-dessus de la statique', u:'bar',
+   aide:'la pompe monte progressivement jusqu\u2019à (pression pompe éteinte + ce '
+       +'delta) et s\u2019y tient pendant le comptage — la vitesse atteinte est '
+       +'apprise et sert de repli si le capteur de pression se tait (D171) ; '
+       +'0,5 bar par défaut'},
   {k:'vitesse_train_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en train',  u:'%',
    aide:'86 % par défaut depuis le 0309 (D128) : ~60 Hz si le variateur est réglé P0-10 = 70 Hz — mettre 92 s\u2019il est resté à 65 Hz'},
   {k:'vitesse_recup_pct', t:'int',   min:10,  max:100,  l:'Vitesse pompe en récup',  u:'%',
-   aide:'vitesse douce de la récupération ; 40 % par défaut (D113, était 60) — elle '
-       +'se fait en 2 passes de 10 L (D121)'},
-  {k:'recup_pause2_s',    t:'int',   min:0,   max:1800, l:'Pause avant la 2e récup', u:'s',
-   aide:'la première passe démarre 2 min après le bouchon ; la seconde attend cette '
-       +'pause, pompe coupée, l\u2019eau se pose — 5 min par défaut (D134, client 03/09)'},
+   aide:'depuis D171, sert de repli ULTIME (capteur de pression muet ET aucune '
+       +'vitesse encore apprise) et aux usages non asservis (mesure, recirculation '
+       +'de veille) ; 40 % par défaut'},
+  /* recup_pause2_s retiré (lot 44) : plus de 2e passe depuis D171 */
   {k:'rech_vague_min_pct', t:'int',  min:10,  max:100,  l:'Vague de mélange, creux', u:'%',
    aide:'le remplissage de réchauffage roule en vague : de ce creux à la crête en '
        +'« rampe » secondes, puis redescend, en continu — le flux brasse la cuve (D127) ; 30 % par défaut'},
@@ -3413,8 +3565,9 @@ const CHAMPS = [
    aide:'au-delà, vanne refermée et remplissage quand même + défaut — couvre '
        +'aussi les flotteurs muets (R8) ; 1800 s par défaut'},
   {k:'recup_attente_s',   t:'int',   min:0,   max:1800, l:'Attente avant récup', u:'s',
-   aide:'la vanne de retour ne rouvre et la pompe ne repart que ce délai après '
-       +'la fin du remplissage + bouchon, TOUS les trains (R5b) ; 120 s par défaut'},
+   aide:'délai entre la fermeture qui suit le bouchon et la recirculation de '
+       +'récup — la pression statique est relevée pendant cette attente, pompe '
+       +'éteinte (D171) ; 10 s par défaut (était 120)'},
   {k:'somm_purge_min',    t:'int',   min:1,   max:120,  l:'Purge de sommeil', u:'min',
    aide:'après CNB sec, la vanne reste ouverte ce temps pour égoutter la cuve '
        +'(R12) ; 5 min par défaut'},
@@ -3428,11 +3581,9 @@ const CHAMPS = [
   {k:'puis_gap_s',        t:'int',   min:10,  max:3600, l:'Fusion des puisages', u:'s',
    aide:'deux tirages espacés de moins de ce délai ne comptent que pour UN puisage '
        +'(volume cumulé) — 300 s = 5 min par défaut (D139, était 15 s)'},
-  {k:'sat_cpt_reg',       t:'int',   min:0,   max:65535, l:'Registre compteur satellite', u:'',
-   aide:'registre FC03 du compteur d\u2019impulsions DI1 du module Ebyte MA01 — le '
-       +'câblage v2 (DI1 = compteur, DI2 = CNH, DI3 = CNM, DI4 = CNB) est le SEUL '
-       +'câblage depuis le pilote 0409b (D145) ; 2527 (0x09DF) d\u2019après la doc, '
-       +'à CONFIRMER sur site avec « cpts » (D141)'},
+  /* sat_cpt_reg retire du formulaire (lot 43, D169) : le comptage de
+     tiree est revenu sur le ZLAN (DI3 = SA1, DI4 = SA2, DI5 = SA3) —
+     le registre du module n'a plus d'effet ; DI1 des modules est libre. */
   {k:'somm_renouv_h',     t:'int',   min:12,  max:720,  l:'Renouvellement sentinelle', u:'h',
    aide:'l\u2019eau froide de la sentinelle est remplacée à cette échéance — '
        +'hygiène (R12b) ; 48 h par défaut'},
@@ -3457,17 +3608,14 @@ const CHAMPS = [
        +'cuve, la fenêtre étalon suit — UNE SEULE opération par cuve et par nuit, '
        +'renouvelée seulement si un tirage la casse (D148) ; 0 = minuit, le défaut'},
   {k:'repos_recirc_l',    t:'float', min:0,   max:60,   l:'Recirculation de repos', u:'L',
-   aide:'litres d\u2019eau froide recirculés dans le tronçon commun quand le site est '
-       +'au repos depuis la période ci-dessous — V3 reste garée sur EFS au repos '
-       +'(D151) ; 10 L par défaut, 0 = coupée'},
+   aide:'litres d\u2019EFS recirculés au calme prolongé, à la même montée asservie '
+       +'que la récup (statique + delta, D151/D171) ; 15 L par défaut (était 10), '
+       +'0 = coupée'},
   {k:'repos_recirc_min',  t:'int',   min:30,  max:720,  l:'Période de recirculation', u:'min',
    aide:'temps sans aucun mouvement de pompe avant une recirculation de repos '
        +'(D151) ; 120 min par défaut'},
-  {k:'vid_recup_l',       t:'float', min:0,   max:30,   l:'Récup après vidange', u:'L',
-   aide:'après une vidange manuelle totale : ces litres vers la réserve, une pause, '
-       +'puis les mêmes litres à nouveau (D156) ; 10 L par défaut, 0 = coupée'},
-  {k:'vid_recup_pause_s', t:'int',   min:30,  max:600,  l:'Pause entre les deux récups', u:'s',
-   aide:'la pause entre les deux passes de récupération (D156) ; 120 s par défaut'},
+  /* vid_recup_l / vid_recup_pause_s retirés (lot 44) : la récup après
+     vidange manuelle est la MÊME recirculation asservie de 40 L (D171) */
   {k:'t_amb_defaut',      t:'float', min:0,   max:40,   l:'Température ambiante par défaut', u:'°C',
    aide:'sert aux pertes ramenées à 35 °C tant qu\u2019il n\u2019y a pas de sonde'},
   {k:'C1',                t:'bool',  l:'Circuit A en service'},
@@ -4149,6 +4297,37 @@ function extraire(j) {
   return j.payload || j.data || j.telemetry || null;
 }
 
+/* Lot 42 : ANTI-RECUL. Le serveur garde l'instantané EN MÉMOIRE et tourne
+   parfois sur PLUSIEURS instances : il ressert par moments un envoi plus
+   ancien que celui déjà affiché — à l'écran, cuve « pleine/vide » qui
+   clignote, vidange qui rejoue ses étapes dans le désordre (constat client
+   06-07/09). Règle : LE FILM NE RECULE JAMAIS. Un envoi plus ancien (numéro
+   inférieur, horodatage serveur pas plus frais) est ÉCARTÉ — pastille
+   discrète, l'affichage garde le plus récent. Redémarrage de l'automate
+   (le numéro repart de zéro mais l'horodatage est PLUS FRAIS) : accepté
+   immédiatement. Filet : 45 s de refus continus → réalignement complet
+   (l'instance fraîche a disparu, on suit ce qui reste). */
+function instantaneAccepte(d, tEmisN) {
+  if (!has(d.seq)) return true;
+  const recul     = state.seqMax >= 0 && d.seq < state.seqMax;
+  const plusFrais = isFinite(tEmisN) && state.emisAt > 0 && tEmisN > state.emisAt;
+  if (recul && !plusFrais) {
+    if (!state.reculDepuis) state.reculDepuis = Date.now();
+    if (Date.now() - state.reculDepuis < 45000) {
+      state.seqRecule = true;            /* pastille ; rien d'autre ne bouge */
+      return false;
+    }
+    state.seqMax = -1;                   /* 45 s de refus : réalignement */
+  } else if (recul) {
+    state.seqMax = -1;                   /* redémarrage automate : on suit */
+  }
+  state.reculDepuis = 0;
+  state.seqRecule = false;
+  if (d.seq !== state.seqVu) { state.seqVu = d.seq; state.seqDepuis = Date.now(); }
+  else if (!state.seqDepuis) state.seqDepuis = Date.now();
+  if (d.seq > state.seqMax) state.seqMax = d.seq;
+  return true;
+}
 async function relever() {
   if (DEMO) { state.data = demo(); state.recuAt = Date.now(); state.emisAt = 0;
               state.erreur = null; rendre(true); return; }
@@ -4157,22 +4336,25 @@ async function relever() {
     if (!r.ok) throw new Error('réponse ' + r.status);
     const j = await r.json();
     /* lot 36 : la version de config STOCKEE au serveur (peut etre en avance
-       sur celle que l'automate a deja appliquee) */
-    state.cfgServeur = (j && j.configs && j.configs[DEVICE]) || null;
+       sur celle que l'automate a deja appliquee). Lot 42 : elle non plus ne
+       recule jamais — meme defaut de memoire multi-instances. */
+    const cfgN = (j && j.configs && j.configs[DEVICE]) || null;
+    if (cfgN && (!state.cfgServeur ||
+                 (cfgN.cfg_version | 0) >= (state.cfgServeur.cfg_version | 0)))
+      state.cfgServeur = cfgN;
     const d = extraire(j);
     if (!d || !d.device_id) throw new Error('payload non reconnu');
 
-    /* surveillance de seq : figé, ou instantané périmé renvoyé par le serveur */
-    if (has(d.seq)) {
-      state.seqRecule = (state.seqMax >= 0 && d.seq < state.seqMax);
-      if (d.seq !== state.seqVu) { state.seqVu = d.seq; state.seqDepuis = Date.now(); }
-      else if (!state.seqDepuis) state.seqDepuis = Date.now();
-      if (d.seq > state.seqMax) state.seqMax = d.seq;
+    const tEmisN = Date.parse(d._received_at || '');
+    if (!instantaneAccepte(d, tEmisN)) {   /* lot 42 : vieil envoi ECARTE */
+      state.erreur = null;
+      rendre();
+      return;
     }
 
     state.data = d;
     state.recuAt = Date.now();
-    const t = Date.parse(d._received_at || '');
+    const t = tEmisN;
     const age = Date.now() - t;
     const emis = (isFinite(t) && age > -60000 && age < 2.6e9) ? t : 0;
     if (emis && state.emisAt && emis > state.emisAt) {
@@ -4354,12 +4536,123 @@ function demo() {
 if (SHOW) document.body.classList.add('presentation');
 construireFormulaire();
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 0609a — ui ' + LOT + ' · lot 41 — 06/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 0709b — ui ' + LOT + ' · lot 44 — 07/09/2026';
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
+/* ══════════════════════════════════════════════════════════════════════════
+   18. MODE SALON (lot 43, client 07/09 : « une version très épurée du
+   pupitre pour montrer dans un salon, mais je veux aussi pouvoir visualiser
+   toutes les infos ») — la vitrine : trois cuves en grand, phrases grand
+   public, AUCUN bouton d'action ni réglage. Ouverture directe : ?salon dans
+   l'adresse (compatible ?salon&demo pour un stand sans site réel). Le
+   bouton discret en haut à droite bascule vitrine <-> vue complète : toutes
+   les infos restent à un clic. Couche d'affichage PURE : la mécanique du
+   pupitre et de l'automate est strictement intacte.
+   ══════════════════════════════════════════════════════════════════════════ */
+const SALON_DEPART = /[?&]salon\b/.test(location.search);
+function salonEtatPublic(s, d) {
+  if (!s.ok) return {t: 'Hors ligne', c: 'gris'};
+  const e = etatSatellite(s, d);
+  if (e.cls === 'vidm')    return {t: 'Entretien en cours', c: 'actif'};
+  if (e.cls === 'urgence') return {t: 'Remplissage prioritaire', c: 'actif'};
+  if (e.cls === 'service') return {t: 'Remplissage en cours', c: 'actif'};
+  if (e.cls === 'somm')    return {t: s.sommeil ? 'Veille économique' : 'Passage en veille', c: 'veille'};
+  if (e.cls === 'defaut')  return {t: 'Vérification en cours', c: 'gris'};
+  if (e.cls === 'file')    return {t: 'Remplissage programmé', c: 'actif'};
+  if (e.cls === 'pui')     return {t: 'Eau chaude en service', c: 'actif'};
+  return {t: 'Prête', c: ''};
+}
+function salonConstruire() {
+  const v = el('div'); v.id = 'salonVue';
+  const tete = el('div', 'salon-tete');
+  const mq = el('div', 'salon-marque', 'enovaQ');
+  mq.appendChild(el('small', null, 'eau chaude sanitaire intelligente'));
+  tete.appendChild(mq);
+  const fin = el('div', 'fin');
+  const lv = el('span', 'liveS'); lv.id = 'salonLive';
+  fin.appendChild(lv);
+  const hr = el('span'); hr.id = 'salonHeure';
+  fin.appendChild(hr);
+  tete.appendChild(fin);
+  v.appendChild(tete);
+  const zone = el('div', 'salon-cuves'); zone.id = 'salonCuves';
+  v.appendChild(zone);
+  const pied = el('div', 'salon-pied'); pied.id = 'salonPied';
+  v.appendChild(pied);
+  document.body.appendChild(v);
+  const b = el('button', null, 'Vue salon'); b.id = 'salonBtn';
+  b.title = 'Basculer entre la vitrine (salon) et la vue complète — toutes les infos.';
+  b.addEventListener('click', () => salonBasculer(!document.body.classList.contains('salon')));
+  document.body.appendChild(b);
+}
+function salonBasculer(on) {
+  document.body.classList.toggle('salon', on);
+  const b = $('#salonBtn'); if (b) b.textContent = on ? 'Vue complète' : 'Vue salon';
+  if (on) rendreSalon(state.data);
+}
+function rendreSalon(d) {
+  if (!document.body.classList.contains('salon')) return;
+  const hr = $('#salonHeure');
+  if (hr) hr.textContent = new Date().toLocaleString('fr-FR',
+    {weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'});
+  const lv = $('#salonLive');
+  if (lv) lv.className = 'liveS' + (telemetrieEnLigne() || DEMO ? '' : ' off');
+  const zone = $('#salonCuves');
+  if (!zone) return;
+  zone.textContent = '';
+  const sats = [];
+  ((d && d.circuits) || []).forEach(c => (c.satellites || []).forEach(s => sats.push(s)));
+  sats.slice(0, 4).forEach(s => {
+    const cv = el('div', 'salon-cuve');
+    cv.appendChild(el('div', 'salon-nom', s.sat_id || '—'));
+    const ap = APPARTEMENTS[s.sat_id];
+    cv.appendChild(el('div', 'salon-lieu', ap ? ap.ou : ' '));
+    const jg = el('div', 'salon-jauge');
+    const eau = el('div', 'salon-eau' + (s.sommeil ? ' froide' : ''));
+    const pct = (has(s.volume_l) && has(s.X_l) && s.X_l > 0)
+              ? Math.max(0, Math.min(100, 100 * s.volume_l / s.X_l)) : 0;
+    eau.style.height = pct.toFixed(0) + '%';
+    jg.appendChild(eau);
+    cv.appendChild(jg);
+    const tp = el('div', 'salon-temp',
+      (has(s.temp_c) && !s.sommeil) ? n(s.temp_c) : '—');
+    if (has(s.temp_c) && !s.sommeil) tp.appendChild(el('small', null, ' °C'));
+    cv.appendChild(tp);
+    const ep = salonEtatPublic(s, d);
+    cv.appendChild(el('div', 'salon-etat ' + ep.c, ep.t));
+    zone.appendChild(cv);
+  });
+  const pied = $('#salonPied');
+  if (pied) {
+    pied.textContent = '';
+    const ch = (d && d.chaufferie) || {};
+    const pompe = el('span');
+    pompe.appendChild(el('b', null, 'Circulation : '));
+    pompe.appendChild(document.createTextNode(
+      ch.pompe_pct > 0 ? 'en marche' : 'au repos'));
+    pied.appendChild(pompe);
+    const rs = (d && d.reserve) || {};
+    if (has(rs.haut_mouille)) {
+      const rz = el('span');
+      rz.appendChild(el('b', null, 'Réserve : '));
+      rz.appendChild(document.createTextNode(
+        rs.haut_mouille ? 'pleine' : rs.milieu_mouille ? 'bonne'
+        : rs.bas_mouille ? 'correcte' : 'en service'));
+      pied.appendChild(rz);
+    }
+    const md = el('span');
+    md.appendChild(el('b', null, DEMO ? 'Démonstration' : 'Site en direct'));
+    pied.appendChild(md);
+  }
+}
+salonConstruire();
+if (SALON_DEPART) salonBasculer(true);
+
 setInterval(relever, DEMO ? 1000 : PERIODE_MS);
 setInterval(rendreFraicheur, PERIODE_AGE_MS);
 setInterval(majInterpolation, 120);
+setInterval(() => { if (document.body.classList.contains('salon')) rendreSalon(state.data); },
+            2000);   /* lot 43 : l'horloge et les jauges de la vitrine respirent */
 document.addEventListener('visibilitychange', () => { if (!document.hidden) relever(); });
 </script>
 </body>
