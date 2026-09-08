@@ -1,13 +1,29 @@
 // =====================================================================
-//  /api/histo — enovaQ (05/09/2026) : lecture de l'historique.
+//  /api/histo — enovaQ v2 (07/09/2026) : lecture de l'historique.
 //  GET ?liste=1                          -> { jours: ["2026-09-05", ...] }
-//  GET ?jour=2026-09-05                  -> les lignes du jour (JSONL)
-//  GET ?jour=2026-09-05&de=10:00&a=11:00 -> seulement 10 h -> 11 h (heure
-//      de Paris — filtre sur l'horodatage local "tl" ecrit par /api/data,
-//      ete/hiver deja regles). SANS dependance (REST signe, crypto Node).
-//  A placer dans api/histo/index.js (function.json a cote).
+//  GET ?jour=2026-09-07&de=10:00&a=11:00 -> les lignes de 10 h a 11 h
+//      (heure de Paris — filtre sur l'horodatage local "tl" ecrit par
+//      /api/data, ete/hiver deja regles).
+//  GET ?essai=1                          -> test d'ecriture de bout en bout.
+//
+//  v2 : LE FICHIER DU JOUR N'EST PLUS LU EN ENTIER. A une ligne toutes les
+//  3 s, un jour plein pese des dizaines de Mo : la v1 chargeait tout en
+//  memoire et la fonction Azure s'etouffait (« Backend call failure »,
+//  constat client du 07/09). Desormais la lecture se fait PAR TRANCHES de
+//  4 Mo (en-tete x-ms-range), le filtre horaire s'applique A LA VOLEE et,
+//  le fichier etant chronologique, la lecture S'ARRETE des que l'heure de
+//  fin est depassee. Memoire bornee quelle que soit la taille du jour.
+//  Garde-fou : une fenetre qui rassemblerait plus de ~6 Mo de lignes est
+//  refusee proprement (413) — demander une plage plus courte (le pupitre
+//  lot 45 demande heure par heure, il ne l'atteint jamais).
+//  SANS dependance (REST signe, crypto Node). A placer dans
+//  api/histo/index.js (function.json inchange a cote).
 // =====================================================================
 const crypto = require("crypto");
+
+const TRANCHE_OCTETS = 4 * 1024 * 1024;   // lecture par tranches de 4 Mo
+const REPONSE_MAX    = 6 * 1024 * 1024;   // garde-fou sur la reponse
+const TRANCHES_MAX   = 64;                // ~256 Mo de fichier au maximum
 
 function clientBlob(cs) {
   const m = {};
@@ -104,32 +120,65 @@ module.exports = async function (context, req) {
         body: { erreur: "Precisez ?jour=AAAA-MM-JJ (en option &de=HH:MM&a=HH:MM), ou ?liste=1." } };
       return;
     }
-    const r = await cli.appel("GET", "/histo/" + jour + ".jsonl", null, null, null, 60000);
-    if (r.status === 404) {
+    const de = q.de || "00:00";
+    const a  = q.a  || "24:00";
+    const borneDe = jour + "T" + de + (de.length === 5 ? ":00" : "");
+    const borneA  = jour + "T" + a  + (a.length === 5 ? ":00" : "");
+
+    /* v2 : lecture PAR TRANCHES, filtre a la volee, arret anticipe. */
+    const garde = [];
+    let gardeOctets = 0;
+    let reste = "";                 // ligne coupee a cheval entre deux tranches
+    let debut = 0;
+    let fini = false, vu404 = false, tropGros = false;
+    for (let t = 0; t < TRANCHES_MAX && !fini; t++) {
+      const r = await cli.appel("GET", "/histo/" + jour + ".jsonl", null, null,
+        { "x-ms-range": "bytes=" + debut + "-" + (debut + TRANCHE_OCTETS - 1) },
+        20000);
+      if (r.status === 404) { vu404 = true; break; }
+      if (r.status === 416) break;                 // au-dela de la fin : fini
+      if (r.status !== 200 && r.status !== 206)
+        throw new Error("lecture du " + jour + " (tranche " + t + ") : " + r.status);
+      const morceau = await r.text();
+      if (!morceau.length) break;
+      debut += Buffer.byteLength(morceau, "utf-8");
+      const texte = reste + morceau;
+      const lignes = texte.split("\n");
+      reste = lignes.pop();                        // derniere ligne peut-etre coupee
+      for (const l of lignes) {
+        if (!l) continue;
+        const i = l.indexOf('"tl":"');
+        const tl = i >= 0 ? l.slice(i + 6, i + 25) : "";
+        if (tl >= borneA) { fini = true; break; }  // chronologique : stop
+        if (tl >= borneDe) {
+          garde.push(l);
+          gardeOctets += l.length + 1;
+          if (gardeOctets > REPONSE_MAX) { tropGros = true; fini = true; break; }
+        }
+      }
+      if (r.status === 200) break;                 // petit fichier servi entier
+      if (Buffer.byteLength(morceau, "utf-8") < TRANCHE_OCTETS) break;  // fin
+    }
+    if (vu404) {
       context.res = { status: 404, headers: { "Content-Type": "application/json" },
         body: { erreur: "Aucun historique pour le " + jour + "." } };
       return;
     }
-    if (!r.ok) throw new Error("lecture du " + jour + " : " + r.status);
-    const texte = await r.text();
-    const de = q.de || "00:00";
-    const a  = q.a  || "24:00";
-    let corps;
-    if (de === "00:00" && a === "24:00") corps = texte;
-    else {
-      const borneDe = jour + "T" + de + (de.length === 5 ? ":00" : "");
-      const borneA  = jour + "T" + a  + (a.length === 5 ? ":00" : "");
-      const garde = [];
-      for (const l of texte.split("\n")) {
-        if (!l) continue;
-        const i = l.indexOf('"tl":"');
-        const tl = i >= 0 ? l.slice(i + 6, i + 25) : "";
-        if (tl >= borneDe && tl < borneA) garde.push(l);
-      }
-      corps = garde.join("\n") + (garde.length ? "\n" : "");
+    if (!fini && reste) {                          // toute derniere ligne du fichier
+      const i = reste.indexOf('"tl":"');
+      const tl = i >= 0 ? reste.slice(i + 6, i + 25) : "";
+      if (tl >= borneDe && tl < borneA) garde.push(reste);
+    }
+    if (tropGros) {
+      context.res = { status: 413, headers: { "Content-Type": "application/json" },
+        body: { erreur: "Fenetre trop large (plus de " + (REPONSE_MAX / 1048576)
+                      + " Mo de lignes) : demandez une plage plus courte — le "
+                      + "pupitre extrait heure par heure." } };
+      return;
     }
     context.res = { status: 200,
-      headers: { "Content-Type": "text/plain; charset=utf-8" }, body: corps };
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+      body: garde.join("\n") + (garde.length ? "\n" : "") };
   } catch (e) {
     context.res = { status: 500, headers: { "Content-Type": "application/json" },
       body: { erreur: "Lecture impossible : " + (e && e.message ? e.message : e) } };
