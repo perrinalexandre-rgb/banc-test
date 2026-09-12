@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · ui 0709b.44 (lot 44, 07/09/2026)
+   enovaQ — pupitre de supervision · ui 1209.48 (lot 48, 12/09/2026)
    Nom officiel du fichier : « enovaQ pupitre 3108b.html » (règle de nommage
    client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
    enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
@@ -264,6 +264,36 @@
    mises à jour par les RAZ sélectives. (3) Réglages : fusion des
    puisages (5 min, D139), câblage satellite v2 + registre compteur
    (D140/D141). Démo à jour.
+   Lot 46 (11/09/2026, « enovaQ pupitre 1109 », pilote 1109 D174/D175) :
+   LE PUPITRE NE MEURT PLUS EN SILENCE. Panne du 11/09 : le payload de
+   l'automate (4 satellites, journal des rechauffages plein, blocs de
+   pertes garnis) a creve le tampon d'envoi de 10 ko — TOUS les envois
+   sautes, pupitre « liaison interrompue » sans explication. Pilote D174 :
+   tampon 24 ko + envoi ALLEGE en filet (tx_allege = 1) + jauge publiee
+   (tx_octets / tx_pct). Pupitre : (1) alerte AMBRE « telemesure allegee »
+   quand tx_allege arrive — l'essentiel est la, le journal et les pertes
+   manquent, prevenir le developpement ; (2) deux cases Sante « Poids du
+   dernier envoi » et « part du tampon » (jauge D174) ; (3) infobulle du
+   bilan compteur corrigee : 10 L au seau = +10 impulsions (1 imp = 1 L,
+   D175 — l'ancien texte disait 20) ; (4) la RESERVE s'affiche sur DEUX
+   flotteurs quand reserve.milieu_present = 0 (D172 : flotteur noir
+   DEPOSE, sa voie DI7 compte la tiree de SB1) — dessin, fourchettes
+   (200-300 L), alertes et salon suivent ; les anciens pilotes qui ne
+   publient pas milieu_present gardent les trois flotteurs. Demo a jour
+   (reserve deux flotteurs, jauge remplie).
+   Lot 45 (07/09/2026, « enovaQ pupitre 0709c » + api/histo v2 pour
+   Alex) : L'EXTRACTION TIENT LES GRANDS JOURS. Constat client : le
+   stockage repondait (essai ok, jour liste) mais l'extraction rendait
+   « Backend call failure » — la fonction serveur lisait le fichier du
+   jour EN ENTIER (des dizaines de Mo a 1 ligne / 3 s) et s'etouffait.
+   v2 serveur : lecture par tranches de 4 Mo (x-ms-range), filtre horaire
+   a la volee, arret des que l'heure de fin est depassee (fichier
+   chronologique), garde-fou 413 « fenetre trop large ». Pupitre : les
+   demandes partent HEURE PAR HEURE (exTranchesHeure — bornes partielles
+   comprises), progression affichee tranche par tranche, erreurs JSON du
+   serveur montrees en clair. Teste contre un jour synthetique de 54 Mo :
+   1 h = 1200 lignes exactes en 11 tranches / 354 ms, early-exit prouve,
+   413 propre sur un jour entier sans bornes.
    Lot 44 (07/09/2026, « enovaQ pupitre 0709b », pilote 0709a D171) : LA
    RECUP ASSERVIE EN PRESSION. La recuperation (E7), la recirculation de
    repos et la recup de vidange manuelle deviennent UNE methode : statique
@@ -904,6 +934,94 @@ body.salon #salonVue{display:flex;flex-direction:column;min-height:100vh;
   font-weight:600;font-size:12px;letter-spacing:.06em;padding:7px 12px;border-radius:8px;
   border:1px solid rgba(0,0,0,.22);background:rgba(255,255,255,.85);cursor:pointer;opacity:.55}
 #salonBtn:hover{opacity:1}
+/* ── LOT 47 (11/09/2026) ────────────────────────────────────────────────
+   (1) PLUS AUCUNE HACHURE dans les cuves (client : « ça n'a pas de sens
+       et il y a des bugs ») : zone aveugle retirée, flux et barre de débit
+       en couleur pleine. (2) Eau BLEUE en veille (EFS #1B6CA6). (3) Réserve
+       D181 : flotteur HAUT « non raccordé » grisé, sans clignotement.
+   (4) Fiches à la demande, vanne Simul SA1, compresseur. (5) Vitrine
+       « Pupitre simple » : schéma du bâtiment (styles sch-*). */
+.cuve .blind{display:none}
+.cuve-flux{background-image:none;background:var(--ecs,#c06712)}
+.bar.coule>i{background-image:none;background:var(--ecs,#c06712)}
+.salon-eau.froide{background:linear-gradient(180deg,#6fb1d8,#1B6CA6)}
+.res-rep.off i,.res-rep.off u{background:#b9b2a6;animation:none}
+.flt.off{opacity:.55}
+.flt.off i{background:#b9b2a6;animation:none}
+.fich-ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0 10px}
+.fich-ctrl button{font-family:var(--fs-cond);font-weight:600;font-size:13px;
+  padding:6px 10px;border-radius:8px;border:1px solid rgba(0,0,0,.25);
+  background:#fff;cursor:pointer}
+.fich-ctrl button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.fich-ctrl #fichEtat{font-family:var(--fs-mono);font-size:12px;color:var(--ink2)}
+.fich-ctrl #fichEtat.err{color:var(--alert)}
+.fich-ctrl #fichEtat.ok{color:var(--ok,#2a7a4b)}
+.simul-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  margin-top:10px;padding-top:8px;border-top:1px dashed rgba(0,0,0,.15)}
+.simul-row button{font-family:var(--fs-cond);font-weight:600;font-size:13px;
+  padding:6px 10px;border-radius:8px;border:1px solid rgba(0,0,0,.25);
+  background:#fff;cursor:pointer}
+.simul-row b.ouv{color:var(--ecs)}
+/* ── vitrine « Pupitre simple » : schéma du bâtiment ── */
+body.salon #salonVue{padding:3vh 4vw 2vh}
+.sch-grille{display:grid;grid-template-columns:86px 1fr 1fr;
+  grid-template-rows:34px auto auto auto auto;gap:0;flex:1;align-items:end;
+  max-width:1240px;width:100%;margin:0 auto}
+.sch-teteC{align-self:center;text-align:center;font-family:var(--fs-cond);
+  font-weight:700;font-size:15px;letter-spacing:.14em;color:var(--ink2)}
+.sch-etg{align-self:end;padding:0 10px 8px 0;text-align:right;
+  font-family:var(--fs-cond);font-weight:600;font-size:13px;color:var(--ink2);
+  border-bottom:2px solid rgba(0,0,0,.14)}
+.sch-cell{position:relative;display:flex;justify-content:center;
+  align-items:flex-end;border-bottom:2px solid rgba(0,0,0,.14);
+  padding:14px 8px 0;min-height:120px}
+.sch-cell.sans-tuyau{border-bottom-color:transparent}
+.sch-cell.sans-tuyau::before{display:none}
+.sch-cuve>div:first-child{display:flex;flex-direction:column;align-items:center}
+.sch-cell::before{content:"";position:absolute;left:50%;top:0;bottom:-2px;
+  width:6px;margin-left:-3px;border-radius:3px;
+  background:linear-gradient(180deg,#e9a13b,#c06712);opacity:.55}
+.sch-cuve{position:relative;z-index:1;background:var(--card,#fff);
+  border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:10px 14px 12px;
+  display:flex;gap:14px;align-items:flex-end;
+  box-shadow:0 8px 22px rgba(60,40,10,.07);cursor:default}
+.sch-cuve.ko{opacity:.45}
+.sch-nom{font-family:var(--fs-cond);font-weight:700;font-size:22px;line-height:1}
+.sch-lieu{font-size:12px;color:var(--ink2);margin-top:3px;max-width:170px}
+.sch-dist{font-family:var(--fs-mono);font-size:11px;color:var(--ink2);margin-top:2px}
+.sch-jg{width:56px;border:2px solid rgba(0,0,0,.2);border-radius:8px 8px 11px 11px;
+  position:relative;overflow:hidden;background:#fbf8f3;flex:none}
+.sch-jg.grande{width:70px}
+.sch-litres{font-family:var(--fs-mono);font-size:11px;color:var(--ink2);
+  text-align:center;margin-top:4px}
+.sch-temp{font-family:var(--fs-cond);font-weight:700;font-size:34px;line-height:1}
+.sch-temp small{font-size:16px;font-weight:600;color:var(--ink2)}
+.sch-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.sch-b{font-family:var(--fs-cond);font-weight:700;font-size:11px;
+  letter-spacing:.08em;padding:3px 7px;border-radius:6px}
+.sch-b.puise{background:var(--ecs,#c06712);color:#fff;animation:salonpulse 1.2s ease-in-out infinite}
+.sch-b.rech{background:#a33b2e;color:#fff;animation:salonpulse 1.6s ease-in-out infinite}
+.sch-b.veille{background:#e4eef5;color:#1B6CA6}
+.sch-etat{font-family:var(--fs-cond);font-weight:600;font-size:12px;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--ok,#2a7a4b);margin-top:6px}
+.sch-tiree{font-family:var(--fs-mono);font-size:11px;color:var(--ink2);margin-top:4px}
+.sch-chauf{grid-column:2/4;display:flex;gap:10px;flex-wrap:wrap;
+  align-items:stretch;justify-content:center;padding:14px 6px 4px}
+.sch-chip{background:var(--card,#fff);border:1px solid rgba(0,0,0,.12);
+  border-radius:12px;padding:8px 14px;text-align:center;min-width:96px}
+.sch-chip b{display:block;font-family:var(--fs-cond);font-weight:600;font-size:11px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}
+.sch-chip span{font-family:var(--fs-cond);font-weight:700;font-size:19px}
+.sch-chip small{display:block;font-family:var(--fs-mono);font-size:10px;color:var(--ink2)}
+.sch-chip.alerte{border-color:var(--warn,#b5892c);background:#fdf6e5}
+.sch-chip.pompeOn span{color:var(--ecs)}
+.sch-etgC{grid-column:1;border-bottom:0!important}
+#schPhoto{position:fixed;z-index:80;display:none;background:#fff;
+  border:1px solid rgba(0,0,0,.2);border-radius:12px;padding:6px;
+  box-shadow:0 14px 40px rgba(0,0,0,.25)}
+#schPhoto img{display:block;max-width:280px;max-height:210px;border-radius:8px}
+#schPhoto small{display:block;text-align:center;font-family:var(--fs-cond);
+  font-size:12px;color:var(--ink2);padding-top:4px}
 </style>
 </head>
 <body>
@@ -968,7 +1086,26 @@ body.salon #salonVue{display:flex;flex-direction:column;min-height:100vh;
 
   <h2 class="eyebrow">Réchauffages</h2>
   <section class="card">
-    <h3>Le journal <em>— une ligne par cycle, comme le serial (D129, lot 26)</em></h3>
+    <h3>Le journal <em>— 30 fiches à la demande (D183, lot 47)</em></h3>
+    <div class="fich-ctrl" id="fichCtrl">
+      <button data-t="1" class="on">Réchauffages (30)</button>
+      <button data-t="2">Remplissages (30)</button>
+      <button data-t="3">Compresseur (30)</button>
+      <button data-t="5">Vanne de sortie (30)</button>
+      <span id="fichEtat">cliquez pour demander les fiches à l'automate</span>
+    </div>
+    <div class="fich-ctrl" id="poseRempl">
+      <span style="font-family:var(--fs-cond);font-weight:600">Reposer les
+        nombres de remplissages effacés le 11/09 (ligne [D186] du série) :</span>
+      <input type="number" min="0" max="60000" id="poseSA1" placeholder="SA1" style="width:72px">
+      <input type="number" min="0" max="60000" id="poseSA2" placeholder="SA2" style="width:72px">
+      <input type="number" min="0" max="60000" id="poseSA3" placeholder="SA3" style="width:72px">
+      <input type="number" min="0" max="60000" id="poseSB1" placeholder="SB1" style="width:72px">
+      <button id="poseBtn" title="Les valeurs saisies s'AJOUTENT aux compteurs actuels
+(les remplissages comptés depuis le flash sont conservés). Ordre un coup,
+protégé par cfg_version, appliqué à l'instant sûr (D37) — trace série [D190].">Ajouter (une fois)</button>
+      <span id="poseEtat"></span>
+    </div>
     <div class="tabwrap"><table class="sattab" id="rechJournal"></table></div>
     <div id="rechJournalNote"></div>
   </section>
@@ -1000,6 +1137,10 @@ body.salon #salonVue{display:flex;flex-direction:column;min-height:100vh;
     <div class="card">
       <h3>Mesures <em>— relevées au repos</em></h3>
       <div id="mesuresBox"></div>
+    </div>
+    <div class="card">
+      <h3>Compresseur d'air <em>— réserve 300 L (D182, lot 47)</em></h3>
+      <div id="compBox"></div>
     </div>
   </section>
 
@@ -1130,7 +1271,7 @@ const API = {
   config:    '/api/config',   // POST → config servie à l'automate à son prochain envoi
 };
 const DEVICE     = 'chaufferie-01';
-const LOT        = '0709b.44';  // marqueur « ui » — bandeau et pied de page
+const LOT        = '1209.48';   // marqueur « ui » — bandeau et pied de page
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -1282,6 +1423,21 @@ const DIAG = [
   {k:'Durée maximale',      champ:'diag.post_ms_max',      unite:'ms', dec:0},
   {k:'Envois réussis',      champ:'diag.envois',           dec:0},
   {k:'Envois échoués',      champ:'diag.echecs',           dec:0},
+  {k:'Poids du dernier envoi', champ:'tx_octets', unite:'o', dec:0,
+   aide:"Taille du message JSON publié toutes les 3 s (jauge D174). Le tampon "
+       +"de l'automate fait 24 576 octets ; le message grossit AVEC LE TEMPS "
+       +"(journal des réchauffages, blocs de pertes) et avec chaque satellite "
+       +"ajouté. Le 11/09, l'ancien tampon de 10 240 octets a débordé et plus "
+       +"AUCUN envoi ne partait — pupitre muet sans explication. D'où cette "
+       +"jauge, le cri série à 80 % et l'envoi allégé en dernier filet.",
+   absent:"Publié par le pilote 1109 (D174), à partir du deuxième envoi."},
+  {k:'… soit, du tampon (24 ko)', champ:'tx_pct', unite:'%', dec:0,
+   aide:"Le même poids, en pourcentage du tampon d'envoi. Sous 50 % : très à "
+       +"l'aise. À 80 % : l'automate crie sur le port série, prévoir "
+       +"d'agrandir le tampon à la livraison suivante. À 100 % : l'envoi "
+       +"passe en version ALLÉGÉE (alerte ambre en haut de page) au lieu de "
+       +"se taire (D174).",
+   absent:"Publié par le pilote 1109 (D174), à partir du deuxième envoi."},
   {k:'Dernière remise à zéro', champ:'diag.raz_age_s', type:'duree',
    aide:"Âge de la dernière remise à zéro générale (bouton des Réglages, D69).",
    absent:"Publié après une remise à zéro (programme 2308c), jusqu'au prochain "
@@ -1445,6 +1601,22 @@ const SAT_RECH = [
        +"synchronisation horaire.",
    absent:"Publié après le premier réchauffage abouti (« — » après un "
         +"redémarrage, jusqu'au suivant)."},
+  {k:'… terminé le', champ:'rech_dernier_ep',
+   calc: s => has(s.rech_dernier_ep) && s.rech_dernier_ep
+              ? fmtEpoque(s.rech_dernier_ep) : undefined,
+   aide:"Date et heure RÉELLES du dernier réchauffage (D177) — persistées, "
+       +"elles survivent aux redémarrages de l'automate.",
+   absent:"Publié par le pilote 1109a, après le premier réchauffage."},
+  {k:'Réchauffages comptés depuis', champ:'rech_nb',
+   calc: () => (state.data && state.data.rech_depuis_j)
+               ? 'le ' + fmtJourCivil(state.data.rech_depuis_j) : undefined,
+   aide:"Début du comptage des réchauffages : 06/09/2026 (D162, fiches "
+       +"reparties au n° 1), persisté (D177).",
+   absent:"Publié par le pilote 1109a."},
+  {k:"Tirée aujourd'hui", champ:'tiree_jour_l', unite:'L', dec:1,
+   aide:"Eau tirée par les logements depuis minuit (heure du site) — repart "
+       +"à zéro chaque jour, base persistée (D185).",
+   absent:"Publié par le pilote 1109a (comptage tirée en service)."},
   {k:'Sans remplissage normal', champ:'rech_sans_rempl', dec:0,
    aide:"Réchauffages consécutifs depuis le dernier remplissage NORMAL (demandé "
        +"par les flotteurs) ou d'urgence. Au réglage « Frein : sans remplissage » "
@@ -1589,10 +1761,11 @@ function infoSat(id) {
            : {def: String(id || ''), dist_m: null};
 }
 
-const APPARTEMENTS = {
-  SA1: {ou: 'rez-de-chaussée', liste: ['201', '202', '211', '212', '213', 'circuit test']},
-  SA2: {ou: 'grenier',         liste: ['221', '222']},
-  SA3: {ou: 'individuel',      liste: ['223']},
+const APPARTEMENTS = {   /* lot 47 : SB1 (client 10/09) + étages/distances pour la vitrine */
+  SA1: {ou: 'rez-de-chaussée', etg: 2, dist: 29, liste: ['201', '202', '211', '212', '213', 'circuit test']},
+  SA2: {ou: 'grenier',         etg: 0, dist: 42, liste: ['221', '222']},
+  SA3: {ou: '3ᵉ étage · individuel', etg: 1, dist: 50, liste: ['223']},
+  SB1: {ou: '3ᵉ étage',        etg: 1, dist: 28, liste: ['214', '215', '220']},
 };
 
 /* Cases par circuit, sous la barre de progression du rail. */
@@ -1783,14 +1956,30 @@ function rendreAlertes(d) {
   const ch = d.chaufferie || {};
   const rs = ch.reserve || {};
 
-  /* Trois flotteurs mouillés en permanence depuis le démarrage de la page :
+  /* Lot 46 (D174) : l'automate a dû ALLÉGER son envoi — le message complet
+     déborde de son tampon. L'essentiel (cuves, pompe, réserve, alertes) est
+     là ; le journal des réchauffages et les blocs de pertes manquent. */
+  if (d.tx_allege)
+    ajouterAlerte(box, 'warn', 'télémesure',
+      "Envoi ALLÉGÉ : le message complet dépasse le tampon de l'automate (D174).",
+      "Le pilotage et l'affichage essentiel restent complets ; le journal des "
+      + "réchauffages et les mesures de pertes sont retirés de l'envoi. Rien "
+      + "d'urgent, mais prévenir le développement : le tampon est à agrandir "
+      + "à la prochaine livraison.");
+
+  /* Tous les flotteurs mouillés en permanence depuis le démarrage de la page :
      cas d'Épinal, capteur non câblé, donc fausse alerte. On la modère — et
-     elle repasse en rouge dès qu'un flotteur a été vu sec une seule fois. */
+     elle repasse en rouge dès qu'un flotteur a été vu sec une seule fois.
+     Lot 46 : le flotteur NOIR (milieu) peut être DÉPOSÉ (D172,
+     reserve.milieu_present = 0) — il sort alors du raisonnement. */
+  const resMilieuPose = !has(rs.milieu_present) || !!rs.milieu_present;
   if (rs.appoint_requis) {
-    const suspect = state.resJamaisSec && rs.haut_mouille && rs.milieu_mouille && rs.bas_mouille;
+    const suspect = state.resJamaisSec && rs.haut_mouille && rs.bas_mouille &&
+                    (!resMilieuPose || rs.milieu_mouille);
     if (suspect)
       ajouterAlerte(box, 'warn', 'réserve',
-        "Appoint d'air signalé, mais les trois flotteurs sont mouillés en permanence depuis le démarrage.",
+        "Appoint d'air signalé, mais " + (resMilieuPose ? "les trois" : "les deux")
+        + " flotteurs sont mouillés en permanence depuis le démarrage.",
         "Lecture douteuse : un capteur non câblé donne exactement cela. À vérifier avant toute injection.");
     else
       ajouterAlerte(box, 'alert', 'réserve',
@@ -2678,7 +2867,7 @@ function rendreSats(d) {
                + "juste : le compteur de tirée " + (m > 0 ? "SOUS-compte" : "SUR-compte")
                + ". Vérification sur site : commande série « cpts », tirer 10 L au "
                + "seau à un robinet de cette cuve, re-« cpts » — le compteur de la "
-               + "voie monte de 20 impulsions exactement.";
+               + "voie monte de 10 exactement (1 impulsion = 1 litre, D175).";
       chips.appendChild(cc);
     }
     card.appendChild(chips);
@@ -2974,6 +3163,7 @@ function rendreSats(d) {
 
     card.appendChild(det);
 
+    if (s.sat_id === 'SA1') card.appendChild(simulSa1Row(d));   /* lot 47 : D188 */
     box.appendChild(card);
   }));
 
@@ -3004,44 +3194,53 @@ function rendreReserve(d) {
   const rs = ((d && d.chaufferie) || {}).reserve || {};
   const tube = $('#resTube');
   const box = $('#resFloats'); box.textContent = '';
-  const lu = has(rs.haut_mouille);
-  if (lu && (!rs.haut_mouille || !rs.milieu_mouille || !rs.bas_mouille))
+  const lu = has(rs.bas_mouille) || has(rs.haut_mouille);
+  /* Lot 46 (D172) : le flotteur NOIR (milieu) est DÉPOSÉ quand l'automate
+     publie milieu_present = 0 — sa voie DI7 compte désormais la tirée de
+     SB1. La réserve se lit alors sur DEUX flotteurs. Un pilote plus ancien
+     ne publie pas la clé : trois flotteurs, comme avant. */
+  const mp = !has(rs.milieu_present) || !!rs.milieu_present;
+  /* Lot 47 (D181) : le flotteur JAUNE (haut) n'est PLUS raccordé quand
+     l'automate publie haut_present = 0 — il reste dessiné, gris, marqué
+     « non raccordé », et ne clignote jamais. Vieux pilote : comme avant. */
+  const hp = !has(rs.haut_present) || !!rs.haut_present;
+  if (lu && ((hp && !rs.haut_mouille) || (mp && !rs.milieu_mouille) || !rs.bas_mouille))
     state.resJamaisSec = false;
 
-  /* [classe, nom, position physique en % de hauteur, cote ronde en L, mouillé] */
-  const FLOTTEURS = [
-    ['j', 'Jaune', 92, 300, rs.haut_mouille],
-    ['n', 'Noir',  72, 250, rs.milieu_mouille],
-    ['r', 'Rouge', 50, 200, rs.bas_mouille],
-  ];
+  /* [classe, nom, position %, cote L, mouillé, raccordé] — lot 47/D181 */
+  const FLOTTEURS = [['j', 'Jaune', 92, 300, hp ? rs.haut_mouille : 0, hp]];
+  if (mp) FLOTTEURS.push(['n', 'Noir', 72, 250, rs.milieu_mouille, true]);
+  FLOTTEURS.push(['r', 'Rouge', 50, 200, rs.bas_mouille, true]);
 
   tube.querySelectorAll('.res-rep').forEach(e => e.remove());
-  FLOTTEURS.forEach(([cl, nom, pos, vol, m]) => {
-    const r = el('div', 'res-rep ' + cl + (m ? ' wet' : ''));
+  FLOTTEURS.forEach(([cl, nom, pos, vol, m, ok2]) => {
+    const r = el('div', 'res-rep ' + cl + (ok2 && m ? ' wet' : '') + (ok2 ? '' : ' off'));
     r.style.bottom = pos + '%';
     r.title = nom + ' — à ' + pos + ' % de la hauteur de la cuve (cote ' + i0(vol)
-            + ' L) — ' + (lu ? (m ? 'MOUILLÉ (clignote)' : 'sec') : 'lecture indisponible');
+            + ' L) — ' + (!ok2 ? 'NON RACCORDÉ (D181)'
+                        : lu ? (m ? 'MOUILLÉ (clignote)' : 'sec') : 'lecture indisponible');
     r.appendChild(el('u'));
     r.appendChild(el('i'));
     tube.appendChild(r);
   });
 
-  FLOTTEURS.forEach(([cl, nom, pos, vol, m]) => {
-    const f = el('div', 'flt ' + cl + (m ? ' wet' : ''));
+  FLOTTEURS.forEach(([cl, nom, pos, vol, m, ok2]) => {
+    const f = el('div', 'flt ' + cl + (ok2 && m ? ' wet' : '') + (ok2 ? '' : ' off'));
     f.style.bottom = pos + '%';               /* en face de son repère */
     f.appendChild(el('i'));
     f.appendChild(el('span', null, nom + ' · ' + i0(vol) + ' L'));
-    f.appendChild(el('b', null, lu ? (m ? 'mouillé' : 'sec') : '—'));
+    f.appendChild(el('b', null, !ok2 ? 'non raccordé' : lu ? (m ? 'mouillé' : 'sec') : '—'));
     box.appendChild(f);
   });
 
   /* eau : AU MILIEU de la fourchette physique donnée par les flotteurs */
   let eauPct = 0, litres = null;
   if (lu) {
-    if (rs.haut_mouille)        { eauPct = 97;            litres = 300; }
-    else if (rs.milieu_mouille) { eauPct = (72 + 92) / 2; litres = 275; }
-    else if (rs.bas_mouille)    { eauPct = (50 + 72) / 2; litres = 225; }
-    else                        { eauPct = 25;            litres = 100; }
+    if (hp && rs.haut_mouille)        { eauPct = 97;            litres = 300; }
+    else if (mp && rs.milieu_mouille) { eauPct = (72 + 92) / 2; litres = 275; }
+    else if (rs.bas_mouille)          { eauPct = mp ? (50 + 72) / 2 : (50 + 92) / 2;
+                                        litres = mp ? 225 : 250; }   /* lot 46 */
+    else                              { eauPct = 25;            litres = 100; }
   }
   const eau = $('#resEau');
   eau.style.height = eauPct + '%';
@@ -3050,9 +3249,9 @@ function rendreReserve(d) {
     + "on ne connaît pas mieux que ça (lot 23).";
 
   $('#resBand').textContent = !lu ? 'lecture indisponible'
-    : rs.haut_mouille ? "≥ 300 L — plus de matelas d'air"
-    : rs.milieu_mouille ? '250 – 300 L'
-    : rs.bas_mouille ? '200 – 250 L' : '< 200 L';
+    : (hp && rs.haut_mouille) ? "≥ 300 L — plus de matelas d'air"
+    : (mp && rs.milieu_mouille) ? (hp ? '250 – 300 L' : '≥ 250 L')
+    : rs.bas_mouille ? (mp ? '200 – 250 L' : '200 – 300 L') : '< 200 L';
   $('#resPct').textContent = litres === null ? '—'
     : '~' + Math.round(litres / 300 * 100) + ' %';
 }
@@ -3190,22 +3389,324 @@ function rendreElecTable(d) {
 
 /* Lot 26 (D129) : le journal des réchauffages — les fiches publiées par
    l'automate (10 dernières), une ligne par cycle. */
-const RECH_MOTIFS = ['seuil jour', 'plancher nuit', 'puisage nocturne', 'grand réveil', 'mesure de nuit'];
-const JOURS_C = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
-function rendreRechJournal(d) {
+/* ── LOT 47 : outillage commun ──────────────────────────────────────────── */
+function fmtEpoque(ep) {
+  return new Date(ep * 1000).toLocaleString('fr-FR',
+    {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'});
+}
+function fmtJourCivil(j) {
+  return new Date(j * 86400000).toLocaleDateString('fr-FR',
+    {day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC'});
+}
+/* Ordre RAPIDE (D180/D183) : bloc config minimal + nonce ordre_n — le
+   pilote 1109a le prélève dès réception, HORS de l'instant sûr (D37). */
+async function ordreRapide(extra) {
+  const cfg = Object.assign({}, extra);
+  cfg.ordre_n = (Date.now() % 2000000000) || 1;
+  cfg.cfg_version = versionSuivante();
+  return deposer(cfg, $('#cfgKey') ? $('#cfgKey').value.trim() : '');
+}
+function fichesEtat(txt, cls) {
+  const e = $('#fichEtat'); if (!e) return;
+  e.textContent = txt; e.className = cls || '';
+}
+function fichesDemander(t) {
+  const st = state.fich;
+  st.t = t;
+  document.querySelectorAll('#fichCtrl button').forEach(b =>
+    b.classList.toggle('on', +b.dataset.t === t));
+  if (DEMO) { st.data[t] = fichesDemo(t); st.attendu = 0;
+              fichesEtat('démonstration — fiches factices', 'ok'); majFiches(state.data); return; }
+  st.attendu = t; st.tPose = Date.now();
+  fichesEtat('demande envoyée — l\u2019automate répond sous ~10 s\u2026');
+  ordreRapide({fiches_voir: t});
+}
+function fichesDemo(t) {
+  const now = Math.floor(Date.now() / 1000);
+  if (t === 2) return Array.from({length: 8}, (_, k) => ({
+    sat: ['SA1', 'SA2', 'SA3', 'SB1'][k % 4], ep: now - 3600 * (k + 1),
+    l: [24.6, 31.0, 12.2, 22.4][k % 4], duree_s: 180 + 40 * k,
+    l_min: 8.2 - 0.3 * (k % 4), tmax_c: 61.5 - k, bar: 4.4}));
+  if (t === 5) return Array.from({length: 4}, (_, k) => ({
+    sat: 'SB1', ep: now - 7200 * (k + 1), motif: 0, ctx: k === 0 ? 20 : 0,
+    duree_s: [42, 18, 12, 63][k], cnm_sec_s: 95 + 20 * k, vol_l: 3.8}));
+  if (t === 3) return Array.from({length: 5}, (_, k) => ({
+    ep: now - 86400 * k - 7200, duree_s: 1200 + 300 * k,
+    l: 44 + 3 * k, fin: k === 3 ? 1 : 0}));
+  return (state.data && state.data.rech_fiches) || [];
+}
+function majFiches(d) {
+  const st = state.fich;
+  if (st.attendu) {
+    const bloc = st.attendu === 1 ? d && d.rech_fiches
+               : st.attendu === 2 ? d && d.fiches_rempl
+               : st.attendu === 3 ? d && d.fiches_comp
+               : st.attendu === 5 ? d && d.fiches_vs : null;   /* D187 */
+    if (d && d.fiches_voir === st.attendu && bloc) {
+      st.data[st.attendu] = bloc;
+      st.attendu = 0;
+      fichesEtat('fiches reçues à ' + new Date().toLocaleTimeString('fr-FR',
+        {hour: '2-digit', minute: '2-digit'}) + ' — flux libéré', 'ok');
+      ordreRapide({fiches_voir: 0});      /* on libère le flux 3 s (D183) */
+    } else if (Date.now() - st.tPose > 45000) {
+      st.attendu = 0;
+      fichesEtat('pas de réponse — le pilote 1109a est-il en service ?', 'err');
+    }
+  } else if (!st.t && d && d.rech_fiches && !has(d.fiches_voir)) {
+    /* compat pilote < 1109a : le journal arrive encore en continu */
+    st.data[1] = d.rech_fiches; st.t = 1;
+  }
+  const t = st.t || 1;
+  if (t === 1)      rendreRechJournal(st.data[1]);
+  else if (t === 2) rendreRemplJournal(st.data[2] || []);
+  else if (t === 5) rendreVsJournal(st.data[5] || []);         /* D187 */
+  else              rendreCompJournal(st.data[3] || []);
+}
+function rendreRemplJournal(fiches) {
   const t = $('#rechJournal'); t.textContent = '';
   const nb = $('#rechJournalNote'); nb.textContent = '';
-  const fiches = (d && d.rech_fiches) || [];
   if (!fiches.length) {
     nb.appendChild(el('p', 'vide-msg',
-      "Aucun réchauffage enregistré depuis le programme 0309 : les fiches "
-      + "apparaîtront ici au premier cycle (heure, motif, vidange, amorçage, "
-      + "températures, litres, durée)."));
+      "Cliquez « Remplissages (30) » : chaque remplissage normal y laisse sa "
+      + "fiche — date, cuve, litres, durée, débit, T° max, pression (D183)."));
     return;
   }
   const thead = document.createElement('thead');
   const hr = document.createElement('tr');
-  ['Heure', 'Cuve', 'N°', 'Motif', 'Vidangé', 'Amorçage', 'T° avant → +5 min', 'Rempli', 'Durée']
+  ['Date · heure', 'Cuve', 'Attente', 'Litres', 'Durée', 'Débit', 'T° max', 'Pression']
+    .forEach(h => { const th = document.createElement('th'); th.textContent = h; hr.appendChild(th); });
+  thead.appendChild(hr); t.appendChild(thead);
+  const tb = document.createElement('tbody');
+  fiches.forEach(f => {
+    const tr = document.createElement('tr');
+    const td = txt => { const d2 = document.createElement('td'); d2.textContent = txt; tr.appendChild(d2); };
+    td(f.ep ? fmtEpoque(f.ep) : '—');
+    td(f.sat || '—');
+    td(has(f.att_s) ? (f.att_s ? duree(f.att_s) : '0 s') : '—');  /* D189 :
+       demande (CNM sec) -> premiere goutte */
+    td(has(f.l) ? n(f.l) + ' L' : '—');
+    td(has(f.duree_s) ? duree(f.duree_s) : '—');
+    td(has(f.l_min) ? n(f.l_min) + ' L/min' : '—');
+    td(has(f.tmax_c) && f.tmax_c ? n(f.tmax_c) + ' °C' : '—');
+    td(has(f.bar) && f.bar ? n(f.bar) + ' bar' : '—');
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
+}
+function rendreCompJournal(fiches) {
+  const t = $('#rechJournal'); t.textContent = '';
+  const nb = $('#rechJournalNote'); nb.textContent = '';
+  if (!fiches.length) {
+    nb.appendChild(el('p', 'vide-msg',
+      "Cliquez « Compresseur (30) » : chaque allumage du compresseur d'air "
+      + "de la réserve y laisse sa fiche — date, durée, litres de puisage du "
+      + "cycle, fin normale (CNB sec) ou FORCÉE à 80 L (D182)."));
+    return;
+  }
+  const thead = document.createElement('thead');
+  const hr = document.createElement('tr');
+  ['Date · heure', 'Durée', 'Puisage du cycle', 'Fin']
+    .forEach(h => { const th = document.createElement('th'); th.textContent = h; hr.appendChild(th); });
+  thead.appendChild(hr); t.appendChild(thead);
+  const tb = document.createElement('tbody');
+  fiches.forEach(f => {
+    const tr = document.createElement('tr');
+    const td = (txt, ko) => { const d2 = document.createElement('td');
+      d2.textContent = txt; if (ko) d2.className = 'ko'; tr.appendChild(d2); };
+    td(f.ep ? fmtEpoque(f.ep) : '—');
+    td(has(f.duree_s) ? duree(f.duree_s) : '—');
+    td(has(f.l) ? n(f.l) + ' L' : '—');
+    td(f.fin ? 'FORCÉE (80 L, CNB jamais sec)' : 'normale — CNB sec', !!f.fin);
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
+}
+const VS_MOTIFS = ['CNB sec — cuve quasi vide', 'cuve isolée (D71)',
+                   'secours volumétrique (D76)', 'autre'];
+function vsCtx(ctx) {
+  const t = [];
+  if (ctx & 4)  t.push('REMPLISSAGE EN COURS');
+  if (ctx & 16) t.push('puisage en cours');
+  if (ctx & 1)  t.push('sommeil');
+  if (ctx & 2)  t.push('en file');
+  if (ctx & 8)  t.push('réchauffage');
+  if (ctx & 32) t.push('vidange manuelle');
+  if (ctx & 64) t.push('circuit pris par une autre');
+  return t.length ? t.join(' · ') : 'au repos';
+}
+function rendreVsJournal(fiches) {
+  const t = $('#rechJournal'); t.textContent = '';
+  const nb = $('#rechJournalNote'); nb.textContent = '';
+  if (!fiches.length) {
+    nb.appendChild(el('p', 'vide-msg',
+      "Cliquez « Vanne de sortie (30) » : chaque fermeture de la vanne de "
+      + "sortie y laisse sa fiche — quand, pourquoi, combien de temps l'usager "
+      + "est resté sans eau, et ce que faisait la cuve à cet instant (D187)."));
+    return;
+  }
+  const thead = document.createElement('thead');
+  const hr = document.createElement('tr');
+  ['Date · heure', 'Cuve', 'Motif', 'Fermée', 'CNM sec depuis', 'Volume', 'Contexte']
+    .forEach(h => { const th = document.createElement('th'); th.textContent = h; hr.appendChild(th); });
+  thead.appendChild(hr); t.appendChild(thead);
+  const tb = document.createElement('tbody');
+  fiches.forEach(f => {
+    const tr = document.createElement('tr');
+    const td = (txt, ko) => { const d2 = document.createElement('td');
+      d2.textContent = txt; if (ko) d2.className = 'ko'; tr.appendChild(d2); };
+    td(f.ep ? fmtEpoque(f.ep) : '—');
+    td(f.sat || '—');
+    td(has(f.motif) ? (VS_MOTIFS[f.motif] || f.motif) : '—', f.motif !== 0);
+    td(has(f.duree_s) ? (f.duree_s ? duree(f.duree_s) : 'en cours') : '—', !f.duree_s);
+    td(has(f.cnm_sec_s) && f.cnm_sec_s ? duree(f.cnm_sec_s) : '—');
+    td(has(f.vol_l) ? n(f.vol_l) + ' L' : '—');
+    td(vsCtx(f.ctx || 0));
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
+  nb.appendChild(el('p', 'peu-fiable-note',
+    "« En cours » : la vanne n'a pas encore rouvert au moment de la fiche. "
+    + "Un motif autre que « CNB sec » ou un contexte REMPLISSAGE/PUISAGE "
+    + "mérite l'œil : c'est là que se cachent les coupures vécues."));
+}
+/* ── LOT 47 : compresseur d'air (D182) ─────────────────────────────────── */
+function rendreCompresseur(d) {
+  const box = $('#compBox'); if (!box) return;
+  box.textContent = '';
+  const cp = ((d && d.chaufferie) || {}).compresseur;
+  if (!cp) {
+    box.appendChild(el('p', 'vide-msg',
+      "Publié par le pilote 1109a (D182) : DO8, fenêtre 10-19 h, démarre "
+      + "CNM mouillé, s'arrête CNB sec — garde volumique 60/80 L."));
+    return;
+  }
+  const etat = cp.etat === 1
+    ? 'EN MARCHE — ' + (has(cp.litres) ? n(cp.litres) + ' L de puisage' : '')
+      + (has(cp.depuis_s) ? ' · ' + duree(cp.depuis_s) : '')
+    : cp.etat === 2 ? 'VERROUILLÉ (arrêt forcé à 80 L)' : 'au repos';
+  ligne(box, 'État', etat, cp.etat === 2,
+    "Démarre quand CNM est mouillé 5 s dans la fenêtre ; ne s'arrête que "
+    + "CNB sec 5 s — un cycle entamé va à son terme même après 19 h (D182).");
+  ligne(box, 'Fenêtre (bruit)', (cp.h_deb ?? 10) + ' h – ' + (cp.h_fin ?? 19) + ' h', false,
+    "Le compresseur est bruyant : il ne DÉMARRE qu'en journée (réglable).");
+  ligne(box, 'Allumages', has(cp.nb) ? i0(cp.nb) : '—', false,
+    'Compteur total, persisté — les 30 dernières fiches sont dans le journal.');
+  if (cp.dern_ep)
+    ligne(box, 'Dernier cycle', fmtEpoque(cp.dern_ep) + ' · '
+      + (has(cp.dern_duree_s) ? duree(cp.dern_duree_s) : '—') + ' · '
+      + (has(cp.dern_l) ? n(cp.dern_l) + ' L' : '—')
+      + (cp.dern_fin ? ' · FORCÉ' : ''), !!cp.dern_fin);
+  if (cp.alarme)
+    ligne(box, 'Alarme', "60 L de puisage et CNB toujours mouillé — flotteur "
+      + "ou fuite d'air à vérifier", true);
+}
+/* ── LOT 47 : vanne « Simul puisage SA1 » (D180, DO7) ──────────────────── */
+function simulSa1Row(d) {
+  /* D188 (client 11/09) : « un clic = un litre ; cinq clics, la vanne se
+     referme après 5 litres ». Les clics s'additionnent 1,2 s puis partent
+     en UN ordre rapide simul_l — le pilote CUMULE si déjà ouverte, et se
+     referme sur le COMPTEUR de tirée de SA1 (butée 15 min + garde « aucun
+     litre compté en 180 s » en filets). */
+  const ch = (d && d.chaufferie) || {};
+  const row = el('div', 'simul-row');
+  const connu = has(ch.simul_sa1);
+  const ouverte = !!ch.simul_sa1;
+  const plus = el('button', null, '+1 L — Simul puisage SA1');
+  plus.title = "Un clic = un litre, cumulable. La vanne DO7 s'ouvre et se "
+    + "referme toute seule quand le compteur de tirée de SA1 a vu la dose "
+    + "(D188). Filets : butée 15 min, fermeture si aucun litre compté en 180 s.";
+  const et = el('b', ouverte ? 'ouv' : null,
+    !connu ? 'pilote 1109b requis'
+    : ouverte ? ('OUVERTE — ' + n(ch.simul_faits_l || 0) + ' L faits'
+                 + (has(ch.simul_dose_l)
+                    ? ' / ' + n((ch.simul_faits_l || 0) + ch.simul_dose_l) + ' L demandés' : '')
+                 + (has(ch.simul_depuis_s) ? ' · ' + duree(ch.simul_depuis_s) : ''))
+    : 'fermée');
+  let enAttente = 0, tEnvoi = null;
+  plus.addEventListener('click', () => {
+    enAttente++;
+    et.textContent = '+' + enAttente + ' L — envoi…';
+    if (tEnvoi) clearTimeout(tEnvoi);
+    tEnvoi = setTimeout(async () => {
+      const dose = enAttente; enAttente = 0;
+      plus.disabled = true;
+      await ordreRapide({simul_l: dose});
+      plus.disabled = false;
+    }, 1200);
+  });
+  const stop = el('button', null, 'Refermer');
+  stop.title = 'Fermeture immédiate — la dose restante est effacée (simul_l = 0).';
+  stop.addEventListener('click', async () => {
+    stop.disabled = true;
+    await ordreRapide({simul_l: 0});
+    stop.disabled = false;
+  });
+  row.appendChild(plus);
+  if (ouverte) row.appendChild(stop);
+  row.appendChild(et);
+  return row;
+}
+/* ── LOT 47 : la démo apprend les clés du pilote 1109a (idempotent) ────── */
+function demoEnrichir(d) {
+  if (!d || !d.chaufferie) return;
+  const ch = d.chaufferie;
+  const cyc = Math.floor(Date.now() / 4000) % 8;
+  ch.reserve = {ok: true, haut_present: 0, milieu_present: 1,
+                milieu_mouille: cyc >= 5 ? 1 : 0, bas_mouille: cyc >= 2 ? 1 : 0,
+                vol_min: cyc >= 5 ? 252.5 : cyc >= 2 ? 205 : 0,
+                vol_max: cyc >= 5 ? 300 : cyc >= 2 ? 252.5 : 205};
+  if (!has(ch.simul_sa1)) ch.simul_sa1 = 0;
+  ch.pompe_100 = ch.pompe_pct >= 100 ? 1 : 0;
+  ch.compresseur = {etat: (cyc === 5 || cyc === 6) ? 1 : 0, nb: 7,
+                    h_deb: 10, h_fin: 19, depuis_s: 340, litres: 12.4,
+                    dern_ep: Math.floor(Date.now() / 1000) - 5400,
+                    dern_l: 48.5, dern_duree_s: 1560, dern_fin: 0};
+  d.rech_depuis_j = Math.floor(Date.now() / 86400000) - 5;
+  let k = 0, sb1 = false;
+  (d.circuits || []).forEach(c => (c.satellites || []).forEach(s => {
+    k++;
+    if (s.sat_id === 'SB1') sb1 = true;
+    if (!has(s.tiree_jour_l)) s.tiree_jour_l = [12.4, 31.0, 8.2, 22.6][(k - 1) % 4];
+    if (!has(s.rech_dernier_ep) && has(s.rech_dernier_age_s))
+      s.rech_dernier_ep = Math.floor(Date.now() / 1000) - s.rech_dernier_age_s;
+    if (k === 2 && ch.pompe_pct > 0) s.rech_en_cours = 1;
+  }));
+  /* lot 47 : la demo d'origine n'avait pas SB1 — la vitrine le montre vivant */
+  if (!sb1 && d.circuits && d.circuits[1]) {
+    d.circuits[1].actif = true;
+    d.circuits[1].satellites = d.circuits[1].satellites || [];
+    d.circuits[1].satellites.push({
+      sat_id: 'SB1', ok: true, cnb: 1, cnm: 1, cnh: 0,
+      niveau: 'MILIEU', vanne: 0, en_file: 0,
+      volume_l: 24.5, volume_qualite: 'MESURE',
+      conso_totale_l: 640.2, tiree_l: 478.5, tiree_jour_l: 22.6,
+      tiree_depuis_s: cyc >= 4 ? 6 : 400, puise: cyc >= 4,
+      rempl_nb: 6, rempl_moy_l_min: 19.0, rempl_therm_nb: 1,
+      temp_c: 58.4, X_l: 39, Y_l: 3.2, marge_l: 2, cible_l: 37,
+      rech_dernier_age_s: 43000,
+      rech_dernier_ep: Math.floor(Date.now() / 1000) - 43000,
+      etalonnage: {bas: 4.2, milieu: 13.3, haut: 22.5},
+      defauts: {cnb_muet: false, cnm_muet: false, cnh_muet: false,
+                capteurs_fous: false, vanne_alerte: false,
+                quarantaine_s: 0, abandons: 0, servable: true}});
+  }
+}
+const RECH_MOTIFS = ['seuil jour', 'plancher nuit', 'puisage nocturne', 'grand réveil', 'mesure de nuit'];
+const JOURS_C = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
+function rendreRechJournal(fiches) {
+  const t = $('#rechJournal'); t.textContent = '';
+  const nb = $('#rechJournalNote'); nb.textContent = '';
+  fiches = fiches || [];
+  if (!fiches.length) {
+    nb.appendChild(el('p', 'vide-msg',
+      "Cliquez « Réchauffages (30) » : le pupitre demande les fiches à "
+      + "l'automate, qui les publie une fois (D183) — heure, motif, vidange, "
+      + "amorçage, températures, litres, durée."));
+    return;
+  }
+  const thead = document.createElement('thead');
+  const hr = document.createElement('tr');
+  ['Date · heure', 'Cuve', 'N°', 'Motif', 'Vidangé', 'Amorçage', 'T° avant → +5 min', 'Rempli', 'Durée']
     .forEach(h => { const th = document.createElement('th'); th.textContent = h; hr.appendChild(th); });
   thead.appendChild(hr); t.appendChild(thead);
   const tbody = document.createElement('tbody');
@@ -3217,8 +3718,10 @@ function rendreRechJournal(d) {
       if (aide) d2.title = aide;
       tr.appendChild(d2);
     };
-    td(has(f.h) ? ((has(f.j) ? JOURS_C[f.j] + ' ' : '') + f.h) : '—',
-       "Heure locale de la fin du cycle (D119). « — » : heure du cloud pas encore acquise.");
+    td(has(f.ep) && f.ep ? fmtEpoque(f.ep)
+       : has(f.h) ? ((has(f.j) ? JOURS_C[f.j] + ' ' : '') + f.h) : '—',
+       "Date et heure locales de la fin du cycle (D177/D183). « — » : heure "
+       + "du cloud pas encore acquise au moment de la fiche.");
     td(f.sat || '—');
     td(has(f.n) ? f.n : '—', "N° de réchauffage de cette cuve depuis la mise en service.");
     td(has(f.motif) ? (RECH_MOTIFS[f.motif] || f.motif) : '—',
@@ -3250,7 +3753,7 @@ function rendreProduction(d) {
   const ch = (d && d.chaufferie) || {};
   remplirStats('#statProdTh', PROD_TH, d);
   rendreElecTable(d);
-  rendreRechJournal(d);
+  majFiches(d);
   const note = (sel, app, nom) => {
     const b = $(sel); b.textContent = '';
     if (!app) { b.appendChild(el('p', 'peu-fiable-note',
@@ -4099,6 +4602,26 @@ function exAplatir(o, prefixe, dest) {
     exAplatir(o[k], prefixe ? prefixe + '.' + k : k, dest);
   }
 }
+/* Lot 45 : decoupe une plage [de, a) en tranches d'UNE heure, bornes
+   partielles comprises (ex. 09:25 -> 11:18 = 09:25-10:00, 10:00-11:00,
+   11:00-11:18). */
+function exTranchesHeure(de, a) {
+  const enMin = h => {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(h);
+    return m ? (+m[1]) * 60 + (+m[2]) : 0;
+  };
+  const enTxt = mn => String(Math.floor(mn / 60)).padStart(2, '0') + ':'
+                    + String(mn % 60).padStart(2, '0');
+  const fin = (a === '24:00') ? 1440 : enMin(a);
+  const out = [];
+  let cur = enMin(de);
+  while (cur < fin) {
+    const proch = Math.min(fin, (Math.floor(cur / 60) + 1) * 60);
+    out.push([enTxt(cur), proch === 1440 ? '24:00' : enTxt(proch)]);
+    cur = proch;
+  }
+  return out.length ? out : [[de, a === '24:00' ? '24:00' : a]];
+}
 async function exExtraire() {
   const j1 = $('#ex_d1').value, j2 = $('#ex_d2').value;
   const h1 = $('#ex_h1').value || '00:00', h2 = $('#ex_h2').value || '23:59';
@@ -4116,15 +4639,23 @@ async function exExtraire() {
       const de = (jour === j1) ? h1 : '00:00';
       const a  = (jour === j2) ? (h2 === '23:59' ? '24:00' : h2) : '24:00';
       exEtat('Lecture du ' + jour + ' (' + de + ' → ' + (a === '24:00' ? 'minuit' : a) + ')…');
-      const tranches = (de === '00:00' && a === '24:00')
-        ? [['00:00','06:00'],['06:00','12:00'],['12:00','18:00'],['18:00','24:00']]
-        : [[de, a]];
+      /* Lot 45 (07/09) : le serveur lit desormais par tranches et refuse
+         les fenetres trop larges (413) — le pupitre demande HEURE PAR
+         HEURE : chaque reponse reste legere, un jour plein d'archivage a
+         3 s/ligne passe sans broncher. */
+      const tranches = exTranchesHeure(de, a);
       let texte = '', absent = false;
       for (const [t1, t2] of tranches) {
+        exEtat('Lecture du ' + jour + ' — ' + t1 + ' → '
+             + (t2 === '24:00' ? 'minuit' : t2) + '…');
         const r = await fetch('/api/histo?jour=' + jour + '&de=' + t1 + '&a=' + t2);
         if (r.status === 404) { absent = true; break; }
         if (!r.ok) {
-          let det = ''; try { det = (await r.text()).slice(0, 200); } catch (_) {}
+          let det = '';
+          try {
+            const j = await r.json();
+            det = (j && j.erreur) ? j.erreur : JSON.stringify(j).slice(0, 200);
+          } catch (_) { try { det = (await r.text()).slice(0, 200); } catch (_2) {} }
           throw new Error('le serveur répond ' + r.status + ' sur ' + jour +
                           (det ? ' — ' + det : ''));
         }
@@ -4269,12 +4800,14 @@ function rendre(force) {
   rendreRail($('#railA'), d && d.trains && d.trains[0], 'A', 504, d);
   rendreRail($('#railB'), d && d.trains && d.trains[1], 'B', 505, d);
   rendreOrganes(d);
+  if (DEMO) demoEnrichir(d);   /* lot 47 */
   rendreSats(d);
   remplirStats('#statRendement', RENDEMENT, d);
   remplirStats('#statEnergie',   ENERGIE,   d);
   remplirStats('#statReserve',   RESERVE_CPT, d);
   remplirStats('#statDiag',      DIAG,      d);
   rendreReserve(d);
+  rendreCompresseur(d);
   rendreEau(d);
   rendreTemp(d);
   rendreProduction(d);
@@ -4400,7 +4933,8 @@ function demo() {
   const puise1 = cA === 0 && cyc < 12;               /* puisage visible au repos */
   return {
     device_id: 'chaufferie-01', seq: Math.floor(t / 5), uptime_s: 10049, rssi_dbm: -72,
-    cfg_version: 0, fw_epoch: 11, simulation: false, prog: '3108', nb_sats: 3, nb_sats_b: 0,
+    cfg_version: 0, fw_epoch: 11, simulation: false, prog: '1109', nb_sats: 3, nb_sats_b: 0,
+    tx_octets: 10480, tx_pct: 42,                                /* lot 46 : jauge D174 */
     trains: [train('A', cA, 'SA1', 59, 3.3), train('B', 0, null, 38, 5)],
     chaufferie: {
       vfd: {ok: true, etat: 3, freq_hz: cA === 0 ? 0 : 65, vbus_v: 319, courant_a: cA === 0 ? 0 : 1.4},
@@ -4421,8 +4955,9 @@ function demo() {
       v3: [4,5,7].includes(cA) ? 'EFS' : 'ECS', vanne_r12: 'CHAUD',
       pompe_pct: cA === 0 ? 0 : ([7].includes(cA) ? 60 : 100),
       pompe_arret_non_confirme: false, pompe_marche_s: cA === 0 ? 0 : 120,
-      reserve: {ok: true, haut_mouille: 0, milieu_mouille: 0, bas_mouille: 1,
-                appoint_requis: false, vol_min: 205, vol_max: 252.5},
+      reserve: {ok: true, haut_mouille: 0, milieu_present: 0, bas_mouille: 1,
+                appoint_requis: false, vol_min: 205, vol_max: 300},   /* lot 46 :
+                flotteur noir DEPOSE (D172) — la demo montre DEUX flotteurs */
       /* Lot 24 : démo alignée sur le capteur 1 MPa (D117) — brut ~390 =
          ~3,8 bar au repos, un peu plus pompe en marche. */
       pression: {ok: true, bar: cA === 0 ? 3.8 : 4.6, brut: cA === 0 ? 389 : 471,
@@ -4535,8 +5070,27 @@ function demo() {
 /* ══════════════════════════════════════════════════════════════════════════ */
 if (SHOW) document.body.classList.add('presentation');
 construireFormulaire();
+state.fich = {t: 0, attendu: 0, tPose: 0, data: {}};   /* lot 47 : fiches D183 */
+document.querySelectorAll('#fichCtrl button').forEach(b =>
+  b.addEventListener('click', () => fichesDemander(+b.dataset.t)));
+$('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
+  const v = ['SA1', 'SA2', 'SA3', 'SB1'].map(id2 => {
+    const x = parseInt($('#pose' + id2).value, 10);
+    return Number.isFinite(x) && x > 0 ? x : 0;
+  });
+  const et = $('#poseEtat');
+  if (!v.some(x => x > 0)) { et.textContent = 'saisir au moins un nombre'; return; }
+  if (DEMO) { et.textContent = 'démonstration — rien envoyé'; return; }
+  const b2 = $('#poseBtn'); b2.disabled = true;
+  et.textContent = 'envoi…';
+  await deposer({rempl_nb_ajout: v, cfg_version: versionSuivante()},
+                $('#cfgKey') ? $('#cfgKey').value.trim() : '');
+  et.textContent = "déposé — les nombres s'AJOUTERONT à l'instant sûr (série [D190])";
+  ['SA1', 'SA2', 'SA3', 'SB1'].forEach(id2 => { $('#pose' + id2).value = ''; });
+  b2.disabled = false;
+});
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 0709b — ui ' + LOT + ' · lot 44 — 07/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1209 — ui ' + LOT + ' · lot 48 — 12/09/2026';
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
 /* ══════════════════════════════════════════════════════════════════════════
@@ -4562,6 +5116,16 @@ function salonEtatPublic(s, d) {
   if (e.cls === 'pui')     return {t: 'Eau chaude en service', c: 'actif'};
   return {t: 'Prête', c: ''};
 }
+/* ══════════════════════════════════════════════════════════════════════════
+   LOT 47 (11/09/2026, client) : le « Pupitre simple » devient un SCHÉMA DU
+   BÂTIMENT — la pompe en bas, les deux circuits en colonnes, chaque cuve à
+   son étage réel avec sa distance de tuyau, jauges À L'ÉCHELLE (SA1 59 L
+   plus grande que les 39 L), eau BLEUE en veille, badges PUISAGE et
+   RÉCHAUFFAGE, tirée du jour, et une PHOTO du site au survol (photos/sa1.jpg
+   … posées dans le dépôt ; repli propre si absentes). Bandeau chaufferie :
+   pompe, T° départ, pression, réserve (haut non raccordé), compresseur,
+   simul SA1, eau du jour. Libellés : « Pupitre simple » / « Pupitre avancé ».
+   ══════════════════════════════════════════════════════════════════════════ */
 function salonConstruire() {
   const v = el('div'); v.id = 'salonVue';
   const tete = el('div', 'salon-tete');
@@ -4569,81 +5133,177 @@ function salonConstruire() {
   mq.appendChild(el('small', null, 'eau chaude sanitaire intelligente'));
   tete.appendChild(mq);
   const fin = el('div', 'fin');
-  const lv = el('span', 'liveS'); lv.id = 'salonLive';
-  fin.appendChild(lv);
-  const hr = el('span'); hr.id = 'salonHeure';
-  fin.appendChild(hr);
+  const lv = el('span', 'liveS'); lv.id = 'salonLive'; fin.appendChild(lv);
+  const hr = el('span'); hr.id = 'salonHeure'; fin.appendChild(hr);
   tete.appendChild(fin);
   v.appendChild(tete);
-  const zone = el('div', 'salon-cuves'); zone.id = 'salonCuves';
-  v.appendChild(zone);
-  const pied = el('div', 'salon-pied'); pied.id = 'salonPied';
-  v.appendChild(pied);
+  const g = el('div', 'sch-grille'); g.id = 'schGrille';
+  v.appendChild(g);
   document.body.appendChild(v);
-  const b = el('button', null, 'Vue salon'); b.id = 'salonBtn';
-  b.title = 'Basculer entre la vitrine (salon) et la vue complète — toutes les infos.';
+  const ph = el('div'); ph.id = 'schPhoto'; document.body.appendChild(ph);
+  const b = el('button', null, 'Pupitre simple'); b.id = 'salonBtn';
+  b.title = 'Basculer entre le pupitre simple (vitrine) et le pupitre avancé — toutes les infos.';
   b.addEventListener('click', () => salonBasculer(!document.body.classList.contains('salon')));
   document.body.appendChild(b);
 }
 function salonBasculer(on) {
   document.body.classList.toggle('salon', on);
-  const b = $('#salonBtn'); if (b) b.textContent = on ? 'Vue complète' : 'Vue salon';
+  const b = $('#salonBtn'); if (b) b.textContent = on ? 'Pupitre avancé' : 'Pupitre simple';
   if (on) rendreSalon(state.data);
+}
+const schPhotoKo = {};
+function schPhotoAttacher(cv, id) {
+  if (!id) return;
+  const montrer = () => {
+    if (schPhotoKo[id]) return;
+    const ph = $('#schPhoto'); ph.textContent = '';
+    const img = document.createElement('img');
+    img.src = 'photos/' + id.toLowerCase() + '.jpg';
+    img.onerror = () => { schPhotoKo[id] = true; ph.style.display = 'none'; };
+    ph.appendChild(img);
+    ph.appendChild(el('small', null, id + ' — photo du site'));
+    ph.style.display = 'block';
+    const rc = cv.getBoundingClientRect();
+    ph.style.left = Math.max(8, Math.min(window.innerWidth - 300, rc.right + 12)) + 'px';
+    ph.style.top  = Math.max(8, Math.min(window.innerHeight - 260, rc.top)) + 'px';
+  };
+  const cacher = () => { const ph = $('#schPhoto'); if (ph) ph.style.display = 'none'; };
+  cv.addEventListener('mouseenter', montrer);
+  cv.addEventListener('mouseleave', cacher);
+  cv.addEventListener('click', () => {
+    const ph = $('#schPhoto');
+    if (ph && ph.style.display === 'block') cacher(); else montrer();
+  });
+}
+function schCuve(s, d) {
+  const ap = APPARTEMENTS[s.sat_id] || {};
+  const cv = el('div', 'sch-cuve' + (s.ok ? '' : ' ko'));
+  const gauche = el('div');
+  const jg = el('div', 'sch-jg' + ((s.X_l || 39) >= 50 ? ' grande' : ''));
+  jg.style.height = Math.round((s.X_l || 39) * 3.2) + 'px';
+  jg.title = 'Jauge à l\u2019échelle : ' + i0(s.X_l || 39) + ' L de contenance.';
+  const eau = el('div', 'salon-eau' + (s.sommeil ? ' froide' : ''));
+  const pct = (has(s.volume_l) && s.X_l > 0)
+            ? Math.max(0, Math.min(100, 100 * s.volume_l / s.X_l)) : 0;
+  eau.style.height = pct.toFixed(0) + '%';
+  jg.appendChild(eau);
+  gauche.appendChild(jg);
+  gauche.appendChild(el('div', 'sch-litres',
+    (has(s.volume_l) ? n(s.volume_l) : '—') + ' / ' + i0(s.X_l || 39) + ' L'));
+  cv.appendChild(gauche);
+  const dr = el('div');
+  dr.appendChild(el('div', 'sch-nom', s.sat_id || '—'));
+  const logts = (ap.liste || []).filter(x => !/test/i.test(x));
+  dr.appendChild(el('div', 'sch-lieu',
+    (ap.ou || ' ') + (logts.length ? ' — logts ' + logts.join('·') : '')));
+  dr.appendChild(el('div', 'sch-dist',
+    ap.dist ? ap.dist + ' m de la chaufferie' : ' '));
+  const tp = el('div', 'sch-temp',
+    (has(s.temp_c) && !s.sommeil) ? n(s.temp_c) : '—');
+  if (has(s.temp_c) && !s.sommeil) tp.appendChild(el('small', null, ' °C'));
+  dr.appendChild(tp);
+  const bd = el('div', 'sch-badges');
+  if (s.puise) bd.appendChild(el('span', 'sch-b puise', 'PUISAGE'));
+  if (s.rech_en_cours) bd.appendChild(el('span', 'sch-b rech', 'RÉCHAUFFAGE'));
+  if (s.sommeil) bd.appendChild(el('span', 'sch-b veille', 'VEILLE · EAU FROIDE'));
+  dr.appendChild(bd);
+  const ep2 = salonEtatPublic(s, d);
+  dr.appendChild(el('div', 'sch-etat ' + ep2.c, ep2.t));
+  if (has(s.tiree_jour_l))
+    dr.appendChild(el('div', 'sch-tiree',
+      'aujourd\u2019hui : ' + n(s.tiree_jour_l) + ' L tirés'));
+  cv.appendChild(dr);
+  schPhotoAttacher(cv, s.sat_id);
+  return cv;
 }
 function rendreSalon(d) {
   if (!document.body.classList.contains('salon')) return;
   const hr = $('#salonHeure');
   if (hr) hr.textContent = new Date().toLocaleString('fr-FR',
-    {weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'});
+    {weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'})
+    + (DEMO ? ' · démonstration' : '');
   const lv = $('#salonLive');
   if (lv) lv.className = 'liveS' + (telemetrieEnLigne() || DEMO ? '' : ' off');
-  const zone = $('#salonCuves');
-  if (!zone) return;
-  zone.textContent = '';
-  const sats = [];
-  ((d && d.circuits) || []).forEach(c => (c.satellites || []).forEach(s => sats.push(s)));
-  sats.slice(0, 4).forEach(s => {
-    const cv = el('div', 'salon-cuve');
-    cv.appendChild(el('div', 'salon-nom', s.sat_id || '—'));
-    const ap = APPARTEMENTS[s.sat_id];
-    cv.appendChild(el('div', 'salon-lieu', ap ? ap.ou : ' '));
-    const jg = el('div', 'salon-jauge');
-    const eau = el('div', 'salon-eau' + (s.sommeil ? ' froide' : ''));
-    const pct = (has(s.volume_l) && has(s.X_l) && s.X_l > 0)
-              ? Math.max(0, Math.min(100, 100 * s.volume_l / s.X_l)) : 0;
-    eau.style.height = pct.toFixed(0) + '%';
-    jg.appendChild(eau);
-    cv.appendChild(jg);
-    const tp = el('div', 'salon-temp',
-      (has(s.temp_c) && !s.sommeil) ? n(s.temp_c) : '—');
-    if (has(s.temp_c) && !s.sommeil) tp.appendChild(el('small', null, ' °C'));
-    cv.appendChild(tp);
-    const ep = salonEtatPublic(s, d);
-    cv.appendChild(el('div', 'salon-etat ' + ep.c, ep.t));
-    zone.appendChild(cv);
+  const g = $('#schGrille'); if (!g) return;
+  g.textContent = '';
+  const parId = {};
+  ((d && d.circuits) || []).forEach(c =>
+    (c.satellites || []).forEach(s => { parId[s.sat_id] = s; }));
+  g.appendChild(el('div'));
+  g.appendChild(el('div', 'sch-teteC', 'CIRCUIT A'));
+  g.appendChild(el('div', 'sch-teteC', 'CIRCUIT B'));
+  /* étages RÉELS (client 10-11/09) : SA2 grenier, SA3 et SB1 au 3ᵉ,
+     SA1 au rez-de-chaussée ; le circuit B ne monte que jusqu'au 3ᵉ. */
+  const PLAN = [
+    {lab: 'grenier',    a: 'SA2', b: null,  tuyauB: false},
+    {lab: '3ᵉ étage',   a: 'SA3', b: 'SB1', tuyauB: true},
+    {lab: 'rez-de-ch.', a: 'SA1', b: null,  tuyauB: true},
+  ];
+  PLAN.forEach(rg => {
+    g.appendChild(el('div', 'sch-etg', rg.lab));
+    ['a', 'b'].forEach(col => {
+      const cell = el('div', 'sch-cell'
+        + ((col === 'b' && !rg.tuyauB) ? ' sans-tuyau' : ''));
+      const id = rg[col];
+      if (id) {
+        const s = parId[id];
+        if (s) cell.appendChild(schCuve(s, d));
+        else {
+          const gh = el('div', 'sch-cuve ko');
+          gh.appendChild(el('div', 'sch-nom', id));
+          gh.appendChild(el('div', 'sch-lieu', 'hors ligne'));
+          cell.appendChild(gh);
+        }
+      }
+      g.appendChild(cell);
+    });
   });
-  const pied = $('#salonPied');
-  if (pied) {
-    pied.textContent = '';
-    const ch = (d && d.chaufferie) || {};
-    const pompe = el('span');
-    pompe.appendChild(el('b', null, 'Circulation : '));
-    pompe.appendChild(document.createTextNode(
-      ch.pompe_pct > 0 ? 'en marche' : 'au repos'));
-    pied.appendChild(pompe);
-    const rs = (d && d.reserve) || {};
-    if (has(rs.haut_mouille)) {
-      const rz = el('span');
-      rz.appendChild(el('b', null, 'Réserve : '));
-      rz.appendChild(document.createTextNode(
-        rs.haut_mouille ? 'pleine' : rs.milieu_mouille ? 'bonne'
-        : rs.bas_mouille ? 'correcte' : 'en service'));
-      pied.appendChild(rz);
-    }
-    const md = el('span');
-    md.appendChild(el('b', null, DEMO ? 'Démonstration' : 'Site en direct'));
-    pied.appendChild(md);
+  g.appendChild(el('div', 'sch-etg sch-etgC', 'chaufferie'));
+  const bande = el('div', 'sch-chauf');
+  const ch = (d && d.chaufferie) || {};
+  const chip = (titre, val, sous, cls) => {
+    const c2 = el('div', 'sch-chip' + (cls ? ' ' + cls : ''));
+    c2.appendChild(el('b', null, titre));
+    c2.appendChild(el('span', null, val));
+    if (sous) c2.appendChild(el('small', null, sous));
+    return c2;
+  };
+  const pOn = (ch.pompe_pct || 0) > 0;
+  bande.appendChild(chip('Pompe', pOn ? ch.pompe_pct + ' %' : 'repos',
+    pOn ? (ch.pompe_100 ? 'coup de collier (D178)' : 'en marche') : ' ',
+    pOn ? 'pompeOn' : ''));
+  const ma = ch.maddalena || {};
+  if (has(ma.t_depart_c))
+    bande.appendChild(chip('Départ', n(ma.t_depart_c) + ' °C', 'production'));
+  const pr = ch.pression || {};
+  if (has(pr.bar)) bande.appendChild(chip('Pression', n(pr.bar) + ' bar', ' '));
+  const rs = ch.reserve || {};
+  if (has(rs.bas_mouille)) {
+    const mp2 = !has(rs.milieu_present) || !!rs.milieu_present;
+    const hp2 = !has(rs.haut_present) || !!rs.haut_present;
+    bande.appendChild(chip('Réserve 300 L',
+      (hp2 && rs.haut_mouille) ? '≥ 300 L'
+        : (mp2 && rs.milieu_mouille) ? '≥ 250 L'
+        : rs.bas_mouille ? '200–250 L' : '< 200 L',
+      hp2 ? ' ' : 'flotteur haut non raccordé'));
   }
+  const cp = ch.compresseur;
+  if (cp && (cp.etat === 1 || cp.alarme || cp.etat === 2))
+    bande.appendChild(chip('Compresseur d\u2019air',
+      cp.etat === 1 ? 'en marche' : 'verrouillé',
+      cp.etat === 1 ? n(cp.litres || 0) + ' L de puisage' : 'arrêt forcé 80 L',
+      (cp.alarme || cp.etat === 2) ? 'alerte' : ''));
+  if (has(ch.simul_sa1) && ch.simul_sa1)
+    bande.appendChild(chip('Simul SA1', 'OUVERTE',
+      n(ch.simul_faits_l || 0) + ' L faits', 'alerte'));
+  let tj = 0, tjOk = false;
+  Object.keys(parId).forEach(k => {
+    const s = parId[k];
+    if (has(s.tiree_jour_l)) { tj += s.tiree_jour_l; tjOk = true; }
+  });
+  if (tjOk) bande.appendChild(chip('Eau aujourd\u2019hui', n(tj) + ' L',
+    'tirée par les logements'));
+  g.appendChild(bande);
 }
 salonConstruire();
 if (SALON_DEPART) salonBasculer(true);
