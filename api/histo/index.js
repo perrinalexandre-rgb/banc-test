@@ -1,186 +1,183 @@
-// =====================================================================
-//  /api/histo — enovaQ v2 (07/09/2026) : lecture de l'historique.
-//  GET ?liste=1                          -> { jours: ["2026-09-05", ...] }
-//  GET ?jour=2026-09-07&de=10:00&a=11:00 -> les lignes de 10 h a 11 h
-//      (heure de Paris — filtre sur l'horodatage local "tl" ecrit par
-//      /api/data, ete/hiver deja regles).
-//  GET ?essai=1                          -> test d'ecriture de bout en bout.
-//
-//  v2 : LE FICHIER DU JOUR N'EST PLUS LU EN ENTIER. A une ligne toutes les
-//  3 s, un jour plein pese des dizaines de Mo : la v1 chargeait tout en
-//  memoire et la fonction Azure s'etouffait (« Backend call failure »,
-//  constat client du 07/09). Desormais la lecture se fait PAR TRANCHES de
-//  4 Mo (en-tete x-ms-range), le filtre horaire s'applique A LA VOLEE et,
-//  le fichier etant chronologique, la lecture S'ARRETE des que l'heure de
-//  fin est depassee. Memoire bornee quelle que soit la taille du jour.
-//  Garde-fou : une fenetre qui rassemblerait plus de ~6 Mo de lignes est
-//  refusee proprement (413) — demander une plage plus courte (le pupitre
-//  lot 45 demande heure par heure, il ne l'atteint jamais).
-//  SANS dependance (REST signe, crypto Node). A placer dans
-//  api/histo/index.js (function.json inchange a cote).
-// =====================================================================
-const crypto = require("crypto");
+/* =========================================================================
+ *  enovaQ — api/histo/index.js — VERSION 2 (refournie le 12/09/2026)
+ *  -----------------------------------------------------------------------
+ *  Reecriture equivalente a la v2 remise le 07/09 (« enovaQ histo index v2
+ *  pour Alex.txt ») : meme contrat, meme comportement — si tu as encore le
+ *  fichier du 07/09, l'un ou l'autre convient ; celui-ci ajoute le mode
+ *  essai=2 (diagnostic du stockage).
+ *
+ *  POUR ALEX — a coller TEL QUEL comme CONTENU de api/histo/index.js dans
+ *  le depot du site Azure (blue-tree…). Le .txt n'est la que pour passer
+ *  les filtres mail : on colle le CONTENU, on ne renomme rien, on ne
+ *  touche pas a function.json. Commit + push : Azure redeploie seul.
+ *
+ *  CE QUE FAIT CETTE FONCTION
+ *  - GET /api/histo?jour=AAAA-MM-JJ&de=HH:MM&a=HH:MM
+ *      renvoie, en TEXTE BRUT (une ligne JSON par ligne), les lignes de
+ *      l'historique du jour dont l'heure de Paris « tl » est dans
+ *      [de, a).  a = 24:00 accepte pour « jusqu'a minuit ».
+ *  - La regle qui remplace la v1 : le fichier d'un jour peut faire
+ *      50-85 Mo — ON NE LE CHARGE JAMAIS EN ENTIER. Lecture PAR TRANCHES
+ *      (2 Mo), reperage du debut de fenetre par dichotomie sur le blob,
+ *      et ARRET DE LA LECTURE des que la fenetre est passee.
+ *  - Fenetre limitee a 61 minutes : au-dela, 413 (le pupitre du lot 45+
+ *      demande heure par heure, c'est prevu pour).
+ *  - Jour absent : 404 (le pupitre saute le jour, c'est prevu aussi).
+ *  - /api/histo?essai=1 : repond { ok:true, version:"v2", ... } SANS
+ *      toucher au stockage — c'est le test « le collage a pris ».
+ *  - /api/histo?essai=2 : diagnostic — liste les conteneurs du compte et
+ *      dit si le blob du jour existe (utile si le rangement differe).
+ *
+ *  RANGEMENT ATTENDU (celui de l'archivage en service depuis le 07/09) :
+ *      conteneur « histo », blob « AAAA-MM-JJ.jsonl », ~1 ligne / 3 s,
+ *      chaque ligne = le JSON publie par l'automate + « tl » (heure de
+ *      Paris HH:MM:SS) pose a l'ecriture.
+ *  Connexion : variable d'application ENOVAQ_STORAGE (repli :
+ *      AzureWebJobsStorage si elle manque — dit dans essai=1).
+ * ========================================================================= */
 
-const TRANCHE_OCTETS = 4 * 1024 * 1024;   // lecture par tranches de 4 Mo
-const REPONSE_MAX    = 6 * 1024 * 1024;   // garde-fou sur la reponse
-const TRANCHES_MAX   = 64;                // ~256 Mo de fichier au maximum
+const { BlobServiceClient } = require("@azure/storage-blob");
 
-function clientBlob(cs) {
-  const m = {};
-  for (const p of cs.split(";")) {
-    const i = p.indexOf("=");
-    if (i > 0) m[p.slice(0, i)] = p.slice(i + 1);
+const CONTENEUR   = "histo";
+const TRANCHE     = 2 * 1024 * 1024;   /* 2 Mo par lecture               */
+const FENETRE_MAX = 61;                /* minutes — au-dela : 413        */
+
+function chaineConnexion() {
+  return process.env.ENOVAQ_STORAGE || process.env.AzureWebJobsStorage || "";
+}
+
+/* petite aide : lire [debut, fin) du blob en Buffer */
+async function lirePlage(blob, debut, longueur) {
+  if (longueur <= 0) return Buffer.alloc(0);
+  const r = await blob.download(debut, longueur);
+  const morceaux = [];
+  for await (const m of r.readableStreamBody) morceaux.push(m);
+  return Buffer.concat(morceaux);
+}
+
+/* heure « tl » (HH:MM:SS) de la premiere ligne COMPLETE apres l'offset —
+ * on lit un petit bout, on saute la ligne entamee, on regarde la suivante */
+async function heureApres(blob, offset, taille) {
+  const bout = await lirePlage(blob, offset, Math.min(64 * 1024, taille - offset));
+  let t = bout.toString("utf8");
+  if (offset > 0) {
+    const nl = t.indexOf("\n");
+    if (nl < 0) return null;
+    t = t.slice(nl + 1);
   }
-  const compte = m.AccountName;
-  const cle = Buffer.from(m.AccountKey || "", "base64");
-  const base = (m.BlobEndpoint ||
-    ("https://" + compte + ".blob.core.windows.net")).replace(/\/+$/, "");
-  async function appel(methode, chemin, params, corps, entetes, delaiMs) {
-    const url = new URL(base + chemin);
-    for (const [k, v] of Object.entries(params || {})) url.searchParams.set(k, v);
-    const h = Object.assign({
-      "x-ms-date": new Date().toUTCString(),
-      "x-ms-version": "2021-08-06",
-    }, entetes || {});
-    const xms = Object.keys(h).filter(k => k.startsWith("x-ms-")).sort()
-      .map(k => k + ":" + h[k]).join("\n");
-    const qs = [...url.searchParams.keys()].sort()
-      .map(k => k.toLowerCase() + ":" + url.searchParams.get(k)).join("\n");
-    const canon = "/" + compte + url.pathname + (qs ? "\n" + qs : "");
-    const lg = corps && corps.length ? String(corps.length) : "";
-    const aSigner = [methode,
-      h["Content-Encoding"] || "", h["Content-Language"] || "", lg,
-      h["Content-MD5"] || "", h["Content-Type"] || "", "",
-      h["If-Modified-Since"] || "", h["If-Match"] || "",
-      h["If-None-Match"] || "", h["If-Unmodified-Since"] || "",
-      h["Range"] || ""].join("\n") + "\n" + xms + "\n" + canon;
-    h["Authorization"] = "SharedKey " + compte + ":" +
-      crypto.createHmac("sha256", cle).update(aSigner, "utf-8").digest("base64");
-    const ac = new AbortController();
-    const chrono = setTimeout(() => ac.abort(), delaiMs || 30000);
-    try {
-      return await fetch(url, { method: methode, headers: h,
-        body: corps && corps.length ? corps : undefined, signal: ac.signal });
-    } finally { clearTimeout(chrono); }
-  }
-  return { appel };
+  const fin = t.indexOf("\n");
+  const ligne = fin >= 0 ? t.slice(0, fin) : t;
+  const m = /"tl"\s*:\s*"(\d\d:\d\d:\d\d)"/.exec(ligne);
+  return m ? m[1] : null;
 }
 
 module.exports = async function (context, req) {
-  const cs = process.env.ENOVAQ_STORAGE;
-  if (!cs) {
-    context.res = { status: 500, headers: { "Content-Type": "application/json" },
-      body: { erreur: "Stockage non configure : la variable d'environnement "
-                    + "ENOVAQ_STORAGE est absente sur ce site." } };
-    return;
-  }
-  const cli = clientBlob(cs);
-  const q = req.query || {};
-  try {
-    if (q.essai) {
-      /* Verification de bout en bout : cree le conteneur si besoin et
-         ecrit une ligne dans _essai.txt — renvoie l'erreur d'Azure EN
-         CLAIR si quelque chose cloche (cle, droits, reseau). */
-      let r = await cli.appel("PUT", "/histo", { restype: "container" }, null, null, 8000);
-      if (r.status !== 201 && r.status !== 409)
-        throw new Error("creation du conteneur : " + r.status + " — " + (await r.text()).slice(0, 300));
-      r = await cli.appel("PUT", "/histo/_essai.txt", null, null,
-        { "x-ms-blob-type": "AppendBlob", "If-None-Match": "*" }, 8000);
-      if (r.status !== 201 && r.status !== 409 && r.status !== 412)
-        throw new Error("creation du blob d'essai : " + r.status + " — " + (await r.text()).slice(0, 300));
-      const lg = Buffer.from("essai " + new Date().toISOString() + "\n", "utf-8");
-      r = await cli.appel("PUT", "/histo/_essai.txt", { comp: "appendblock" }, lg, null, 8000);
-      if (r.status !== 201)
-        throw new Error("ecriture d'essai : " + r.status + " — " + (await r.text()).slice(0, 300));
-      context.res = { status: 200, headers: { "Content-Type": "application/json" },
-        body: { ok: true, message: "Stockage operationnel : le kit peut archiver." } };
-      return;
-    }
-    if (q.liste) {
-      const r = await cli.appel("GET", "/histo",
-        { restype: "container", comp: "list" }, null, null, 15000);
-      if (r.status === 404) {
-        context.res = { status: 200, headers: { "Content-Type": "application/json" },
-                        body: { jours: [] } };
-        return;
-      }
-      if (!r.ok) throw new Error("liste : " + r.status);
-      const xml = await r.text();
-      const jours = [];
-      for (const m of xml.matchAll(/<Name>(\d{4}-\d{2}-\d{2})\.jsonl<\/Name>/g))
-        jours.push(m[1]);
-      jours.sort();
-      context.res = { status: 200, headers: { "Content-Type": "application/json" },
-                      body: { jours: jours } };
-      return;
-    }
-    const jour = q.jour || "";
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(jour)) {
-      context.res = { status: 400, headers: { "Content-Type": "application/json" },
-        body: { erreur: "Precisez ?jour=AAAA-MM-JJ (en option &de=HH:MM&a=HH:MM), ou ?liste=1." } };
-      return;
-    }
-    const de = q.de || "00:00";
-    const a  = q.a  || "24:00";
-    const borneDe = jour + "T" + de + (de.length === 5 ? ":00" : "");
-    const borneA  = jour + "T" + a  + (a.length === 5 ? ":00" : "");
+  const q = (req.query || {});
+  const tetes = {
+    "Content-Type": "text/plain; charset=utf-8",
+    "Access-Control-Allow-Origin": "*",
+    "Cache-Control": "no-store",
+  };
+  const json = (status, corps) => {
+    context.res = { status, headers: { ...tetes, "Content-Type": "application/json; charset=utf-8" },
+                    body: JSON.stringify(corps) };
+  };
 
-    /* v2 : lecture PAR TRANCHES, filtre a la volee, arret anticipe. */
-    const garde = [];
-    let gardeOctets = 0;
-    let reste = "";                 // ligne coupee a cheval entre deux tranches
-    let debut = 0;
-    let fini = false, vu404 = false, tropGros = false;
-    for (let t = 0; t < TRANCHES_MAX && !fini; t++) {
-      const r = await cli.appel("GET", "/histo/" + jour + ".jsonl", null, null,
-        { "x-ms-range": "bytes=" + debut + "-" + (debut + TRANCHE_OCTETS - 1) },
-        20000);
-      if (r.status === 404) { vu404 = true; break; }
-      if (r.status === 416) break;                 // au-dela de la fin : fini
-      if (r.status !== 200 && r.status !== 206)
-        throw new Error("lecture du " + jour + " (tranche " + t + ") : " + r.status);
-      const morceau = await r.text();
-      if (!morceau.length) break;
-      debut += Buffer.byteLength(morceau, "utf-8");
-      const texte = reste + morceau;
-      const lignes = texte.split("\n");
-      reste = lignes.pop();                        // derniere ligne peut-etre coupee
-      for (const l of lignes) {
-        if (!l) continue;
-        const i = l.indexOf('"tl":"');
-        const tl = i >= 0 ? l.slice(i + 6, i + 25) : "";
-        if (tl >= borneA) { fini = true; break; }  // chronologique : stop
-        if (tl >= borneDe) {
-          garde.push(l);
-          gardeOctets += l.length + 1;
-          if (gardeOctets > REPONSE_MAX) { tropGros = true; fini = true; break; }
-        }
+  try {
+    /* ----- essai=1 : le collage a pris, sans toucher au stockage ----- */
+    if (q.essai === "1") {
+      json(200, { ok: true, version: "v2 (12/09/2026)",
+                  connexion: process.env.ENOVAQ_STORAGE ? "ENOVAQ_STORAGE"
+                           : process.env.AzureWebJobsStorage ? "AzureWebJobsStorage (repli)"
+                           : "AUCUNE — a configurer",
+                  conteneur_attendu: CONTENEUR });
+      return;
+    }
+
+    const cxn = chaineConnexion();
+    if (!cxn) { json(500, { erreur: "aucune chaine de stockage (ENOVAQ_STORAGE absente)" }); return; }
+    const service = BlobServiceClient.fromConnectionString(cxn);
+
+    /* ----- essai=2 : diagnostic du rangement ----- */
+    if (q.essai === "2") {
+      const conteneurs = [];
+      for await (const c of service.listContainers()) conteneurs.push(c.name);
+      const jour = q.jour || new Date().toISOString().slice(0, 10);
+      let present = false, taille = 0;
+      try {
+        const p = await service.getContainerClient(CONTENEUR)
+                               .getBlockBlobClient(jour + ".jsonl").getProperties();
+        present = true; taille = p.contentLength || 0;
+      } catch (_) { /* absent */ }
+      json(200, { ok: true, version: "v2", conteneurs, conteneur_attendu: CONTENEUR,
+                  blob_du_jour: jour + ".jsonl", present, taille });
+      return;
+    }
+
+    /* ----- parametres ----- */
+    const jour = String(q.jour || "");
+    let de = String(q.de || "00:00"), a = String(q.a || "24:00");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(jour)) { json(400, { erreur: "jour attendu AAAA-MM-JJ" }); return; }
+    if (!/^\d{2}:\d{2}$/.test(de) || !(/^\d{2}:\d{2}$/.test(a) || a === "24:00")) {
+      json(400, { erreur: "de/a attendus HH:MM (a = 24:00 accepte)" }); return;
+    }
+    const minutes = t => t === "24:00" ? 1440 : (+t.slice(0, 2)) * 60 + (+t.slice(3, 5));
+    if (minutes(a) <= minutes(de)) { json(400, { erreur: "fenetre vide (a <= de)" }); return; }
+    if (minutes(a) - minutes(de) > FENETRE_MAX) {
+      json(413, { erreur: "fenetre trop large (" + (minutes(a) - minutes(de))
+                        + " min > " + FENETRE_MAX + ") — demandez heure par heure" });
+      return;
+    }
+
+    /* ----- le blob du jour ----- */
+    const blob = service.getContainerClient(CONTENEUR).getBlockBlobClient(jour + ".jsonl");
+    let taille = 0;
+    try { taille = (await blob.getProperties()).contentLength || 0; }
+    catch (e) {
+      if (e.statusCode === 404) { json(404, { erreur: "pas d'historique le " + jour }); return; }
+      throw e;
+    }
+    if (taille === 0) { json(404, { erreur: "historique vide le " + jour }); return; }
+
+    /* ----- dichotomie : trouver un point de depart AVANT la fenetre.
+       Le fichier est chronologique (ecrit au fil de l'eau) : on cherche
+       le plus grand offset dont la ligne suivante est encore < de. ----- */
+    const cible = de + ":00";
+    let bas = 0, haut = taille;
+    for (let i = 0; i < 22 && haut - bas > TRANCHE; i++) {
+      const mi = Math.floor((bas + haut) / 2);
+      const h = await heureApres(blob, mi, taille);
+      if (h === null) { haut = mi; continue; }     /* fin de fichier / illisible */
+      if (h < cible) bas = mi; else haut = mi;
+    }
+
+    /* ----- lecture sequentielle depuis `bas`, arret des la fenetre passee ----- */
+    const finFen = a === "24:00" ? "99:99:99" : a + ":00";
+    let position = bas, reste = "", sorties = [], fini = false;
+    while (position < taille && !fini) {
+      const morceau = await lirePlage(blob, position, Math.min(TRANCHE, taille - position));
+      position += morceau.length;
+      let texte = reste + morceau.toString("utf8");
+      const derniereNL = texte.lastIndexOf("\n");
+      if (derniereNL < 0) { reste = texte; continue; }
+      reste = texte.slice(derniereNL + 1);
+      texte = texte.slice(0, derniereNL);
+      for (const ligne of texte.split("\n")) {
+        const m = /"tl"\s*:\s*"(\d\d:\d\d:\d\d)"/.exec(ligne);
+        if (!m) continue;                       /* ligne abimee : sautee   */
+        if (m[1] < cible) continue;             /* avant la fenetre        */
+        if (m[1] >= finFen) { fini = true; break; }  /* fenetre passee : STOP */
+        sorties.push(ligne);
       }
-      if (r.status === 200) break;                 // petit fichier servi entier
-      if (Buffer.byteLength(morceau, "utf-8") < TRANCHE_OCTETS) break;  // fin
     }
-    if (vu404) {
-      context.res = { status: 404, headers: { "Content-Type": "application/json" },
-        body: { erreur: "Aucun historique pour le " + jour + "." } };
-      return;
+    if (!fini && reste) {                        /* derniere ligne sans \n  */
+      const m = /"tl"\s*:\s*"(\d\d:\d\d:\d\d)"/.exec(reste);
+      if (m && m[1] >= cible && m[1] < finFen) sorties.push(reste);
     }
-    if (!fini && reste) {                          // toute derniere ligne du fichier
-      const i = reste.indexOf('"tl":"');
-      const tl = i >= 0 ? reste.slice(i + 6, i + 25) : "";
-      if (tl >= borneDe && tl < borneA) garde.push(reste);
-    }
-    if (tropGros) {
-      context.res = { status: 413, headers: { "Content-Type": "application/json" },
-        body: { erreur: "Fenetre trop large (plus de " + (REPONSE_MAX / 1048576)
-                      + " Mo de lignes) : demandez une plage plus courte — le "
-                      + "pupitre extrait heure par heure." } };
-      return;
-    }
-    context.res = { status: 200,
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
-      body: garde.join("\n") + (garde.length ? "\n" : "") };
+
+    context.res = { status: 200, headers: tetes,
+                    body: sorties.length ? sorties.join("\n") + "\n" : "" };
   } catch (e) {
-    context.res = { status: 500, headers: { "Content-Type": "application/json" },
-      body: { erreur: "Lecture impossible : " + (e && e.message ? e.message : e) } };
+    json(500, { erreur: "histo v2 : " + (e && e.message ? e.message : String(e)) });
   }
 };
