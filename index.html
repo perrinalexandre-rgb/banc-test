@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · ui 1509c.60 (lot 60, 15/09/2026)
+   enovaQ — pupitre de supervision · ui 1509d.61 (lot 61, 15/09/2026)
    Nom officiel du fichier : « enovaQ pupitre 3108b.html » (règle de nommage
    client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
    enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
@@ -1223,7 +1223,7 @@ Les compteurs de vie (nombres de remplissages, de réchauffages…) ne bougent p
     <summary>Extraire l'historique vers Excel</summary>
     <div class="cfg-body">
       <p class="note">
-        Une ligne toutes les 5 secondes, toutes les grandeurs en colonnes, une
+        Une ligne toutes les ~3 secondes (ou au pas choisi ci-dessous), toutes les grandeurs en colonnes, une
         feuille Excel par jour couvert. Heures de Paris. L'historique commence
         au jour de la mise en service de l'archivage — les jours absents sont
         simplement sautés.
@@ -1242,6 +1242,16 @@ Les compteurs de vie (nombres de remplissages, de réchauffages…) ne bougent p
           <input id="ex_h2" type="time" value="23:59">
         </div>
       </div>
+      <label style="display:block;margin-top:10px;font-size:12.5px;font-weight:600">
+        Finesse des lignes
+        <select id="ex_pas" style="margin-left:8px;font-size:13px">
+          <option value="0">toutes les lignes (~3 s — fichier complet)</option>
+          <option value="10">une toutes les 10 s (÷3)</option>
+          <option value="30" selected>une toutes les 30 s (÷10)</option>
+          <option value="60">une par minute (÷20)</option>
+          <option value="300">une toutes les 5 min (÷100)</option>
+        </select>
+      </label>
       <button id="ex_go" class="btnvid" style="margin-top:12px">Extraire vers Excel</button>
       <div id="ex_etat" class="vidmsg" style="margin-top:10px">Choisissez la plage, puis « Extraire ».
 Exemple : hier 10:00 → hier 11:00 = 720 lignes.</div>
@@ -1350,7 +1360,7 @@ const API = {
   histo:     '/api/histo',    // GET  → lignes d'historique (lot 58 : rétablissement)
 };
 const DEVICE     = 'chaufferie-01';
-const LOT        = '1509c.60';  // marqueur « ui » — bandeau et pied de page
+const LOT        = '1509d.61';  // marqueur « ui » — bandeau et pied de page
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -4872,7 +4882,25 @@ async function exExtraire() {
       for (const [t1, t2] of tranches) {
         exEtat('Lecture du ' + jour + ' — ' + t1 + ' → '
              + (t2 === '24:00' ? 'minuit' : t2) + '…');
-        const r = await fetch('/api/histo?jour=' + jour + '&de=' + t1 + '&a=' + t2);
+        /* Lot 61 (client 15/09, « résous ce problème de microcoupure ») :
+           une grande plage = des dizaines de requêtes ; UNE microcoupure
+           réseau ne doit plus tout casser — chaque tranche est retentée
+           3 fois (pauses 0,8 s puis 1,6 s) avant d'abandonner en nommant
+           l'heure fautive. */
+        let r = null, err9 = null;
+        for (let ess = 1; ess <= 3; ess++) {
+          try { err9 = null;
+                r = await fetch('/api/histo?jour=' + jour + '&de=' + t1 + '&a=' + t2);
+                if (r.ok || r.status === 404) break;
+          } catch (e9) { err9 = e9; r = null; }
+          if (ess < 3) {
+            exEtat('Réseau instable sur ' + jour + ' ' + t1 + ' — nouvel essai '
+                 + (ess + 1) + '/3…');
+            await new Promise(rz => setTimeout(rz, 800 * ess));
+          }
+        }
+        if (!r) throw new Error('réseau coupé sur ' + jour + ' ' + t1 + '–' + t2
+          + ' malgré 3 essais (' + (err9 && err9.message || err9) + ') — relancez.');
         if (r.status === 404) { absent = true; break; }
         if (!r.ok) {
           let det = '';
@@ -4886,15 +4914,29 @@ async function exExtraire() {
         texte += await r.text();
       }
       if (absent) { exEtat("Pas d'historique le " + jour + ' — jour sauté.'); continue; }
+      const pas9 = parseInt(($('#ex_pas') && $('#ex_pas').value) || '0', 10);
+      const vues9 = new Set();
       const lignes = [];
       for (const l of texte.split('\n')) {
         if (!l.trim()) continue;
         try {
           const brut = JSON.parse(l);
+          /* Lot 61 : heure PROPRE (le fichier porte l'heure datée
+             « 2026-09-14T10:00:03 ») + FINESSE choisie : au pas N, on
+             garde une ligne par tranche de N secondes. */
+          const m9 = /(\d\d):(\d\d):(\d\d)/.exec(brut.tl || '');
+          if (!m9) continue;
+          const heure9 = m9[0];
+          if (pas9 > 0) {
+            const sec9 = (+m9[1]) * 3600 + (+m9[2]) * 60 + (+m9[3]);
+            const cle9 = Math.floor(sec9 / pas9);
+            if (vues9.has(cle9)) continue;
+            vues9.add(cle9);
+          }
           const plat0 = {};
           exAplatir(brut, '', plat0);
           delete plat0.tl;
-          const plat = { 'heure (Paris)': brut.tl || '' };
+          const plat = { 'heure (Paris)': heure9 };
           for (const k of Object.keys(plat0)) {
             const k2 = k.replace(/^circuits\.([AB])\.satellites\./, '')
                         .replace(/^circuits\.([AB])\./, 'circuit $1.');
@@ -5453,7 +5495,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1509c — ui ' + LOT + ' · lot 60 — 15/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1509d — ui ' + LOT + ' · lot 61 — 15/09/2026';
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
 /* ══════════════════════════════════════════════════════════════════════════
