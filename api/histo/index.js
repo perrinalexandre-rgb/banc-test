@@ -1,7 +1,13 @@
 /* =========================================================================
- *  enovaQ — api/histo/index.js — VERSION 2.1 (15/09/2026)
+ *  enovaQ — api/histo/index.js — VERSION 2.2 (15/09/2026, soir)
  *  -----------------------------------------------------------------------
- *  REMPLACE la v2 du 12/09. Difference UNIQUE : ZERO DEPENDANCE — plus
+ *  REMPLACE la v2.1. En plus du ZERO DEPENDANCE : la fonction ne peut
+ *  PLUS mourir en silence (« Backend call failure ») — budget de temps
+ *  interne : si la lecture approche la limite d'Azure, elle repond un
+ *  message PROPRE disant l'etape atteinte ; connexions reutilisees
+ *  (beaucoup plus rapide) ; et essai=3 chronometre une vraie lecture.
+ *  -----------------------------------------------------------------------
+ *  REMPLACE la v2 du 12/09. Difference : ZERO DEPENDANCE — plus
  *  aucun « require » de bibliotheque a installer. La lecture du stockage
  *  Azure se fait en direct (https + crypto, fournis par Node lui-meme).
  *  Si la v2 mourait au demarrage avec « Cannot find module
@@ -36,6 +42,8 @@ const CONTENEUR   = "histo";
 const TRANCHE     = 2 * 1024 * 1024;
 const FENETRE_MAX = 61;
 const XMS_VERSION = "2020-10-02";
+const AGENT = new https.Agent({ keepAlive: true, maxSockets: 4 });
+const BUDGET_MS = 22000;   /* Azure coupe vers 30 s : on repond AVANT, proprement */
 
 /* ----------------------------------------------------------------------
  *  Connexion : on lit AccountName / AccountKey / (BlobEndpoint ou
@@ -97,7 +105,8 @@ function requete(cpt, methode, chemin, params, range) {
       ? "?" + cles.map(k => k + "=" + encodeURIComponent(params[k])).join("&")
       : "";
     const req = https.request(
-      { host: cpt.hote, path: chemin + qs, method: methode, headers: enTetes },
+      { host: cpt.hote, path: chemin + qs, method: methode, headers: enTetes,
+        agent: AGENT },
       rep => {
         const morceaux = [];
         rep.on("data", m => morceaux.push(m));
@@ -108,7 +117,7 @@ function requete(cpt, methode, chemin, params, range) {
         }));
       });
     req.on("error", rejeter);
-    req.setTimeout(20000, () => { req.destroy(new Error("delai stockage")); });
+    req.setTimeout(8000, () => { req.destroy(new Error("delai stockage (8 s)")); });
     req.end();
   });
 }
@@ -133,7 +142,7 @@ async function lirePlage(cpt, jour, debut, longueur) {
 
 async function heureApres(cpt, jour, offset, taille) {
   const bout = await lirePlage(cpt, jour, offset,
-                               Math.min(64 * 1024, taille - offset));
+                               Math.min(8 * 1024, taille - offset));
   let t = bout.toString("utf8");
   if (offset > 0) {
     const nl = t.indexOf("\n");
@@ -148,6 +157,9 @@ async function heureApres(cpt, jour, offset, taille) {
 
 module.exports = async function (context, req) {
   const q = (req.query || {});
+  const t0 = Date.now();
+  let etape = "depart";
+  const tempsMort = () => Date.now() - t0 > BUDGET_MS;
   const tetes = {
     "Content-Type": "text/plain; charset=utf-8",
     "Access-Control-Allow-Origin": "*",
@@ -162,7 +174,7 @@ module.exports = async function (context, req) {
   try {
     if (q.essai === "1") {
       const cpt = compte();
-      json(200, { ok: true, version: "v2.1 (15/09/2026, zero dependance)",
+      json(200, { ok: true, version: "v2.2 (15/09/2026, zero dependance, budget interne)",
                   connexion: cpt ? cpt.source : "AUCUNE — a configurer",
                   compte: cpt ? cpt.nom : null,
                   conteneur_attendu: CONTENEUR });
@@ -181,13 +193,33 @@ module.exports = async function (context, req) {
       const jour = q.jour || new Date().toISOString().slice(0, 10);
       let taille = -1;
       try { taille = await tailleBlob(cpt, jour); } catch (e) { /* laisse -1 */ }
-      json(200, { ok: true, version: "v2.1", conteneurs,
+      json(200, { ok: true, version: "v2.2", conteneurs,
                   conteneur_attendu: CONTENEUR,
                   blob_du_jour: jour + ".jsonl",
                   present: taille >= 0, taille: Math.max(0, taille) });
       return;
     }
 
+    if (q.essai === "3") {           /* une VRAIE lecture, chronometree */
+      const j3 = String(q.jour || new Date().toISOString().slice(0, 10));
+      etape = "essai3-head";
+      const t1 = Date.now();
+      const taille3 = await tailleBlob(cpt, j3);
+      const msHead = Date.now() - t1;
+      if (taille3 < 0) { json(404, { erreur: "pas d'historique le " + j3 }); return; }
+      etape = "essai3-debut";
+      const t2 = Date.now();
+      const hDeb = await heureApres(cpt, j3, 0, taille3);
+      const msDeb = Date.now() - t2;
+      etape = "essai3-milieu";
+      const t3 = Date.now();
+      const hMil = await heureApres(cpt, j3, Math.floor(taille3 / 2), taille3);
+      const msMil = Date.now() - t3;
+      json(200, { ok: true, version: "v2.2", jour: j3, taille: taille3,
+                  ms_head: msHead, tl_debut: hDeb, ms_debut: msDeb,
+                  tl_milieu: hMil, ms_milieu: msMil, ms_total: Date.now() - t0 });
+      return;
+    }
     const jour = String(q.jour || "");
     let de = String(q.de || "00:00"), a = String(q.a || "24:00");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(jour)) { json(400, { erreur: "jour attendu AAAA-MM-JJ" }); return; }
@@ -202,13 +234,17 @@ module.exports = async function (context, req) {
       return;
     }
 
+    etape = "taille";
     const taille = await tailleBlob(cpt, jour);
     if (taille < 0)  { json(404, { erreur: "pas d'historique le " + jour }); return; }
     if (taille === 0){ json(404, { erreur: "historique vide le " + jour }); return; }
 
     const cible = de + ":00";
     let bas = 0, haut = taille;
-    for (let i = 0; i < 22 && haut - bas > TRANCHE; i++) {
+    for (let i = 0; i < 26 && haut - bas > TRANCHE; i++) {
+      etape = "dichotomie " + i + " [" + bas + ".." + haut + "]";
+      if (tempsMort()) { json(500, { erreur: "budget depasse a l'etape " + etape,
+                                     ms: Date.now() - t0 }); return; }
       const mi = Math.floor((bas + haut) / 2);
       const h = await heureApres(cpt, jour, mi, taille);
       if (h === null) { haut = mi; continue; }
@@ -218,6 +254,9 @@ module.exports = async function (context, req) {
     const finFen = a === "24:00" ? "99:99:99" : a + ":00";
     let position = bas, reste = "", sorties = [], fini = false;
     while (position < taille && !fini) {
+      etape = "lecture " + position + "/" + taille + " (" + sorties.length + " lignes)";
+      if (tempsMort()) { json(500, { erreur: "budget depasse a l'etape " + etape,
+                                     ms: Date.now() - t0 }); return; }
       const morceau = await lirePlage(cpt, jour, position,
                                       Math.min(TRANCHE, taille - position));
       position += morceau.length;
@@ -242,6 +281,8 @@ module.exports = async function (context, req) {
     context.res = { status: 200, headers: tetes,
                     body: sorties.length ? sorties.join("\n") + "\n" : "" };
   } catch (e) {
-    json(500, { erreur: "histo v2.1 : " + (e && e.message ? e.message : String(e)) });
+    json(500, { erreur: "histo v2.2 [" + etape + "] : "
+                        + (e && e.message ? e.message : String(e)),
+                ms: Date.now() - t0 });
   }
 };
