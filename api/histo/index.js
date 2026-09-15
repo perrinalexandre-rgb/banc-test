@@ -1,7 +1,13 @@
 /* =========================================================================
- *  enovaQ — api/histo/index.js — VERSION 2.2 (15/09/2026, soir)
+ *  enovaQ — api/histo/index.js — VERSION 2.3 (15/09/2026, nuit)
  *  -----------------------------------------------------------------------
- *  REMPLACE la v2.1. En plus du ZERO DEPENDANCE : la fonction ne peut
+ *  REMPLACE la v2.2 (dont les sondes de reperage, reduites a 8 Ko,
+ *  rataient l'heure « tl » ecrite en FIN de ligne apres ~6 Ko de
+ *  satellites : le reperage echouait et la lecture repartait du DEBUT du
+ *  fichier — d'ou le « budget depasse... 0 lignes »). v2.3 : sondes de
+ *  24 Ko qui cherchent « tl » N'IMPORTE OU dans la ligne, et si le
+ *  reperage doute, un echantillonnage lineaire de secours encadre la
+ *  fenetre en 11 sondes. En plus du ZERO DEPENDANCE : la fonction ne peut
  *  PLUS mourir en silence (« Backend call failure ») — budget de temps
  *  interne : si la lecture approche la limite d'Azure, elle repond un
  *  message PROPRE disant l'etape atteinte ; connexions reutilisees
@@ -141,18 +147,30 @@ async function lirePlage(cpt, jour, debut, longueur) {
 }
 
 async function heureApres(cpt, jour, offset, taille) {
+  /* v2.3 : « tl » est ecrit en FIN de ligne (apres ~6 Ko de satellites) —
+   * on lit 24 Ko et on prend le PREMIER « tl » complet apres le premier
+   * saut de ligne, ou qu'il soit dans sa ligne. */
   const bout = await lirePlage(cpt, jour, offset,
-                               Math.min(8 * 1024, taille - offset));
+                               Math.min(24 * 1024, taille - offset));
   let t = bout.toString("utf8");
   if (offset > 0) {
     const nl = t.indexOf("\n");
-    if (nl < 0) return null;
-    t = t.slice(nl + 1);
+    if (nl >= 0) t = t.slice(nl + 1);
   }
-  const fin = t.indexOf("\n");
-  const ligne = fin >= 0 ? t.slice(0, fin) : t;
-  const m = /"tl"\s*:\s*"(\d\d:\d\d:\d\d)"/.exec(ligne);
+  const m = /"tl"\s*:\s*"(\d\d:\d\d:\d\d)"/.exec(t);
   return m ? m[1] : null;
+}
+/* v2.3 : secours si la dichotomie doute — 11 sondes reparties encadrent
+ * la cible ; on retient le plus grand offset dont l'heure est AVANT elle. */
+async function encadrerParEchantillons(cpt, jour, taille, cible) {
+  let bas = 0;
+  for (let k = 1; k <= 10; k++) {
+    const off = Math.floor((taille * k) / 11);
+    const h = await heureApres(cpt, jour, off, taille);
+    if (h !== null && h < cible) bas = off;
+    if (h !== null && h >= cible) break;
+  }
+  return bas;
 }
 
 module.exports = async function (context, req) {
@@ -174,7 +192,7 @@ module.exports = async function (context, req) {
   try {
     if (q.essai === "1") {
       const cpt = compte();
-      json(200, { ok: true, version: "v2.2 (15/09/2026, zero dependance, budget interne)",
+      json(200, { ok: true, version: "v2.3 (15/09/2026, sondes fin-de-ligne)",
                   connexion: cpt ? cpt.source : "AUCUNE — a configurer",
                   compte: cpt ? cpt.nom : null,
                   conteneur_attendu: CONTENEUR });
@@ -193,7 +211,7 @@ module.exports = async function (context, req) {
       const jour = q.jour || new Date().toISOString().slice(0, 10);
       let taille = -1;
       try { taille = await tailleBlob(cpt, jour); } catch (e) { /* laisse -1 */ }
-      json(200, { ok: true, version: "v2.2", conteneurs,
+      json(200, { ok: true, version: "v2.3", conteneurs,
                   conteneur_attendu: CONTENEUR,
                   blob_du_jour: jour + ".jsonl",
                   present: taille >= 0, taille: Math.max(0, taille) });
@@ -215,7 +233,7 @@ module.exports = async function (context, req) {
       const t3 = Date.now();
       const hMil = await heureApres(cpt, j3, Math.floor(taille3 / 2), taille3);
       const msMil = Date.now() - t3;
-      json(200, { ok: true, version: "v2.2", jour: j3, taille: taille3,
+      json(200, { ok: true, version: "v2.3", jour: j3, taille: taille3,
                   ms_head: msHead, tl_debut: hDeb, ms_debut: msDeb,
                   tl_milieu: hMil, ms_milieu: msMil, ms_total: Date.now() - t0 });
       return;
@@ -240,15 +258,22 @@ module.exports = async function (context, req) {
     if (taille === 0){ json(404, { erreur: "historique vide le " + jour }); return; }
 
     const cible = de + ":00";
-    let bas = 0, haut = taille;
+    let bas = 0, haut = taille, nuls = 0;
     for (let i = 0; i < 26 && haut - bas > TRANCHE; i++) {
-      etape = "dichotomie " + i + " [" + bas + ".." + haut + "]";
+      etape = "dichotomie " + i + " [" + bas + ".." + haut + "] nuls=" + nuls;
       if (tempsMort()) { json(500, { erreur: "budget depasse a l'etape " + etape,
                                      ms: Date.now() - t0 }); return; }
       const mi = Math.floor((bas + haut) / 2);
       const h = await heureApres(cpt, jour, mi, taille);
-      if (h === null) { haut = mi; continue; }
+      if (h === null) {
+        if (++nuls > 3) break;              /* le reperage doute : secours */
+        haut = mi; continue;
+      }
       if (h < cible) bas = mi; else haut = mi;
+    }
+    if (nuls > 3) {
+      etape = "echantillonnage de secours";
+      bas = await encadrerParEchantillons(cpt, jour, taille, cible);
     }
 
     const finFen = a === "24:00" ? "99:99:99" : a + ":00";
@@ -281,7 +306,7 @@ module.exports = async function (context, req) {
     context.res = { status: 200, headers: tetes,
                     body: sorties.length ? sorties.join("\n") + "\n" : "" };
   } catch (e) {
-    json(500, { erreur: "histo v2.2 [" + etape + "] : "
+    json(500, { erreur: "histo v2.3 [" + etape + "] : "
                         + (e && e.message ? e.message : String(e)),
                 ms: Date.now() - t0 });
   }
