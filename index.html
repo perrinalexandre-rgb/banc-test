@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · ui 1509a.58 (lot 58, 15/09/2026)
+   enovaQ — pupitre de supervision · ui 1509c.60 (lot 60, 15/09/2026)
    Nom officiel du fichier : « enovaQ pupitre 3108b.html » (règle de nommage
    client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
    enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
@@ -532,6 +532,7 @@ header{border-bottom:1px solid var(--line);background:var(--panel)}
 
 /* ══ LE PUPITRE (deux trains + organes partagés) ═══════════════════════ */
 .pupitre{margin-top:6px;display:grid;gap:14px}
+.organs-bas{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
 .rail{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
   border-left:3px solid var(--c);padding:14px 16px 16px;position:relative}
 .rail.a{--c:var(--cuivre)} .rail.b{--c:var(--verdigris)}
@@ -1050,7 +1051,7 @@ body.salon #salonVue{padding:3vh 4vw 2vh}
 @keyframes voilePulse{50%{opacity:.45}}
 body:not(.salon) #schVoile{display:none}
 #schPhoto{position:fixed;z-index:80;display:none;inset:0;margin:auto;
-  width:min(92vw,1200px);height:min(92vh,1000px);flex-direction:column;
+  width:min(80vw,940px);height:min(82vh,820px);flex-direction:column;
   align-items:center;justify-content:center;gap:8px;background:#fff;
   border:1px solid rgba(0,0,0,.2);border-radius:12px;padding:6px;
   box-shadow:0 14px 40px rgba(0,0,0,.25)}
@@ -1095,13 +1096,16 @@ body:not(.salon) #schVoile{display:none}
   <h2 class="eyebrow">Les deux trains</h2>
   <section class="pupitre" id="pupitre">
     <article class="rail a" id="railA"></article>
-    <div class="spine">
-      <div class="tie up" id="tieA"></div>
-      <div class="spine-lbl">Organes partagés · une pompe, une vanne 3 voies</div>
-      <div class="organs" id="organs"></div>
-      <div class="tie down" id="tieB"></div>
-    </div>
     <article class="rail b" id="railB"></article>
+  </section>
+  <!-- Lot 59 (client 15/09) : les organes PARTAGÉS n'ont rien à faire
+       coincés ENTRE les circuits — bande pleine largeur DESSOUS, avec la
+       réserve 300 L et le Maddalena regroupés. Les consommations « depuis
+       la date de départ » s'y afficheront avec ce chantier-là. -->
+  <section class="carte" id="partage" style="margin-top:14px">
+    <div class="spine-lbl" style="margin-bottom:8px">Organes partagés · une
+      pompe, une vanne 3 voies, la réserve 300 L, le Maddalena</div>
+    <div class="organs organs-bas" id="organs"></div>
   </section>
 
   <h2 class="eyebrow">Satellites</h2>
@@ -1346,7 +1350,7 @@ const API = {
   histo:     '/api/histo',    // GET  → lignes d'historique (lot 58 : rétablissement)
 };
 const DEVICE     = 'chaufferie-01';
-const LOT        = '1509a.58';  // marqueur « ui » — bandeau et pied de page
+const LOT        = '1509c.60';  // marqueur « ui » — bandeau et pied de page
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -2358,8 +2362,32 @@ function rendreOrganes(d) {
              + "c'est la vraie eau froide, pas l'eau qui a tiédi dans le tube.";
   box.appendChild(oEfs);
 
+  { /* Lot 59 : la réserve 300 L et le Maddalena rejoignent le matériel
+       partagé — les consommations « depuis la date de départ » viendront
+       s'afficher ici avec ce chantier-là. */
+    const rs = ch.reserve || {};
+    if (has(rs.bas_mouille)) {
+      const mp2 = !has(rs.milieu_present) || !!rs.milieu_present;
+      box.appendChild(organe('', 'Réserve 300 L',
+        (mp2 && rs.milieu_mouille) ? '≥ 250' : rs.bas_mouille ? '200–250' : '< 200',
+        'L',
+        (ch.compresseur && ch.compresseur.etat === 1)
+          ? "compresseur d'air EN MARCHE" : 'flotteur haut non raccordé'));
+    }
+    const ma2 = ch.maddalena || {};
+    if (has(ma2.t_depart_c) || has(ma2.energie_mwh))
+      box.appendChild(organe('', 'Maddalena',
+        has(ma2.t_depart_c) ? n(ma2.t_depart_c) : '—', '°C',
+        has(ma2.energie_mwh)
+          ? 'énergie ' + n(ma2.energie_mwh, 3) + ' ' + (ma2.energie_unite || 'MWh')
+          : 'départ production'));
+  }
+
+  /* Lot 59 : les « liens » visuels tieA/tieB ont disparu avec la colonne
+     centrale — garde tolerante si un vieux HTML les porte encore. */
   [['#tieA', 0, 'var(--cuivre)'], ['#tieB', 1, 'var(--verdigris)']].forEach(([sel, idx, col]) => {
     const t = trains[idx], tie = $(sel);
+    if (!tie) return;
     const live = !!t && POMPE_ETAPES.includes(codeEtape(t.etape)) && pp > 0;
     tie.style.setProperty('--tc', col);
     tie.classList.toggle('live', live);
@@ -5425,7 +5453,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1509a — ui ' + LOT + ' · lot 58 — 15/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1509c — ui ' + LOT + ' · lot 60 — 15/09/2026';
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
 /* ══════════════════════════════════════════════════════════════════════════
@@ -5514,7 +5542,23 @@ const PHOTOS_ALB = {  /* lot 56 : albums (client 14/09) — sources 1280 px */
    au centre de l'ecran ; plusieurs photos = defilement (fleches, molette,
    points). Le survol previsualise ; un clic VERROUILLE l'album (croix,
    Echap ou clic sur le voile pour fermer). */
-const alb = {id: null, i: 0, fixe: false, tFerme: null};
+const alb = {id: null, i: 0, fixe: false, tFerme: null, mx: -1, my: -1};
+/* Lot 60 (client, diagnostic EXACT : « quand elle apparait, la souris
+   n'est plus sur la fiche ») : la photo s'ouvre au centre, elle recouvre
+   le curseur -> la cuve recoit mouseleave -> fermeture -> la cuve repasse
+   sous le curseur -> reouverture -> CLIGNOTEMENT. Deux verrous :
+   (1) on suit la souris, et la fermeture est REFUSEE tant qu'elle est
+       dans le rectangle de la photo — meme immobile, sans attendre un
+       mouseenter que le navigateur n'envoie pas toujours ;
+   (2) rouvrir un album DEJA ouvert ne le reconstruit plus (zero flash). */
+document.addEventListener('mousemove', ev => { alb.mx = ev.clientX; alb.my = ev.clientY; });
+function albumSourisDessus() {
+  const ph = $('#schPhoto');
+  if (!ph || ph.style.display === 'none' || alb.mx < 0) return false;
+  const rc = ph.getBoundingClientRect();
+  return alb.mx >= rc.left && alb.mx <= rc.right &&
+         alb.my >= rc.top  && alb.my <= rc.bottom;
+}
 function albumRendre() {
   const ph = $('#schPhoto'); if (!ph) return;
   const lst = PHOTOS_ALB[alb.id] || [];
@@ -5546,16 +5590,40 @@ function albumRendre() {
   ph.style.display = 'flex';
 }
 function albumOuvrir(id, fixe) {
+  albumFixSouris();
   if (alb.tFerme) { clearTimeout(alb.tFerme); alb.tFerme = null; }
+  if (fixe) alb.fixe = true;
+  const ph = $('#schPhoto');
+  if (alb.id === id && ph && ph.style.display === 'flex') return;  /* lot 60 :
+    deja ouvert sur cet album — rien a reconstruire, zero clignotement */
   if (alb.id !== id) alb.i = 0;
   alb.id = id;
-  if (fixe) alb.fixe = true;
   albumRendre();
 }
 function albumFermer(force) {
+  if (!force && albumSourisDessus()) {        /* lot 60 : elle est SUR la
+    photo — on ne ferme pas, on re-verifiera en la quittant */
+    return;
+  }
   if (alb.fixe && !force) return;
   alb.fixe = false; alb.id = null;
   const ph = $('#schPhoto'); if (ph) ph.style.display = 'none';
+}
+/* Lot 59 : FIN DU CLIGNOTEMENT — la grande photo s'ouvrait SOUS la
+   souris, la cuve croyait le curseur parti, refermait, rouvrait, en
+   boucle. Désormais l'album est une EXTENSION de la cuve : la souris
+   dessus annule la fermeture ; elle ne se referme qu'en quittant les
+   deux (ou croix / Échap / clic pour verrouiller). */
+function albumFixSouris() {           /* pose une seule fois, des que #schPhoto existe */
+  const ph = $('#schPhoto');
+  if (!ph || ph._fixSouris) return;
+  ph._fixSouris = true;
+  ph.addEventListener('mouseenter', () => {
+    if (alb.tFerme) { clearTimeout(alb.tFerme); alb.tFerme = null; }
+  });
+  ph.addEventListener('mouseleave', () => {
+    alb.tFerme = setTimeout(() => albumFermer(false), 250);
+  });
 }
 document.addEventListener('keydown', ev => {
   const ph = $('#schPhoto');
