@@ -1,5 +1,5 @@
 /* =========================================================================
- *  enovaQ — api/histo/index.js — VERSION 2.3 (15/09/2026, nuit)
+ *  enovaQ — api/histo/index.js — VERSION 2.5 (15/09/2026 — + APERCU BRUT : on REGARDE le fichier)
  *  -----------------------------------------------------------------------
  *  REMPLACE la v2.2 (dont les sondes de reperage, reduites a 8 Ko,
  *  rataient l'heure « tl » ecrite en FIN de ligne apres ~6 Ko de
@@ -192,7 +192,7 @@ module.exports = async function (context, req) {
   try {
     if (q.essai === "1") {
       const cpt = compte();
-      json(200, { ok: true, version: "v2.3 (15/09/2026, sondes fin-de-ligne)",
+      json(200, { ok: true, version: "v2.5 (apercu brut)",
                   connexion: cpt ? cpt.source : "AUCUNE — a configurer",
                   compte: cpt ? cpt.nom : null,
                   conteneur_attendu: CONTENEUR });
@@ -211,13 +211,50 @@ module.exports = async function (context, req) {
       const jour = q.jour || new Date().toISOString().slice(0, 10);
       let taille = -1;
       try { taille = await tailleBlob(cpt, jour); } catch (e) { /* laisse -1 */ }
-      json(200, { ok: true, version: "v2.3", conteneurs,
+      json(200, { ok: true, version: "v2.4", conteneurs,
                   conteneur_attendu: CONTENEUR,
                   blob_du_jour: jour + ".jsonl",
                   present: taille >= 0, taille: Math.max(0, taille) });
       return;
     }
 
+    if (q.essai === "5") {   /* APERCU BRUT : les octets TELS QUELS — la
+                                 fin des hypotheses sur le format */
+      const j5 = String(q.jour || new Date().toISOString().slice(0, 10));
+      etape = "apercu-head";
+      const t5 = await tailleBlob(cpt, j5);
+      if (t5 < 0) { json(404, { erreur: "pas d'historique le " + j5 }); return; }
+      let pos = 0;
+      if (q.pos === "milieu") pos = Math.floor(t5 / 2);
+      else if (q.pos) pos = Math.max(0, Math.min(t5 - 1, parseInt(q.pos, 10) || 0));
+      etape = "apercu-lecture";
+      const bout = await lirePlage(cpt, j5, pos, Math.min(4096, t5 - pos));
+      context.res = { status: 200, headers: tetes,
+        body: "=== APERCU BRUT " + j5 + " — octets " + pos + " a "
+            + (pos + bout.length) + " sur " + t5 + " ===\n\n"
+            + bout.toString("utf8") };
+      return;
+    }
+    if (q.essai === "4") {           /* RADIOGRAPHIE : ou sont les heures ? */
+      const j4 = String(q.jour || new Date().toISOString().slice(0, 10));
+      etape = "radio-head";
+      const t4 = await tailleBlob(cpt, j4);
+      if (t4 < 0) { json(404, { erreur: "pas d'historique le " + j4 }); return; }
+      const points = [];
+      for (let k = 0; k <= 12; k++) {
+        etape = "radio " + k + "/12";
+        const off = Math.min(Math.floor((t4 * k) / 12), Math.max(0, t4 - 25000));
+        const h4 = await heureApres(cpt, j4, off, t4);
+        points.push({ pct: Math.round(k * 100 / 12), offset: off, tl: h4 });
+        if (tempsMort()) break;
+      }
+      json(200, { ok: true, version: "v2.4", jour: j4, taille: t4,
+                  points, ms: Date.now() - t0,
+                  lecture: "si les tl ne montent pas regulierement de 00:00 "
+                    + "vers 23:59, le fichier n'est pas chronologique "
+                    + "(horloge perdue aux redemarrages)" });
+      return;
+    }
     if (q.essai === "3") {           /* une VRAIE lecture, chronometree */
       const j3 = String(q.jour || new Date().toISOString().slice(0, 10));
       etape = "essai3-head";
@@ -233,7 +270,7 @@ module.exports = async function (context, req) {
       const t3 = Date.now();
       const hMil = await heureApres(cpt, j3, Math.floor(taille3 / 2), taille3);
       const msMil = Date.now() - t3;
-      json(200, { ok: true, version: "v2.3", jour: j3, taille: taille3,
+      json(200, { ok: true, version: "v2.4", jour: j3, taille: taille3,
                   ms_head: msHead, tl_debut: hDeb, ms_debut: msDeb,
                   tl_milieu: hMil, ms_milieu: msMil, ms_total: Date.now() - t0 });
       return;
@@ -278,8 +315,11 @@ module.exports = async function (context, req) {
 
     const finFen = a === "24:00" ? "99:99:99" : a + ":00";
     let position = bas, reste = "", sorties = [], fini = false;
+    let secoursFait = (nuls > 3), tranches = 0, tlVuMin = null, tlVuMax = null;
     while (position < taille && !fini) {
-      etape = "lecture " + position + "/" + taille + " (" + sorties.length + " lignes)";
+      etape = "lecture " + position + "/" + taille + " (" + sorties.length
+            + " lignes, depart=" + bas + ", nuls=" + nuls
+            + (tlVuMin ? ", vu " + tlVuMin + ".." + tlVuMax : "") + ")";
       if (tempsMort()) { json(500, { erreur: "budget depasse a l'etape " + etape,
                                      ms: Date.now() - t0 }); return; }
       const morceau = await lirePlage(cpt, jour, position,
@@ -293,9 +333,21 @@ module.exports = async function (context, req) {
       for (const ligne of texte.split("\n")) {
         const m = /"tl"\s*:\s*"(\d\d:\d\d:\d\d)"/.exec(ligne);
         if (!m) continue;
+        if (!tlVuMin || m[1] < tlVuMin) tlVuMin = m[1];
+        if (!tlVuMax || m[1] > tlVuMax) tlVuMax = m[1];
         if (m[1] < cible) continue;
         if (m[1] >= finFen) { fini = true; break; }
         sorties.push(ligne);
+      }
+      /* v2.4 : REPRISE EN VOL — trois tranches sans une ligne de fenetre =
+       * le point de depart etait faux (fichier pas chronologique ?) : on
+       * repere par echantillons et on repart de la, une seule fois. */
+      tranches++;
+      if (!fini && !sorties.length && tranches >= 3 && !secoursFait) {
+        secoursFait = true;
+        etape = "reprise par echantillons";
+        const bas2 = await encadrerParEchantillons(cpt, jour, taille, cible);
+        if (bas2 > position) { bas = bas2; position = bas2; reste = ""; tranches = 0; }
       }
     }
     if (!fini && reste) {
@@ -306,7 +358,7 @@ module.exports = async function (context, req) {
     context.res = { status: 200, headers: tetes,
                     body: sorties.length ? sorties.join("\n") + "\n" : "" };
   } catch (e) {
-    json(500, { erreur: "histo v2.3 [" + etape + "] : "
+    json(500, { erreur: "histo v2.4 [" + etape + "] : "
                         + (e && e.message ? e.message : String(e)),
                 ms: Date.now() - t0 });
   }
