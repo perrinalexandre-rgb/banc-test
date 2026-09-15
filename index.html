@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · ui 1509d.61 (lot 61, 15/09/2026)
+   enovaQ — pupitre de supervision · ui 1509f.63 (lot 63, 15/09/2026)
    Nom officiel du fichier : « enovaQ pupitre 3108b.html » (règle de nommage
    client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
    enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
@@ -866,6 +866,10 @@ table.sattab tr.elec-muet td{opacity:.45}
 .btnvid:disabled{opacity:.6;cursor:default}
 .vidmsg{margin-top:6px;font-size:12.5px;line-height:1.45;color:var(--ink2);
   border-left:3px solid var(--line);padding-left:8px}
+.vidmsg.ex-busy{color:var(--ecs,#c06712);font-weight:600}
+.vidmsg.ex-busy::after{content:'';display:inline-block;width:1.2em;text-align:left;
+  animation:exPts 1.2s steps(4,end) infinite}
+@keyframes exPts{0%{content:''}25%{content:' .'}50%{content:' ..'}75%{content:' ...'}}
 .vidmsg.err{color:var(--alert);border-left-color:var(--alert)}
 .recup-attente{margin-top:6px;font-size:12.5px;color:var(--ink2);
   border-left:3px solid var(--line);padding-left:8px;font-style:italic}
@@ -1298,7 +1302,7 @@ Exemple : hier 10:00 → hier 11:00 = 720 lignes.</div>
       <div class="tabwrap"><table class="sattab" id="cfgSats"></table></div>
       <details style="margin-top:18px">
         <summary style="cursor:pointer;font-family:var(--fs-cond);font-weight:600;color:var(--ink2)">
-          Réparation ponctuelle du 11/09 — reposer les nombres de remplissages
+          RÉPARER LES COMPTEURS EFFACÉS — remettre les vrais totaux (automatique)
         </summary>
         <div class="fich-ctrl" id="poseRempl" style="margin-top:8px">
           <button id="autoRet" style="font-weight:700">Rétablir AUTOMATIQUEMENT
@@ -1360,7 +1364,7 @@ const API = {
   histo:     '/api/histo',    // GET  → lignes d'historique (lot 58 : rétablissement)
 };
 const DEVICE     = 'chaufferie-01';
-const LOT        = '1509d.61';  // marqueur « ui » — bandeau et pied de page
+const LOT        = '1509f.63';  // marqueur « ui » — bandeau et pied de page
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -4790,6 +4794,18 @@ function exEtat(msg, err) {
   const e = $('#ex_etat'); if (!e) return;
   e.textContent = msg; e.className = 'vidmsg' + (err ? ' err' : '');
 }
+/* Lot 62 (client : « si tu travailles, DIS-LE clairement ») : pendant tout
+   le travail, une ligne VIVANTE — préfixe explicite, points animés, tranche
+   n/total, lignes reçues, chrono — et la main est rendue au navigateur
+   pendant les gros aplatissages pour que la page ne fige jamais muette. */
+let exT0 = 0;
+function exTravail(msg) {
+  const e = $('#ex_etat'); if (!e) return;
+  const sec = exT0 ? Math.round((Date.now() - exT0) / 1000) + ' s' : '';
+  e.textContent = 'TRAVAIL EN COURS — ' + msg + (sec ? '  ·  ' + sec : '');
+  e.className = 'vidmsg ex-busy';
+}
+function exSouffle() { return new Promise(rz => setTimeout(rz, 0)); }
 function exAssurerXLSX() {
   return new Promise((resoudre, rejeter) => {
     if (typeof XLSX !== 'undefined') { resoudre(); return; }
@@ -4865,8 +4881,17 @@ async function exExtraire() {
       !confirm(jours.length + ' jours à extraire — le fichier sera très gros. Continuer ?')) return;
   $('#ex_go').disabled = true;
   try {
-    exEtat('Préparation…');
+    exT0 = Date.now();
+    exTravail('préparation (chargement du moteur Excel)');
     await exAssurerXLSX();
+    let trFaites = 0;
+    let trTotal = 0;
+    for (const jour9 of jours) {
+      const de9 = (jour9 === j1) ? h1 : '00:00';
+      const a9  = (jour9 === j2) ? (h2 === '23:59' ? '24:00' : h2) : '24:00';
+      trTotal += exTranchesHeure(de9, a9).length;
+    }
+    let lignesRecues = 0;
     const classeur = XLSX.utils.book_new();
     let totalLignes = 0, joursOk = 0;
     for (const jour of jours) {
@@ -4880,8 +4905,10 @@ async function exExtraire() {
       const tranches = exTranchesHeure(de, a);
       let texte = '', absent = false;
       for (const [t1, t2] of tranches) {
-        exEtat('Lecture du ' + jour + ' — ' + t1 + ' → '
-             + (t2 === '24:00' ? 'minuit' : t2) + '…');
+        trFaites++;
+        exTravail('lecture du ' + jour + ', ' + t1 + ' → '
+             + (t2 === '24:00' ? 'minuit' : t2) + '  ·  tranche ' + trFaites
+             + '/' + trTotal + '  ·  ' + lignesRecues + ' lignes reçues');
         /* Lot 61 (client 15/09, « résous ce problème de microcoupure ») :
            une grande plage = des dizaines de requêtes ; UNE microcoupure
            réseau ne doit plus tout casser — chaque tranche est retentée
@@ -4911,13 +4938,23 @@ async function exExtraire() {
           throw new Error('le serveur répond ' + r.status + ' sur ' + jour +
                           (det ? ' — ' + det : ''));
         }
-        texte += await r.text();
+        { const b9 = await r.text(); texte += b9;
+          lignesRecues += (b9.match(/\n/g) || []).length; }
       }
       if (absent) { exEtat("Pas d'historique le " + jour + ' — jour sauté.'); continue; }
       const pas9 = parseInt(($('#ex_pas') && $('#ex_pas').value) || '0', 10);
       const vues9 = new Set();
       const lignes = [];
-      for (const l of texte.split('\n')) {
+      const brutes9 = texte.split('\n');
+      exTravail('mise en tableau du ' + jour + ' (0/' + brutes9.length + ' lignes)');
+      await exSouffle();
+      let i9 = 0;
+      for (const l of brutes9) {
+        if (++i9 % 2500 === 0) {
+          exTravail('mise en tableau du ' + jour + ' (' + i9 + '/'
+                  + brutes9.length + ' lignes)');
+          await exSouffle();
+        }
         if (!l.trim()) continue;
         try {
           const brut = JSON.parse(l);
@@ -4952,6 +4989,9 @@ async function exExtraire() {
         if (!colonnes.includes(k)) colonnes.push(k);
       const aoa = [colonnes];
       for (const l of lignes) aoa.push(colonnes.map(cc => (cc in l ? l[cc] : '')));
+      exTravail('construction de la feuille ' + jour + ' (' + lignes.length
+              + ' lignes × ' + colonnes.length + ' colonnes)');
+      await exSouffle();
       XLSX.utils.book_append_sheet(classeur, XLSX.utils.aoa_to_sheet(aoa), jour);
       totalLignes += lignes.length; joursOk++;
       exEtat(jour + ' : ' + lignes.length + ' lignes ajoutées.');
@@ -4960,6 +5000,8 @@ async function exExtraire() {
     else {
       const nom = 'enovaQ extraction ' + j1 + ' ' + h1.replace(':', 'h')
                 + ' - ' + j2 + ' ' + h2.replace(':', 'h') + '.xlsx';
+      exTravail("écriture du fichier Excel (c'est l'étape la plus longue)");
+      await exSouffle();
       XLSX.writeFile(classeur, nom);
       exEtat('Terminé : ' + joursOk + ' feuille(s), ' + totalLignes
            + ' lignes.\nFichier téléchargé : ' + nom);
@@ -5383,25 +5425,55 @@ function retLireLigne(texte) {
   return null;
 }
 async function retChercher() {
+  /* Lot 63 : on ne prend plus la PREMIERE ligne passable — on balaye les
+     13 ET 12/09 EN ENTIER et on garde la ligne au MAXIMUM de remplissages
+     (la derniere d'avant la casse du 12). Progression affichee n/48. */
   const et = $('#autoRetEtat');
   const jours = ['2026-09-13', '2026-09-12'];
+  let meilleur = null, faits = 0;
   for (const j2 of jours) {
     for (let h2 = 23; h2 >= 0; h2--) {
       const de = String(h2).padStart(2, '0') + ':00';
       const a2 = h2 === 23 ? '24:00' : String(h2 + 1).padStart(2, '0') + ':00';
-      et.textContent = 'recherche… ' + j2 + ' ' + de + '–' + a2;
+      faits++;
+      et.textContent = 'TRAVAIL EN COURS — examen ' + j2 + ' ' + de + '–' + a2
+                     + '  ·  tranche ' + faits + '/48'
+                     + (meilleur ? '  ·  meilleur : ' + meilleur.somme
+                                 + ' remplissages (' + meilleur.jour + ' '
+                                 + (meilleur.tl || '') + ')' : '');
       let r2;
       try { r2 = await fetch(API.histo + '?jour=' + j2 + '&de=' + de + '&a=' + a2); }
       catch (e2) { return {err: 'réseau : ' + (e2.message || e2)}; }
       if (r2.status === 404) continue;
       if (!r2.ok) return {err500: true, jour: j2};
       const trouve = retLireLigne(await r2.text());
-      if (trouve) { trouve.jour = j2; trouve.heure = de + '–' + a2; return trouve; }
+      if (trouve) {
+        let somme = 0;
+        RET_SATS.forEach(id2 => {
+          const s2 = trouve.par[id2];
+          if (s2 && has(s2.rempl_nb)) somme += s2.rempl_nb;
+        });
+        trouve.somme = somme; trouve.jour = j2; trouve.heure = de + '–' + a2;
+        if (!meilleur || somme > meilleur.somme) meilleur = trouve;
+      }
     }
   }
-  return {vide: true};
+  return meilleur || {vide: true};
+}
+function retActuel(id2) {
+  /* la valeur ACTUELLE publiee par l'automate, cuve par cuve */
+  const d = state.data || {};
+  let trouve = null;
+  ((d.circuits) || []).forEach(c2 => (c2.satellites || []).forEach(s2 => {
+    if (s2.sat_id === id2) trouve = s2;
+  }));
+  return trouve || {};
 }
 function retMontrer(t9) {
+  /* Lot 63 : le bouton n'ajoute plus betement l'historique — il calcule
+     LA DIFFERENCE (historique − actuel) pour que le total retombe JUSTE,
+     meme si une premiere repose partielle a deja eu lieu. Rien ne peut
+     etre double. Familles cochables. */
   const tab = $('#autoRetTab'); tab.textContent = '';
   const tb = document.createElement('table'); tb.className = 'mini-tab';
   const tr0 = document.createElement('tr');
@@ -5409,35 +5481,74 @@ function retMontrer(t9) {
     .forEach(h2 => { const th = document.createElement('th'); th.textContent = h2; tr0.appendChild(th); });
   tb.appendChild(tr0);
   const doses = {rempl: [], rech: [], vid: [], tiree: [], livree: []};
+  const dose9 = (hist, act, dec) => {
+    if (!has(hist)) return 0;
+    const d9 = Math.max(0, hist - (has(act) ? act : 0));
+    return dec ? Math.round(d9 * 10) / 10 : Math.round(d9);
+  };
   RET_SATS.forEach(id2 => {
     const s2 = t9.par[id2] || {};
+    const a2 = retActuel(id2);
     const tr = document.createElement('tr');
-    const td = v2 => { const d3 = document.createElement('td'); d3.textContent = v2; tr.appendChild(d3); };
-    td(id2);
-    td(has(s2.rempl_nb) ? s2.rempl_nb : '—');
-    td(has(s2.rempl_therm_nb) ? s2.rempl_therm_nb : '—');
-    td(has(s2.rech_nb_vid) ? s2.rech_nb_vid : '—');
-    td(has(s2.tiree_l) ? n(s2.tiree_l) : '—');
-    td(has(s2.conso_totale_l) ? n(s2.conso_totale_l) : '—');
+    const td = (hist, ajout) => {
+      const d3 = document.createElement('td');
+      d3.textContent = hist;
+      if (ajout !== undefined) {
+        const p9 = document.createElement('small');
+        p9.style.display = 'block';
+        p9.style.color = ajout > 0 ? '#2a7a4b' : '#999';
+        p9.textContent = ajout > 0 ? '+' + ajout + ' à ajouter' : 'déjà à jour';
+        d3.appendChild(p9);
+      }
+      tr.appendChild(d3);
+    };
+    const dR = dose9(s2.rempl_nb, a2.rempl_nb);
+    const dH = dose9(s2.rempl_therm_nb, a2.rempl_therm_nb || a2.rech_nb);
+    const dV = dose9(s2.rech_nb_vid, a2.rech_nb_vid);
+    const dT = dose9(s2.tiree_l, a2.tiree_l, 1);
+    const dL = dose9(s2.conso_totale_l, a2.conso_totale_l, 1);
+    const tdC = document.createElement('td'); tdC.textContent = id2; tr.appendChild(tdC);
+    td(has(s2.rempl_nb) ? s2.rempl_nb : '—', dR);
+    td(has(s2.rempl_therm_nb) ? s2.rempl_therm_nb : '—', dH);
+    td(has(s2.rech_nb_vid) ? s2.rech_nb_vid : '—', dV);
+    td(has(s2.tiree_l) ? n(s2.tiree_l) : '—', dT);
+    td(has(s2.conso_totale_l) ? n(s2.conso_totale_l) : '—', dL);
     tb.appendChild(tr);
-    doses.rempl.push(has(s2.rempl_nb) ? s2.rempl_nb : 0);
-    doses.rech.push(has(s2.rempl_therm_nb) ? s2.rempl_therm_nb : 0);
-    doses.vid.push(has(s2.rech_nb_vid) ? s2.rech_nb_vid : 0);
-    doses.tiree.push(has(s2.tiree_l) ? Math.round(s2.tiree_l * 10) / 10 : 0);
-    doses.livree.push(has(s2.conso_totale_l) ? Math.round(s2.conso_totale_l * 10) / 10 : 0);
+    doses.rempl.push(dR); doses.rech.push(dH); doses.vid.push(dV);
+    doses.tiree.push(dT); doses.livree.push(dL);
   });
-  tab.appendChild(el('p', null, 'Dernière ligne saine trouvée : ' + t9.jour
-    + ', ' + (t9.tl || t9.heure) + ' — ces valeurs seront AJOUTÉES aux '
-    + 'compteurs actuels (le total redevient juste).'));
+  tab.appendChild(el('p', null, 'Meilleure ligne de l\'historique : ' + t9.jour
+    + ', ' + (t9.tl || t9.heure) + ' (' + t9.somme + ' remplissages au total). '
+    + 'Le bouton ajoute LA DIFFÉRENCE entre ces valeurs et vos compteurs '
+    + 'actuels — le total redevient juste, rien ne peut être compté deux fois.'));
   tab.appendChild(tb);
+  const fam = el('div', null, '');
+  fam.style.margin = '8px 0';
+  const cases9 = {};
+  [['rempl', 'Remplissages'], ['rech', 'Réchauffages'], ['vid', 'dont vidange'],
+   ['tiree', 'Tirée'], ['livree', 'Livrée']].forEach(([k9, lb9]) => {
+    const l9 = document.createElement('label');
+    l9.style.marginRight = '14px';
+    const c9 = document.createElement('input');
+    c9.type = 'checkbox'; c9.checked = true; cases9[k9] = c9;
+    l9.appendChild(c9); l9.appendChild(document.createTextNode(' ' + lb9));
+    fam.appendChild(l9);
+  });
+  tab.appendChild(fam);
+  retMontrer._cases = cases9;
   const ok2 = el('button', null, 'Confirmer — tout rétablir maintenant');
   ok2.style.fontWeight = '700';
   ok2.addEventListener('click', async () => {
     ok2.disabled = true;
     $('#autoRetEtat').textContent = 'envoi de la repose groupée…';
-    await ordreRapide({rempl_nb_ajout: doses.rempl, rech_nb_ajout: doses.rech,
-                       rech_vid_ajout: doses.vid, tiree_ajout: doses.tiree,
-                       livree_ajout: doses.livree});
+    const c9 = retMontrer._cases || {};
+    const ordre9 = {};
+    if (!c9.rempl || c9.rempl.checked)  ordre9.rempl_nb_ajout = doses.rempl;
+    if (!c9.rech || c9.rech.checked)    ordre9.rech_nb_ajout  = doses.rech;
+    if (!c9.vid || c9.vid.checked)      ordre9.rech_vid_ajout = doses.vid;
+    if (!c9.tiree || c9.tiree.checked)  ordre9.tiree_ajout    = doses.tiree;
+    if (!c9.livree || c9.livree.checked) ordre9.livree_ajout  = doses.livree;
+    await ordreRapide(ordre9);
     $('#autoRetEtat').textContent = "déposé — appliqué à l'instant sûr : "
       + 'séries [D190]/[D201]/[D203], compteurs justes au tour suivant.';
     tab.textContent = '';
@@ -5495,7 +5606,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1509d — ui ' + LOT + ' · lot 61 — 15/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1509f — ui ' + LOT + ' · lot 63 — 15/09/2026';
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
 /* ══════════════════════════════════════════════════════════════════════════
