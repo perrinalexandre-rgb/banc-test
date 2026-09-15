@@ -1,5 +1,5 @@
 /* =========================================================================
- *  enovaQ — api/histo/index.js — VERSION 2.5 (15/09/2026 — + APERCU BRUT : on REGARDE le fichier)
+ *  enovaQ — api/histo/index.js — VERSION 2.6 (15/09/2026 — apercu AUTO-DIAGNOSTIC : signature + verdict)
  *  -----------------------------------------------------------------------
  *  REMPLACE la v2.2 (dont les sondes de reperage, reduites a 8 Ko,
  *  rataient l'heure « tl » ecrite en FIN de ligne apres ~6 Ko de
@@ -43,6 +43,7 @@
 
 const https = require("https");
 const crypto = require("crypto");
+const zlib = require("zlib");
 
 const CONTENEUR   = "histo";
 const TRANCHE     = 2 * 1024 * 1024;
@@ -192,7 +193,7 @@ module.exports = async function (context, req) {
   try {
     if (q.essai === "1") {
       const cpt = compte();
-      json(200, { ok: true, version: "v2.5 (apercu brut)",
+      json(200, { ok: true, version: "v2.6 (apercu auto-diagnostic)",
                   connexion: cpt ? cpt.source : "AUCUNE — a configurer",
                   compte: cpt ? cpt.nom : null,
                   conteneur_attendu: CONTENEUR });
@@ -218,8 +219,9 @@ module.exports = async function (context, req) {
       return;
     }
 
-    if (q.essai === "5") {   /* APERCU BRUT : les octets TELS QUELS — la
-                                 fin des hypotheses sur le format */
+    if (q.essai === "5") {   /* APERCU AUTO-DIAGNOSTIC : la fonction
+        identifie ELLE-MEME la nature du fichier et rend du TEXTE PUR,
+        copiable-collable — plus d'octets illisibles au navigateur. */
       const j5 = String(q.jour || new Date().toISOString().slice(0, 10));
       etape = "apercu-head";
       const t5 = await tailleBlob(cpt, j5);
@@ -228,11 +230,52 @@ module.exports = async function (context, req) {
       if (q.pos === "milieu") pos = Math.floor(t5 / 2);
       else if (q.pos) pos = Math.max(0, Math.min(t5 - 1, parseInt(q.pos, 10) || 0));
       etape = "apercu-lecture";
-      const bout = await lirePlage(cpt, j5, pos, Math.min(4096, t5 - pos));
-      context.res = { status: 200, headers: tetes,
-        body: "=== APERCU BRUT " + j5 + " — octets " + pos + " a "
-            + (pos + bout.length) + " sur " + t5 + " ===\n\n"
-            + bout.toString("utf8") };
+      const bout = await lirePlage(cpt, j5, pos, Math.min(64 * 1024, t5 - pos));
+      const hex = Array.from(bout.slice(0, 24))
+                       .map(b => b.toString(16).padStart(2, "0")).join(" ");
+      let verdict = "TEXTE (ou inconnu)", extrait = "";
+      const asciiOk = bout.slice(0, 512).every
+        ? null : null;
+      const part = bout.slice(0, 512);
+      let lisibles = 0;
+      for (const b of part)
+        if (b === 9 || b === 10 || b === 13 || (b >= 32 && b < 127)) lisibles++;
+      const ratio = lisibles / part.length;
+      if (bout[0] === 0x1f && bout[1] === 0x8b) {
+        verdict = "GZIP (fichier COMPRESSE)";
+        try {
+          const dec = zlib.gunzipSync(bout);
+          extrait = "\n--- 800 premiers caracteres DECOMPRESSES ---\n"
+                  + dec.slice(0, 800).toString("utf8");
+        } catch (e) {
+          try {
+            const inf = zlib.inflateSync(bout.slice(0), { finishFlush: zlib.constants.Z_SYNC_FLUSH });
+            extrait = "\n--- flux partiel decompresse ---\n" + inf.slice(0, 800).toString("utf8");
+          } catch (e2) {
+            extrait = "\n(tranche seule indecompressable : " + (e.message || e)
+                    + " — gzip MONOLITHIQUE probable : la lecture par tranches"
+                    + " est alors impossible telle quelle)";
+          }
+        }
+      } else if (bout[0] === 0x50 && bout[1] === 0x4b) verdict = "ZIP";
+      else if (bout[0] === 0xff && bout[1] === 0xfe) verdict = "UTF-16";
+      else if (ratio > 0.95) {
+        verdict = "TEXTE lisible (" + Math.round(ratio * 100) + " % ascii)";
+        extrait = "\n--- 800 premiers caracteres TELS QUELS ---\n"
+                + part.toString("utf8").slice(0, 800);
+      } else verdict = "BINAIRE inconnu (" + Math.round(ratio * 100) + " % lisible)";
+      context.res = { status: 200,
+        headers: { ...tetes, "Content-Type": "text/plain; charset=utf-8" },
+        body: [
+          "=== AUTO-DIAGNOSTIC " + j5 + " ===",
+          "taille du jour : " + t5 + " octets",
+          "position lue   : " + pos,
+          "signature hex  : " + hex,
+          "VERDICT        : " + verdict,
+          extrait,
+          "",
+          "(collez ce bloc tel quel dans la conversation)"
+        ].join("\n") };
       return;
     }
     if (q.essai === "4") {           /* RADIOGRAPHIE : ou sont les heures ? */
