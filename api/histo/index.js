@@ -1,5 +1,12 @@
 /* =========================================================================
- *  enovaQ — api/histo/index.js — VERSION 2.6 (15/09/2026 — apercu AUTO-DIAGNOSTIC : signature + verdict)
+ *  enovaQ — api/histo/index.js — VERSION 3 (15/09/2026 — DEFINITIVE : ecrite sur le format REEL constate)
+ *  -----------------------------------------------------------------------
+ *  La cause de TOUS les echecs v2->v2.6 tenait en une ligne : dans le
+ *  fichier reel, l'heure est datee — "tl":"2026-09-10T00:00:02" — et le
+ *  filtre exigeait un guillemet colle a HH:MM:SS : il ne matchait JAMAIS.
+ *  v3 : le filtre accepte les deux formes (avec ou sans date). Et « tl »
+ *  est l'heure du SERVEUR : le fichier est chronologique meme pendant
+ *  les redemarrages de l'automate — la dichotomie est fiable partout.
  *  -----------------------------------------------------------------------
  *  REMPLACE la v2.2 (dont les sondes de reperage, reduites a 8 Ko,
  *  rataient l'heure « tl » ecrite en FIN de ligne apres ~6 Ko de
@@ -49,6 +56,9 @@ const CONTENEUR   = "histo";
 const TRANCHE     = 2 * 1024 * 1024;
 const FENETRE_MAX = 61;
 const XMS_VERSION = "2020-10-02";
+/* v3 : l'heure de Paris dans « tl », AVEC ou SANS la date devant —
+ * "tl":"2026-09-10T08:53:57" comme "tl":"08:53:57" */
+const RE_TL = /"tl"\s*:\s*"(?:[^"]*T)?(\d\d:\d\d:\d\d)/;
 const AGENT = new https.Agent({ keepAlive: true, maxSockets: 4 });
 const BUDGET_MS = 22000;   /* Azure coupe vers 30 s : on repond AVANT, proprement */
 
@@ -158,7 +168,7 @@ async function heureApres(cpt, jour, offset, taille) {
     const nl = t.indexOf("\n");
     if (nl >= 0) t = t.slice(nl + 1);
   }
-  const m = /"tl"\s*:\s*"(\d\d:\d\d:\d\d)"/.exec(t);
+  const m = RE_TL.exec(t);
   return m ? m[1] : null;
 }
 /* v2.3 : secours si la dichotomie doute — 11 sondes reparties encadrent
@@ -193,7 +203,7 @@ module.exports = async function (context, req) {
   try {
     if (q.essai === "1") {
       const cpt = compte();
-      json(200, { ok: true, version: "v2.6 (apercu auto-diagnostic)",
+      json(200, { ok: true, version: "v3 (format reel : tl date, filtre corrige)",
                   connexion: cpt ? cpt.source : "AUCUNE — a configurer",
                   compte: cpt ? cpt.nom : null,
                   conteneur_attendu: CONTENEUR });
@@ -212,7 +222,7 @@ module.exports = async function (context, req) {
       const jour = q.jour || new Date().toISOString().slice(0, 10);
       let taille = -1;
       try { taille = await tailleBlob(cpt, jour); } catch (e) { /* laisse -1 */ }
-      json(200, { ok: true, version: "v2.4", conteneurs,
+      json(200, { ok: true, version: "v3", conteneurs,
                   conteneur_attendu: CONTENEUR,
                   blob_du_jour: jour + ".jsonl",
                   present: taille >= 0, taille: Math.max(0, taille) });
@@ -291,7 +301,7 @@ module.exports = async function (context, req) {
         points.push({ pct: Math.round(k * 100 / 12), offset: off, tl: h4 });
         if (tempsMort()) break;
       }
-      json(200, { ok: true, version: "v2.4", jour: j4, taille: t4,
+      json(200, { ok: true, version: "v3", jour: j4, taille: t4,
                   points, ms: Date.now() - t0,
                   lecture: "si les tl ne montent pas regulierement de 00:00 "
                     + "vers 23:59, le fichier n'est pas chronologique "
@@ -313,7 +323,7 @@ module.exports = async function (context, req) {
       const t3 = Date.now();
       const hMil = await heureApres(cpt, j3, Math.floor(taille3 / 2), taille3);
       const msMil = Date.now() - t3;
-      json(200, { ok: true, version: "v2.4", jour: j3, taille: taille3,
+      json(200, { ok: true, version: "v3", jour: j3, taille: taille3,
                   ms_head: msHead, tl_debut: hDeb, ms_debut: msDeb,
                   tl_milieu: hMil, ms_milieu: msMil, ms_total: Date.now() - t0 });
       return;
@@ -374,7 +384,7 @@ module.exports = async function (context, req) {
       reste = texte.slice(derniereNL + 1);
       texte = texte.slice(0, derniereNL);
       for (const ligne of texte.split("\n")) {
-        const m = /"tl"\s*:\s*"(\d\d:\d\d:\d\d)"/.exec(ligne);
+        const m = RE_TL.exec(ligne);
         if (!m) continue;
         if (!tlVuMin || m[1] < tlVuMin) tlVuMin = m[1];
         if (!tlVuMax || m[1] > tlVuMax) tlVuMax = m[1];
@@ -394,14 +404,14 @@ module.exports = async function (context, req) {
       }
     }
     if (!fini && reste) {
-      const m = /"tl"\s*:\s*"(\d\d:\d\d:\d\d)"/.exec(reste);
+      const m = RE_TL.exec(reste);
       if (m && m[1] >= cible && m[1] < finFen) sorties.push(reste);
     }
 
     context.res = { status: 200, headers: tetes,
                     body: sorties.length ? sorties.join("\n") + "\n" : "" };
   } catch (e) {
-    json(500, { erreur: "histo v2.4 [" + etape + "] : "
+    json(500, { erreur: "histo v3 [" + etape + "] : "
                         + (e && e.message ? e.message : String(e)),
                 ms: Date.now() - t0 });
   }
