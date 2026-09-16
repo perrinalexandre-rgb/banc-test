@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609d.70 (lot 70, 16/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1609f.72 (lot 72, 16/09/2026)
    Nom officiel du fichier : « enovaQ pupitre 3108b.html » (règle de nommage
    client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
    enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
@@ -1389,7 +1389,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1609d.70';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1609f.72';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -2568,6 +2568,7 @@ function bilanEau(s) {
                      + "l'écart doit rester proche de zéro, au stock de la cuve près. "
                      + "N'a de sens que si les deux compteurs partent du même point zéro "
                      + "(RAZ sélective : « Eau livrée » ET « Eau tirée » ensemble).");
+
   if (tiree === null) {
     lg.appendChild(document.createTextNode(' · '));
     morceau('sortie pas encore vue',
@@ -3293,7 +3294,17 @@ function rendreSats(d) {
 
     const mEau = el('div', 'mini');
     SAT_EAU.forEach(spec => mEau.appendChild(statCase(spec, s, 'st')));
-    det.appendChild(famille('Eau', [bilanEau(s), mEau]));
+    det.appendChild(famille('Eau', [bilanEau(s)]));   /* lot 71 : la fiche
+       s'arrête à « tirée » — les mesures du puisage passent en avancé */
+    /* ── Lot 71 : PLIAGE À LA SOURCE — toutes les familles rendues APRÈS
+       « Eau » partent dans les infos avancées (clic = déplier). */
+    {
+      const av9 = el('div', 'sat-avance');
+      const appVrai9 = det.appendChild.bind(det);
+      det.appendChild = x9 => av9.appendChild(x9);
+      card._av9 = av9; card._app9 = appVrai9; card._det9 = det;
+    }
+    det.appendChild(famille('Puisage', [mEau]));   /* -> dans l'avancé */
 
     const mR = el('div', 'mini');
     SAT_REMPL.forEach(spec => mR.appendChild(statCase(spec, s, 'st')));
@@ -3362,6 +3373,33 @@ function rendreSats(d) {
     card.appendChild(det);
 
     if (s.sat_id === 'SA1') card.appendChild(simulSa1Row(d));   /* lot 47 : D188 */
+    if (card._app9) {   /* lot 71 : refermer le pliage et brancher le clic */
+      card._det9.appendChild = card._app9;
+      const av9 = card._av9;
+      card.querySelectorAll('button').forEach(b9 => {
+        const t9 = b9.textContent || '';
+        if (/Mesurer les pertes|Vidanger|Simulation puisage/.test(t9)) {
+          const w9 = b9.parentNode;
+          const cible9 = (w9 && w9 !== card && !w9.contains(av9)) ? w9 : b9;
+          if (!av9.contains(cible9)) av9.insertBefore(cible9, av9.firstChild);
+        }
+      });
+      const ind9 = el('div', 'sat-plus', 'cliquez la fiche : infos avancées & commandes');
+      card._det9.appendChild(ind9);
+      card._det9.appendChild(av9);
+      const id9 = s.sat_id;
+      card.classList.toggle('ouverte', state.satOuverts.has(id9));
+      card.style.cursor = 'pointer';
+      card._plie = true; card._satId = id9;   /* lot 72 : l'ancien plieur
+         (satPlierTout) voit la carte comme déjà traitée — plus JAMAIS de
+         second écouteur de clic (cause du double-toggle) */
+      card.addEventListener('click', ev9 => {
+        if (ev9.target.closest('button, input, select, a, textarea')) return;
+        const o9 = !card.classList.contains('ouverte');
+        card.classList.toggle('ouverte', o9);
+        if (o9) state.satOuverts.add(id9); else state.satOuverts.delete(id9);
+      });
+    }
     box.appendChild(card);
   }));
 
@@ -5675,7 +5713,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1609d — pupitre ' + LOT + ' · lot 70 — 16/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1609f — pupitre ' + LOT + ' · lot 72 — 16/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
