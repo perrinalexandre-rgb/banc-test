@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609.66 (lot 66, 16/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1609d.70 (lot 70, 16/09/2026)
    Nom officiel du fichier : « enovaQ pupitre 3108b.html » (règle de nommage
    client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
    enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
@@ -1378,8 +1378,18 @@ const DEVICE     = 'chaufferie-01';
 /* Lot 64 : le pupitre CONNAIT le pilote qu'il attend — s'il voit un autre
    programme tourner dans l'automate, il le dit en ROUGE. Fini la
    confusion page/puce. A mettre a jour a chaque livraison pilote. */
-const PILOTE_ATTENDU = '1609';
-const LOT        = '1609.66';   // marqueur « pupitre » — bandeau et pied
+const PILOTE_ATTENDU = '1609a';
+/* Lot 68 : on ne crie plus a l'egalite stricte — un pilote PLUS RECENT
+   que l'attendu est une bonne nouvelle, pas une alerte. Et le ton
+   redevient SOBRE (client : « etre clair, pas en faire des tonnes »). */
+function pilotePlusVieux(prog) {
+  const p9 = /^(\d{4})([a-z]?)/.exec(String(prog || ''));
+  const a9 = /^(\d{4})([a-z]?)/.exec(PILOTE_ATTENDU);
+  if (!p9 || !a9) return false;
+  if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
+  return (p9[2] || '') < (a9[2] || '');
+}
+const LOT        = '1609d.70';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -2090,9 +2100,10 @@ function rendreBandeau(d) {
   $('#mProg').textContent = d.prog || '—';
   { /* lot 64 : alarme claire si l'automate tourne un vieux pilote */
     const w9 = $('#mProgWrap');
-    const vieux = d.prog && d.prog !== PILOTE_ATTENDU;
-    if (w9) w9.classList.toggle('m-anormal', !!vieux);
-    if (vieux) $('#mProg').textContent = d.prog + ' — À FLASHER : ' + PILOTE_ATTENDU + ' (câble USB)';
+    const vieux = pilotePlusVieux(d.prog);
+  if (w9) w9.classList.remove('m-anormal');
+  if (vieux) $('#mProg').textContent = d.prog
+    + ' (mise à jour ' + PILOTE_ATTENDU + ' disponible, câble USB)';
   }
   const chh = d.chaufferie || {};                                /* lot 25 */
   $('#mHeure').textContent = chh.heure
@@ -5463,40 +5474,52 @@ function retLireLigne(texte) {
   return null;
 }
 async function retChercher() {
-  /* Lot 63 : on ne prend plus la PREMIERE ligne passable — on balaye les
-     13 ET 12/09 EN ENTIER et on garde la ligne au MAXIMUM de remplissages
-     (la derniere d'avant la casse du 12). Progression affichee n/48. */
+  /* Lot 70 : les DEUX effacements n'ont pas eu lieu le meme jour — on
+     balaye 13 -> 10/09 (96 tranches, ~3-5 min) et on garde DEUX lignes :
+     la meilleure pour les NOMBRES (max de remplissages, attendue au 11)
+     et la meilleure pour les LITRES (max de tiree, attendue au 13).
+     Chaque tranche est retentee 2 fois (microcoupures). */
   const et = $('#autoRetEtat');
-  const jours = ['2026-09-13', '2026-09-12'];
-  let meilleur = null, faits = 0;
+  const jours = ['2026-09-13', '2026-09-12', '2026-09-11', '2026-09-10'];
+  let mN = null, mL = null, faits = 0;
   for (const j2 of jours) {
     for (let h2 = 23; h2 >= 0; h2--) {
       const de = String(h2).padStart(2, '0') + ':00';
       const a2 = h2 === 23 ? '24:00' : String(h2 + 1).padStart(2, '0') + ':00';
       faits++;
       et.textContent = 'TRAVAIL EN COURS — examen ' + j2 + ' ' + de + '–' + a2
-                     + '  ·  tranche ' + faits + '/48'
-                     + (meilleur ? '  ·  meilleur : ' + meilleur.somme
-                                 + ' remplissages (' + meilleur.jour + ' '
-                                 + (meilleur.tl || '') + ')' : '');
-      let r2;
-      try { r2 = await fetch(API.histo + '?jour=' + j2 + '&de=' + de + '&a=' + a2); }
-      catch (e2) { return {err: 'réseau : ' + (e2.message || e2)}; }
+        + '  ·  tranche ' + faits + '/96'
+        + (mN ? '  ·  nombres max : ' + mN.somme + ' (' + mN.jour + ')' : '')
+        + (mL ? '  ·  litres max : ' + Math.round(mL.litres) + ' L (' + mL.jour + ')' : '');
+      let r2 = null, err9 = null;
+      for (let ess = 1; ess <= 2; ess++) {
+        try { err9 = null;
+              r2 = await fetch(API.histo + '?jour=' + j2 + '&de=' + de + '&a=' + a2);
+              if (r2.ok || r2.status === 404) break;
+        } catch (e2) { err9 = e2; r2 = null; }
+        if (ess < 2) await new Promise(rz => setTimeout(rz, 600));
+      }
+      if (!r2) return {err: 'réseau coupé sur ' + j2 + ' ' + de + ' malgré 2 essais ('
+                           + (err9 && err9.message || err9) + ')'};
       if (r2.status === 404) continue;
       if (!r2.ok) return {err500: true, jour: j2};
       const trouve = retLireLigne(await r2.text());
       if (trouve) {
-        let somme = 0;
+        let somme = 0, litres = 0;
         RET_SATS.forEach(id2 => {
           const s2 = trouve.par[id2];
           if (s2 && has(s2.rempl_nb)) somme += s2.rempl_nb;
+          if (s2 && has(s2.tiree_l))  litres += s2.tiree_l;
         });
-        trouve.somme = somme; trouve.jour = j2; trouve.heure = de + '–' + a2;
-        if (!meilleur || somme > meilleur.somme) meilleur = trouve;
+        trouve.somme = somme; trouve.litres = litres;
+        trouve.jour = j2; trouve.heure = de + '–' + a2;
+        if (!mN || somme  > mN.somme)  mN = trouve;
+        if (!mL || litres > mL.litres) mL = trouve;
       }
     }
   }
-  return meilleur || {vide: true};
+  if (!mN && !mL) return {vide: true};
+  return {duo: true, N: mN || mL, L: mL || mN};
 }
 function retActuel(id2) {
   /* la valeur ACTUELLE publiee par l'automate, cuve par cuve */
@@ -5507,7 +5530,11 @@ function retActuel(id2) {
   }));
   return trouve || {};
 }
-function retMontrer(t9) {
+function retMontrer(duo9) {
+  const tN = duo9.N || duo9, tL = duo9.L || duo9.N || duo9;
+  return retMontrer2(tN, tL);
+}
+function retMontrer2(tN, tL) {
   /* Lot 63 : le bouton n'ajoute plus betement l'historique — il calcule
      LA DIFFERENCE (historique − actuel) pour que le total retombe JUSTE,
      meme si une premiere repose partielle a deja eu lieu. Rien ne peut
@@ -5525,7 +5552,8 @@ function retMontrer(t9) {
     return dec ? Math.round(d9 * 10) / 10 : Math.round(d9);
   };
   RET_SATS.forEach(id2 => {
-    const s2 = t9.par[id2] || {};
+    const s2 = tN.par[id2] || {};        /* nombres */
+    const sL = (tL.par[id2]) || s2;      /* litres  */
     const a2 = retActuel(id2);
     const tr = document.createElement('tr');
     const td = (hist, ajout) => {
@@ -5543,22 +5571,24 @@ function retMontrer(t9) {
     const dR = dose9(s2.rempl_nb, a2.rempl_nb);
     const dH = dose9(s2.rempl_therm_nb, a2.rempl_therm_nb || a2.rech_nb);
     const dV = dose9(s2.rech_nb_vid, a2.rech_nb_vid);
-    const dT = dose9(s2.tiree_l, a2.tiree_l, 1);
-    const dL = dose9(s2.conso_totale_l, a2.conso_totale_l, 1);
+    const dT = dose9(sL.tiree_l, a2.tiree_l, 1);
+    const dL = dose9(sL.conso_totale_l, a2.conso_totale_l, 1);
     const tdC = document.createElement('td'); tdC.textContent = id2; tr.appendChild(tdC);
     td(has(s2.rempl_nb) ? s2.rempl_nb : '—', dR);
     td(has(s2.rempl_therm_nb) ? s2.rempl_therm_nb : '—', dH);
     td(has(s2.rech_nb_vid) ? s2.rech_nb_vid : '—', dV);
-    td(has(s2.tiree_l) ? n(s2.tiree_l) : '—', dT);
-    td(has(s2.conso_totale_l) ? n(s2.conso_totale_l) : '—', dL);
+    td(has(sL.tiree_l) ? n(sL.tiree_l) : '—', dT);
+    td(has(sL.conso_totale_l) ? n(sL.conso_totale_l) : '—', dL);
     tb.appendChild(tr);
     doses.rempl.push(dR); doses.rech.push(dH); doses.vid.push(dV);
     doses.tiree.push(dT); doses.livree.push(dL);
   });
-  tab.appendChild(el('p', null, 'Meilleure ligne de l\'historique : ' + t9.jour
-    + ', ' + (t9.tl || t9.heure) + ' (' + t9.somme + ' remplissages au total). '
-    + 'Le bouton ajoute LA DIFFÉRENCE entre ces valeurs et vos compteurs '
-    + 'actuels — le total redevient juste, rien ne peut être compté deux fois.'));
+  tab.appendChild(el('p', null,
+    'NOMBRES pris au ' + tN.jour + ' ' + (tN.tl || tN.heure) + ' (' + tN.somme
+    + ' remplissages) · LITRES pris au ' + tL.jour + ' ' + (tL.tl || tL.heure)
+    + ' (' + Math.round(tL.litres || 0) + ' L tirés) — les deux effacements '
+    + "n'ont pas eu lieu le même jour. Le bouton ajoute LA DIFFÉRENCE avec "
+    + 'vos compteurs actuels : rien ne peut être compté deux fois.'));
   tab.appendChild(tb);
   const fam = el('div', null, '');
   fam.style.margin = '8px 0';
@@ -5599,6 +5629,7 @@ $('#autoRet').addEventListener('click', async () => {
   $('#autoRet').disabled = true;
   const t9 = await retChercher();
   $('#autoRet').disabled = false;
+  if (t9.duo) { $('#autoRetEtat').textContent = 'trouvé — vérifiez puis confirmez :'; retMontrer(t9); return; }
   if (t9.err500) {
     et.textContent = 'le lecteur v1 en ligne bloque la lecture (500 sur '
       + t9.jour + ') — collez la v2 (2 min, instructions du 12/09) et '
@@ -5644,7 +5675,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1609 — pupitre ' + LOT + ' · lot 66 — 16/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1609d — pupitre ' + LOT + ' · lot 70 — 16/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
@@ -5826,7 +5857,7 @@ function satPlierTout() {
       if (!coupe && e2.children.length === 0
           && (e2.textContent || '').indexOf('écart suppose') >= 0) coupe = e2;
     });
-    if (!coupe) {   /* repli : couper juste AVANT le bloc « Dernier puisage » */
+    if (!coupe) {   /* repli 1 : couper juste AVANT le bloc « Dernier puisage » */
       const tous = cv.querySelectorAll('div');
       for (const e2 of tous) {
         const t2 = (e2.textContent || '').trim();
@@ -5834,6 +5865,20 @@ function satPlierTout() {
           depuis = e2.parentNode && e2.parentNode !== cv ? e2.parentNode : e2;
           break;
         }
+      }
+    }
+    if (!coupe && !depuis) {   /* repli 2 (lot 68) : couper APRÈS le bloc
+        qui porte « Tirée » — la fiche s'arrête à « tirée X L » */
+      let t9 = null;
+      cv.querySelectorAll('b, small, div, span').forEach(e2 => {
+        if (!t9 && /^tirée$/i.test((e2.textContent || '').trim())) t9 = e2;
+      });
+      if (t9) {
+        let bloc = t9;
+        while (bloc.parentNode && bloc.parentNode !== cv
+               && bloc.parentNode.parentNode !== cv) bloc = bloc.parentNode;
+        while (bloc.parentNode && bloc.parentNode !== cv) bloc = bloc.parentNode;
+        depuis = bloc.nextElementSibling;
       }
       if (!depuis) return;
     }
@@ -5891,14 +5936,28 @@ document.addEventListener('keydown', ev => {
   else if (ev.key === 'ArrowRight') { alb.i++; albumRendre(); }
 });
 function schPhotoAttacher(cv, id) {
+  /* Lot 69 (client) : le déclencheur est LE DESSIN de la cuve seulement —
+     jamais la fiche entière (les boutons restent libres) — et la photo
+     n'apparaît que si la souris y RESTE plus de 250 ms (fini les
+     ouvertures au simple passage). Clic = album verrouillé, immédiat. */
   if (!id || !PHOTOS_ALB[id]) return;
-  cv.style.cursor = 'pointer';
-  cv.title = 'Photos du site — survol : aperçu · clic : album';
-  cv.addEventListener('mouseenter', () => albumOuvrir(id, false));
-  cv.addEventListener('mouseleave', () => {
+  const cible = cv.querySelector('.sch-jg') || cv.querySelector('svg') || cv;
+  cible.style.cursor = 'pointer';
+  cible.title = 'Photos du site — restez 1/4 s : aperçu · clic : album';
+  let tOuvre = null;
+  cible.addEventListener('mouseenter', () => {
+    if (alb.tFerme) { clearTimeout(alb.tFerme); alb.tFerme = null; }
+    tOuvre = setTimeout(() => { tOuvre = null; albumOuvrir(id, false); }, 250);
+  });
+  cible.addEventListener('mouseleave', () => {
+    if (tOuvre) { clearTimeout(tOuvre); tOuvre = null; }
     alb.tFerme = setTimeout(() => albumFermer(false), 350);
   });
-  cv.addEventListener('click', ev => { ev.stopPropagation(); albumOuvrir(id, true); });
+  cible.addEventListener('click', ev => {
+    ev.stopPropagation();
+    if (tOuvre) { clearTimeout(tOuvre); tOuvre = null; }
+    albumOuvrir(id, true);
+  });
 }
 function schCuve(s, d) {
   const ap = APPARTEMENTS[s.sat_id] || {};
@@ -6021,11 +6080,9 @@ function rendreSalon(d) {
     if (sous) c2.appendChild(el('small', null, sous));
     return c2;
   };
-  if (d && d.prog && d.prog !== PILOTE_ATTENDU)   /* lot 64 */
-    bande.appendChild(chip('PILOTE À METTRE À JOUR',
-      d.prog + ' → ' + PILOTE_ATTENDU,
-      'téléverser le .ino au câble USB — tant que ce n\'est pas fait, un '
-      + 'redémarrage peut encore tout effacer', 'alerte'));
+  if (d && pilotePlusVieux(d.prog))                /* lot 68 : sobre */
+    bande.appendChild(chip('Pilote', d.prog,
+      'mise à jour ' + PILOTE_ATTENDU + ' disponible (câble USB)'));
   if (d && d.boot_anormal)                     /* lot 57 : reboot anormal */
     bande.appendChild(chip('REDÉMARRAGE ANORMAL',
       d.boot_raison || 'raison inconnue',
