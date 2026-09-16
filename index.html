@@ -9,7 +9,25 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609g.73 (lot 73, 16/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1609j.76 (lot 76, 16/09/2026)
+   Lot 76 (Claude Fable 5, go client « quelque chose de top ») :
+   ① la quantité EN GRAND, marquée dans chaque cuve de la vitrine ;
+   ② la liaison satellites -> module maître redessinée : UNE couche SVG
+   continue par circuit (A orange, B bleu-vert), coudes arrondis,
+   collecteur vers le centre de la chaufferie, recalculée des positions
+   réelles — plus d'interruptions ;
+   ③ dès qu'une date de prise en compte est posée, la chaufferie affiche
+   « Depuis le JJ/MM : pompe x kWh · auxiliaires x kWh · cumulus x kWh ·
+   chaleur fournie x kWh/MWh » (vitrine + bandeau avancé).
+   Lot 75 (Claude Fable 5, client) : le flotteur CNB ROUGE est SUPPRIMÉ du
+   dessin de la cuve 300 L (mort, retiré — D206) ; fourchette et niveau
+   d'eau sur DEUX flotteurs (Noir 250 / Jaune 300), « < 250 L » quand
+   tout est sec.
+   Lot 74 (Claude Fable 5, correction client) : la fonctionnalité DATE DE
+   PRISE EN COMPTE (bouton, références, totaux bruts) vit au PUPITRE
+   AVANCÉ, au-dessus des fiches ; la vitrine INDIQUE clairement la date ;
+   « Installation en service depuis le 20/08/2026 » (dates_deb du pilote,
+   au brut) partout.
    Lot 73 (Claude Fable 5) : Rétablir HONNÊTE (échec affiché sous le bouton,
    tableau conservé, suivi jusqu'à « config vN vue ») ; FUSION D205
    (rapide 3 s -> dernier complet 30 s) ; DATE DE PRISE EN COMPTE DES
@@ -1001,11 +1019,14 @@ body.salon #salonVue{padding:3vh 4vw 2vh}
   align-items:flex-end;border-bottom:2px solid rgba(0,0,0,.14);
   padding:14px 8px 0;min-height:120px}
 .sch-cell.sans-tuyau{border-bottom-color:transparent}
-.sch-cell.sans-tuyau::before{display:none}
 .sch-cuve>div:first-child{display:flex;flex-direction:column;align-items:center}
-.sch-cell::before{content:"";position:absolute;left:50%;top:0;bottom:-2px;
-  width:6px;margin-left:-3px;border-radius:3px;
-  background:linear-gradient(180deg,#e9a13b,#c06712);opacity:.55}
+/* Lot 76 : les tronçons de tuyau par cellule (::before) sont SUPPRIMÉS —
+   la liaison est UNE couche SVG continue (#schTuyaux) dessinée derrière
+   les cuves depuis les positions réelles : plus d'interruptions. */
+#schTuyaux{position:absolute;inset:0;z-index:0;pointer-events:none}
+#schGrille{position:relative}
+#schGrille>.sch-cell,#schGrille>.sch-etg,#schGrille>.sch-teteC,
+#schGrille>.date-bande,#schGrille>.sch-chauf{position:relative;z-index:1}
 .sch-cuve{position:relative;z-index:1;background:var(--card,#fff);
   border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:10px 14px 12px;
   display:flex;gap:14px;align-items:flex-end;
@@ -1019,6 +1040,18 @@ body.salon #salonVue{padding:3vh 4vw 2vh}
 .sch-jg.grande{width:70px}
 .sch-litres{font-family:var(--fs-mono);font-size:11px;color:var(--ink2);
   text-align:center;margin-top:4px}
+/* Lot 76 : la quantité EN GRAND, marquée DANS la cuve (client 16/09) */
+.sch-jg .sch-vol{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;font-family:var(--fs-cond);font-weight:800;
+  font-size:21px;color:#4a3208;pointer-events:none;
+  text-shadow:0 0 3px #fff,0 0 6px #fff,0 0 10px #fff,0 1px 2px #fff}
+.sch-jg.grande .sch-vol{font-size:24px}
+.sch-jg .sch-vol small{font-size:12px;font-weight:700;margin-left:2px;
+  color:#6a4d18}
+/* Lot 76 : énergies « depuis le » dans la bande chaufferie */
+.sch-ener{flex-basis:100%;text-align:center;font-family:var(--fs-cond);
+  font-size:14px;padding:2px 4px;color:var(--ink)}
+.sch-ener b{font-weight:800}
 .sch-temp{font-family:var(--fs-cond);font-weight:700;font-size:34px;line-height:1}
 .sch-temp small{font-size:16px;font-weight:600;color:var(--ink2)}
 .sch-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
@@ -1062,10 +1095,12 @@ article.sat button{cursor:pointer}
 .sch-roue.tourne svg{animation:schRot 1.4s linear infinite}
 .sch-roue.vite   svg{animation:schRot .55s linear infinite}
 @keyframes schRot{to{transform:rotate(360deg)}}
-.sch-grille.fluxOn .sch-cell::before{
-  background:repeating-linear-gradient(180deg,#e2574b 0 12px,var(--eau,#c3271e) 12px 24px);
-  opacity:.8;animation:schFlux .9s linear infinite}
-@keyframes schFlux{to{background-position:0 24px}}
+/* lot 76 : l'animation « eau chaude en route » (fluxOn) vit désormais sur
+   la conduite SVG — les tirets remontent de la chaufferie vers les cuves
+   (les tracés partent des cuves : dashoffset positif = flux montant). */
+.sch-grille.fluxOn #schTuyaux path{stroke-dasharray:11 13;opacity:.8;
+  animation:schFlux .9s linear infinite}
+@keyframes schFlux{to{stroke-dashoffset:24}}
 .sch-chip.pompeOn span{color:var(--ecs)}
 /* Lot 73 : le chip Réserve dit son état en TAILLE NORMALE (client : « écrit
    trop gros ») — la valeur reprend la taille du texte courant. */
@@ -1166,6 +1201,7 @@ body:not(.salon) #schVoile{display:none}
   </section>
 
   <h2 class="eyebrow">Satellites</h2>
+  <div id="dateBandeauAv"></div>
   <section class="sats" id="sats"></section>
 
   <h2 class="eyebrow">Réserve 300 L</h2>
@@ -1178,7 +1214,7 @@ body:not(.salon) #schVoile{display:none}
           <div class="res-demi" title="mi-cuve"></div></div>
         <div class="res-floats" id="resFloats"></div>
       </div>
-      <div class="kv" style="margin-top:12px"><span title="Encadré du volume d'eau déduit des trois flotteurs (cotes rondes 200 / 250 / 300 L).">Fourchette déduite</span><b id="resBand">—</b></div>
+      <div class="kv" style="margin-top:12px"><span title="Encadré du volume d'eau déduit des flotteurs Noir (250 L) et Jaune (300 L) — le CNB rouge est retiré (D206).">Fourchette déduite</span><b id="resBand">—</b></div>
       <div class="kv"><span>Remplissage de la cuve</span><b id="resPct">—</b></div>
       <p class="peu-fiable-note">Les cotes en litres sont provisoires : elles seront corrigées au câblage des flotteurs.</p>
     </div>
@@ -1431,7 +1467,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1609g.73';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1609j.76';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -3479,14 +3515,13 @@ function ligne(box, k, v, ko, aide) {
   box.appendChild(d);
 }
 
-/* Réserve 300 L — lot 3, refondu au lot 23 (client 31/08) : cotes RONDES
-   200 / 250 / 300 L, PLUS de zone hachurée — l'eau bleue est dessinée AU
-   MILIEU de la fourchette donnée par les flotteurs : à mi-chemin entre
-   cuve vide et le capteur 200 si tout est sec, entre 200 et 250 si le
-   rouge est mouillé, entre 250 et 300 si le noir l'est aussi, pleine si
-   le jaune est mouillé. Un flotteur MOUILLÉ CLIGNOTE dans sa couleur
-   (rouge, noir, jaune), comme une alarme. Les flotteurs restent dessinés
-   à leur hauteur PHYSIQUE dans la cuve (relevé client). */
+/* Réserve 300 L — lot 3 -> 23 -> 75. D206 (client 16/09) : le CNB ROUGE
+   est MORT, physiquement retiré — « supprime le cnb rouge dans la cuve
+   300L » : il n'est PLUS dessiné, en dur. La cuve se lit sur DEUX
+   flotteurs : Noir (CNM, 250 L) et Jaune (CNH, 300 L), dessinés à leur
+   hauteur physique, clignotant quand mouillés. L'eau bleue reste au
+   MILIEU de la fourchette : sous 250 si tout est sec, 250-300 si le noir
+   est mouillé, pleine si le jaune l'est. */
 const resRond = v => has(v) && isFinite(v) ? Math.round(v / 50) * 50 : v;
 function rendreReserve(d) {
   const rs = ((d && d.chaufferie) || {}).reserve || {};
@@ -3505,10 +3540,10 @@ function rendreReserve(d) {
   if (lu && ((hp && !rs.haut_mouille) || (mp && !rs.milieu_mouille) || !rs.bas_mouille))
     state.resJamaisSec = false;
 
-  /* [classe, nom, position %, cote L, mouillé, raccordé] — lot 47/D181 */
+  /* [classe, nom, position %, cote L, mouillé, raccordé] — lot 47/D181.
+     Lot 75 (D206) : le Rouge (CNB, 200 L) est SUPPRIMÉ du dessin. */
   const FLOTTEURS = [['j', 'Jaune', 92, 300, hp ? rs.haut_mouille : 0, hp]];
   if (mp) FLOTTEURS.push(['n', 'Noir', 72, 250, rs.milieu_mouille, true]);
-  FLOTTEURS.push(['r', 'Rouge', 50, 200, rs.bas_mouille, true]);
 
   tube.querySelectorAll('.res-rep').forEach(e => e.remove());
   FLOTTEURS.forEach(([cl, nom, pos, vol, m, ok2]) => {
@@ -3531,14 +3566,12 @@ function rendreReserve(d) {
     box.appendChild(f);
   });
 
-  /* eau : AU MILIEU de la fourchette physique donnée par les flotteurs */
+  /* eau : AU MILIEU de la fourchette physique — deux flotteurs (D206) */
   let eauPct = 0, litres = null;
   if (lu) {
     if (hp && rs.haut_mouille)        { eauPct = 97;            litres = 300; }
     else if (mp && rs.milieu_mouille) { eauPct = (72 + 92) / 2; litres = 275; }
-    else if (rs.bas_mouille)          { eauPct = mp ? (50 + 72) / 2 : (50 + 92) / 2;
-                                        litres = mp ? 225 : 250; }   /* lot 46 */
-    else                              { eauPct = 25;            litres = 100; }
+    else                              { eauPct = 36;            litres = 125; }
   }
   const eau = $('#resEau');
   eau.style.height = eauPct + '%';
@@ -3549,7 +3582,7 @@ function rendreReserve(d) {
   $('#resBand').textContent = !lu ? 'lecture indisponible'
     : (hp && rs.haut_mouille) ? "≥ 300 L — plus de matelas d'air"
     : (mp && rs.milieu_mouille) ? (hp ? '250 – 300 L' : '≥ 250 L')
-    : rs.bas_mouille ? (mp ? '200 – 250 L' : '200 – 300 L') : '< 200 L';
+    : '< 250 L';
   $('#resPct').textContent = litres === null ? '—'
     : '~' + Math.round(litres / 300 * 100) + ' %';
 }
@@ -5405,6 +5438,10 @@ function rendre(force) {
   rendreRail($('#railB'), d && d.trains && d.trains[1], 'B', 505, d);
   rendreOrganes(d);
   if (DEMO) demoEnrichir(d);   /* lot 47 */
+  { const zb = $('#dateBandeauAv');            /* lot 74 : la fonctionnalité
+      DATE vit au pupitre avancé (client : « les données sont
+      principalement sur le pupitre avancé ») */
+    if (zb) { zb.textContent = ''; zb.appendChild(dateBandeau(state.dataBrut || d)); } }
   rendreSats(d);
   remplirStats('#statRendement', RENDEMENT, d);
   remplirStats('#statEnergie',   ENERGIE,   d);
@@ -5692,13 +5729,38 @@ function dateAppliquer(d) {
   if (ch2.maddalena && has(ch2.maddalena.energie_mwh))
     ch2.maddalena.energie_mwh =
       Math.round(Math.max(0, ch2.maddalena.energie_mwh - (isFinite(rc.ma_mwh) ? rc.ma_mwh : 0)) * 1000) / 1000;
-  const dj = jma.slice(0, 5);
   out.dates_deb = Object.assign({}, out.dates_deb,
-    {tiree: dj, livree: dj, rempl: dj});
+    {tiree: jma, livree: jma, rempl: jma});   /* lot 74 : format JJ/MM/AAAA */
   out._depuis = jma;
   return out;
 }
-/* bandeau vitrine « entre la fiche chaufferie et les satellites » */
+function dateInstallation() {   /* lot 74 : « installation en service
+   depuis le 20/08 » — la date de départ RÉELLE des compteurs, lue au
+   BRUT (dates_deb du pilote), jamais réécrite par la date choisie. */
+  const dd = (state.dataBrut && state.dataBrut.dates_deb) || {};
+  const v = dd.livree || dd.tiree || dd.rempl;
+  return (v && v !== '?') ? v : null;
+}
+function energiesDepuis(d) {   /* lot 76 : « la conso de la pompe, du
+   cumulus, des auxiliaires, la quantité d'énergie fournie par le
+   Maddalena » — d est DÉJÀ en delta quand une date est posée. */
+  const ch = (d && d.chaufferie) || {};
+  const m9 = [];
+  if (ch.sdm120 && has(ch.sdm120.energie_kwh))
+    m9.push('pompe ' + n(ch.sdm120.energie_kwh) + ' kWh');
+  if (ch.elec_aux && has(ch.elec_aux.energie_kwh))
+    m9.push('auxiliaires ' + n(ch.elec_aux.energie_kwh) + ' kWh');
+  if (ch.elec_cumulus && has(ch.elec_cumulus.energie_kwh))
+    m9.push('cumulus ' + n(ch.elec_cumulus.energie_kwh) + ' kWh');
+  if (ch.maddalena && has(ch.maddalena.energie_mwh)) {
+    const mwh = ch.maddalena.energie_mwh;
+    m9.push('chaleur fournie ' + (mwh < 2
+      ? i0(Math.round(mwh * 1000)) + ' kWh'
+      : (Math.round(mwh * 100) / 100).toLocaleString('fr-FR') + ' MWh'));
+  }
+  return m9.length ? m9.join(' \u00b7 ') : null;
+}
+/* bandeau complet — pupitre AVANCÉ (lot 74) */
 function dateBandeau(d) {
   const b = el('div', 'date-bande');
   b.appendChild(el('b', null, 'Date de prise en compte des données : '));
@@ -5706,6 +5768,20 @@ function dateBandeau(d) {
   const bt = el('button', null, 'Changer la date de prise en compte des données');
   bt.addEventListener('click', ev => { ev.stopPropagation(); dateChoisir(); });
   b.appendChild(bt);
+  const inst = dateInstallation();
+  if (inst) b.appendChild(el('div', 'date-etat',
+    'Installation en service depuis le ' + inst + '.'));
+  { const dd9 = state.data;                     /* lot 76 : énergies en clair */
+    if (dd9 && dd9._depuis) {
+      const en9 = energiesDepuis(dd9);
+      if (en9) {
+        const le9 = el('div', 'date-etat');
+        le9.style.fontSize = '13px';
+        le9.appendChild(el('b', null, 'Depuis le ' + dd9._depuis + ' — '));
+        le9.appendChild(document.createTextNode(en9));
+        b.appendChild(le9);
+      }
+    } }
   const src = dateSource();
   let et = state.dateEtat || '';
   if (!et && src === 'navigateur')
@@ -6254,7 +6330,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1609g — pupitre ' + LOT + ' · lot 73 — 16/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1609j — pupitre ' + LOT + ' · lot 76 — 16/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
@@ -6314,6 +6390,63 @@ function salonConstruire() {
   b.addEventListener('click', () => salonBasculer(!document.body.classList.contains('salon')));
   document.body.appendChild(b);
 }
+/* =====================================================================
+   Lot 76 : LA CONDUITE — le tuyau qui relie les satellites au module
+   maître, dessiné PROPREMENT (client : « mal représenté, pas soigné,
+   avec des interruptions »). Une seule couche SVG derrière les cuves,
+   recalculée depuis les positions RÉELLES : une montante continue par
+   circuit (A orange, B bleu-vert), un coude arrondi au pied, un
+   collecteur qui rejoint le centre de la bande chaufferie. Zéro raccord,
+   zéro interruption ; les cuves (fond plein) passent devant.
+   ===================================================================== */
+function salonTuyaux() {
+  const g = $('#schGrille'), sv = $('#schTuyaux'), bd = $('#schBande');
+  if (!g || !sv || !bd) return;
+  const rg = g.getBoundingClientRect();
+  if (rg.width < 60 || rg.height < 60) return;
+  sv.setAttribute('viewBox', '0 0 ' + Math.round(rg.width) + ' '
+                  + Math.round(rg.height));
+  sv.setAttribute('width', '100%'); sv.setAttribute('height', '100%');
+  sv.setAttribute('preserveAspectRatio', 'none');
+  sv.textContent = '';
+  const rb = bd.getBoundingClientRect();
+  const yColl = rb.top - rg.top + 30;              /* collecteur DANS la bande */
+  const xCentre = rb.left - rg.left + rb.width / 2;
+  const R = 14;                                    /* rayon des coudes */
+  [['A', '#c06712'], ['B', '#2a7a8c']].forEach(([circ, coul]) => {
+    const cuves = [];
+    g.querySelectorAll('.sch-cell[data-circ="' + circ + '"] .sch-cuve')
+     .forEach(cv => cuves.push(cv.getBoundingClientRect()));
+    if (!cuves.length) return;
+    const x = cuves.reduce((a2, r2) => a2 + r2.left + r2.width / 2, 0)
+            / cuves.length - rg.left;              /* axe de la colonne */
+    const yHaut = Math.min(...cuves.map(r2 => r2.top)) - rg.top + 16;
+    const vers = xCentre > x ? 1 : -1;             /* sens du coude */
+    const d9 = 'M ' + x.toFixed(1) + ' ' + yHaut.toFixed(1)
+      + ' L ' + x.toFixed(1) + ' ' + (yColl - R).toFixed(1)
+      + ' Q ' + x.toFixed(1) + ' ' + yColl.toFixed(1) + ' '
+              + (x + vers * R).toFixed(1) + ' ' + yColl.toFixed(1)
+      + ' L ' + xCentre.toFixed(1) + ' ' + yColl.toFixed(1);
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d9);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', coul);
+    path.setAttribute('stroke-width', '6');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    path.setAttribute('opacity', '0.5');
+    sv.appendChild(path);
+  });
+  /* la goutte du module maître, au point de jonction */
+  const pt = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  pt.setAttribute('cx', xCentre.toFixed(1)); pt.setAttribute('cy', yColl.toFixed(1));
+  pt.setAttribute('r', '7'); pt.setAttribute('fill', '#8a5a20');
+  pt.setAttribute('opacity', '0.55');
+  sv.appendChild(pt);
+}
+window.addEventListener('resize', () => {
+  if (document.body.classList.contains('salon')) salonTuyaux();
+});
 function salonBasculer(on) {
   document.body.classList.toggle('salon', on);
   const b = $('#salonBtn'); if (b) b.textContent = on ? 'Pupitre avancé' : 'Pupitre simple';
@@ -6551,6 +6684,10 @@ function schCuve(s, d) {
             ? Math.max(0, Math.min(100, 100 * s.volume_l / s.X_l)) : 0;
   eau.style.height = pct.toFixed(0) + '%';
   jg.appendChild(eau);
+  { const vol = el('div', 'sch-vol',                 /* lot 76 : EN GRAND */
+      has(s.volume_l) ? i0(Math.round(s.volume_l)) : '—');
+    vol.appendChild(el('small', null, 'L'));
+    jg.appendChild(vol); }
   gauche.appendChild(jg);
   gauche.appendChild(el('div', 'sch-litres',
     (has(s.volume_l) ? n(s.volume_l) : '—') + ' / ' + i0(s.X_l || 39) + ' L'));
@@ -6613,6 +6750,8 @@ function rendreSalon(d) {
   { const vo = $('#schVoile');                             /* lot 55 */
     if (vo && d && d.circuits && d.circuits.length) vo.style.display = 'none'; }
   g.textContent = '';
+  { const sv = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    sv.id = 'schTuyaux'; g.appendChild(sv); }        /* lot 76 : la conduite */
   const parId = {};
   ((d && d.circuits) || []).forEach(c =>
     (c.satellites || []).forEach(s => { parId[s.sat_id] = s; }));
@@ -6633,6 +6772,7 @@ function rendreSalon(d) {
         + ((col === 'b' && !rg.tuyauB) ? ' sans-tuyau' : ''));
       const id = rg[col];
       if (id) {
+        cell.dataset.circ = col === 'a' ? 'A' : 'B';   /* lot 76 : tracé */
         const s = parId[id];
         if (s) cell.appendChild(schCuve(s, d));
         else {
@@ -6646,10 +6786,20 @@ function rendreSalon(d) {
     });
   });
   g.appendChild(el('div', 'sch-etg sch-etgC', 'chaufferie'));
-  /* Lot 73 : bandeau DATE — « entre la fiche chaufferie et les
-     satellites » (emplacement acté verbatim, client 16/09). */
-  g.appendChild(dateBandeau(state.dataBrut || d));
+  /* Lot 73 -> 74 : la vitrine INDIQUE clairement (client : « la date
+     doit être indiquée clairement sur le pupitre simple ») — la
+     fonctionnalité (bouton, références, totaux bruts) vit au pupitre
+     avancé. */
+  { const lb = el('div', 'date-bande');
+    const dj9 = dateCourante();
+    lb.appendChild(el('b', null, dj9 ? 'Données depuis le ' : 'Données depuis l\u2019origine'));
+    if (dj9) lb.appendChild(el('span', 'date-val', dj9));
+    const inst9 = dateInstallation();
+    if (inst9) lb.appendChild(el('span', null,
+      '· installation en service depuis le ' + inst9));
+    g.appendChild(lb); }
   const bande = el('div', 'sch-chauf sch-encadre');
+  bande.id = 'schBande';                             /* lot 76 : cible du tracé */
   bande.appendChild(el('div', 'sch-chauf-titre',
     'CHAUFFERIE COLLECTIVE — ' + totalLogements() + ' logements desservis'));
   schPhotoAttacher(bande, 'CHAUF');            /* lot 54 : album chaufferie */
@@ -6778,7 +6928,18 @@ function rendreSalon(d) {
   });
   if (tjOk) bande.appendChild(chip('Eau aujourd\u2019hui', n(tj) + ' L',
     'tirée par les logements'));
+  /* lot 76 : énergies « depuis le » — la chaufferie dit ce qui COMPTE */
+  if (d && d._depuis) {
+    const en9 = energiesDepuis(d);
+    if (en9) {
+      const le9 = el('div', 'sch-ener');
+      le9.appendChild(el('b', null, 'Depuis le ' + d._depuis + ' : '));
+      le9.appendChild(document.createTextNode(en9));
+      bande.appendChild(le9);
+    }
+  }
   g.appendChild(bande);
+  requestAnimationFrame(salonTuyaux);
 }
 salonConstruire();
 /* Lot 54 (client 14/09) : le pupitre S'OUVRE sur le Pupitre simple.
