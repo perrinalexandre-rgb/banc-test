@@ -9,7 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609f.72 (lot 72, 16/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1609g.73 (lot 73, 16/09/2026)
+   Lot 73 (Claude Fable 5) : Rétablir HONNÊTE (échec affiché sous le bouton,
+   tableau conservé, suivi jusqu'à « config vN vue ») ; FUSION D205
+   (rapide 3 s -> dernier complet 30 s) ; DATE DE PRISE EN COMPTE DES
+   DONNÉES (bandeau vitrine, deltas partout, totaux bruts repliés) ;
+   journal DANS chaque carte satellite ; affichage COLLECTIF des infos
+   avancées (un clic = toutes les fiches) ; habillage D206 (CNH/CNB,
+   compresseur objectif 25/50 L, journal enrichi) ; redémarrages sobres ;
+   simul « X L · envoi 4 s » ; vieil instantané silencieux ; Excel avec
+   feuille ESSENTIEL en tête.
    Nom officiel du fichier : « enovaQ pupitre 3108b.html » (règle de nommage
    client du 28/08 : enovaQ pilote / enovaQ pupitre + JJMM, casse exacte
    enovaQ, lettre a/b/c à partir de la deuxième version du même jour).
@@ -1058,6 +1067,39 @@ article.sat button{cursor:pointer}
   opacity:.8;animation:schFlux .9s linear infinite}
 @keyframes schFlux{to{background-position:0 24px}}
 .sch-chip.pompeOn span{color:var(--ecs)}
+/* Lot 73 : le chip Réserve dit son état en TAILLE NORMALE (client : « écrit
+   trop gros ») — la valeur reprend la taille du texte courant. */
+.sch-chip.val-normale span{font-size:12.5px;font-weight:600;line-height:1.25}
+/* Lot 73 : bandeau DATE DE DÉPART — entre les satellites et la chaufferie */
+.date-bande{grid-column:1 / -1;background:var(--card,#fff);
+  border:1px solid rgba(0,0,0,.14);border-radius:10px;padding:9px 12px;
+  font-family:var(--fs-cond);display:flex;flex-wrap:wrap;gap:8px 14px;
+  align-items:center;margin:2px 0}
+.date-bande b{font-size:14px}
+.date-bande .date-val{font-size:16px;font-weight:700}
+.date-bande button{cursor:pointer}
+.date-bande .date-etat{flex-basis:100%;font-size:11.5px;color:var(--ink2)}
+.date-bande .date-etat.err{color:#b3261e}
+details.date-brut{flex-basis:100%;font-size:11.5px;color:var(--ink2)}
+details.date-brut summary{cursor:pointer}
+details.date-brut table{border-collapse:collapse;margin-top:4px}
+details.date-brut td,details.date-brut th{border:1px solid rgba(0,0,0,.15);
+  padding:2px 7px;font-family:var(--fs-mono);font-size:11px}
+.sat-depuis{font-family:var(--fs-cond);font-size:12.5px;margin:2px 0 4px;
+  padding:3px 8px;background:rgba(0,0,0,.045);border-radius:7px}
+.sat-depuis b{font-weight:700}
+/* Lot 73 : le libellé simul garde sa place (fiche SA1 qui « changeait de
+   format » au clic) */
+.simul-etat{display:inline-block;min-width:172px}
+/* Lot 73 : journal dans chaque carte satellite */
+.sat-journal{margin-top:8px;border-top:1px dashed rgba(0,0,0,.2);padding-top:6px}
+.sat-journal .sj-btns button{font-size:11px;margin-right:5px;cursor:pointer}
+.sat-journal .sj-btns button.on{font-weight:700;outline:2px solid var(--ecs)}
+.sat-journal table{border-collapse:collapse;margin-top:5px;width:100%}
+.sat-journal td,.sat-journal th{border:1px solid rgba(0,0,0,.14);padding:2px 5px;
+  font-family:var(--fs-mono);font-size:10.5px;text-align:right}
+.sat-journal th{font-family:var(--fs-cond);text-align:center}
+.sat-journal .sj-note{font-size:11px;color:var(--ink2);margin-top:3px}
 .sch-etgC{grid-column:1;border-bottom:0!important}
 #schVoile{position:absolute;inset:0;display:flex;align-items:center;
   justify-content:center;background:var(--fond,#f4efe7);z-index:5}
@@ -1378,7 +1420,7 @@ const DEVICE     = 'chaufferie-01';
 /* Lot 64 : le pupitre CONNAIT le pilote qu'il attend — s'il voit un autre
    programme tourner dans l'automate, il le dit en ROUGE. Fini la
    confusion page/puce. A mettre a jour a chaque livraison pilote. */
-const PILOTE_ATTENDU = '1609a';
+const PILOTE_ATTENDU = '1609b';   /* lot 73 : D205/D206 + date de départ */
 /* Lot 68 : on ne crie plus a l'egalite stricte — un pilote PLUS RECENT
    que l'attendu est une bonne nouvelle, pas une alerte. Et le ton
    redevient SOBRE (client : « etre clair, pas en faire des tonnes »). */
@@ -1389,7 +1431,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1609f.72';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1609g.73';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -2061,12 +2103,15 @@ function rendreFraicheur() {
   fige.textContent = '';
   const bloque = d && state.seqDepuis && (Date.now() - state.seqDepuis > FIGE_MS);
   if (state.seqRecule) {
-    fige.className = 'on';
-    fige.appendChild(el('b', null, 'Vieil instantané écarté. '));
-    fige.appendChild(document.createTextNode(
-      "Le serveur ressert un envoi plus ancien que celui affiché (défaut connu du "
-      + "stockage en mémoire, plusieurs instances) : il est ÉCARTÉ, l'affichage garde "
-      + "le plus récent (n° " + i0(state.seqMax) + "). Rien à faire — lot 42."));
+    /* Lot 73 (client) : ce message toutes les 2 s était inutile à l'écran —
+       il vit en console, l'affichage reste calme. La mécanique lot 42
+       (écarter le vieil envoi) est INCHANGÉE. */
+    fige.className = '';
+    if (!state._seqReculeDit || Date.now() - state._seqReculeDit > 30000) {
+      state._seqReculeDit = Date.now();
+      console.log('[lot 42] vieil instantané écarté — le serveur ressert un '
+        + 'envoi plus ancien ; affichage conservé au n° ' + i0(state.seqMax));
+    }
   } else if (bloque) {
     fige.className = 'on';
     fige.appendChild(el('b', null, 'Données figées. '));
@@ -2989,6 +3034,19 @@ function rendreSats(d) {
     hero.appendChild(dessinerCuve(s, K));
     if (s.ok) hero.appendChild(heroNums(s, s.X_l, progNeuf));
     card.appendChild(hero);
+    /* Lot 73 : la fiche dit d'un coup d'œil « depuis le JJ/MM » — les
+       valeurs de s sont DÉJÀ les deltas (dateAppliquer). */
+    if (s.ok && d && d._depuis) {
+      const dp = el('div', 'sat-depuis');
+      dp.appendChild(document.createTextNode('Depuis le ' + d._depuis + ' : '));
+      dp.appendChild(el('b', null,
+        (has(s.rempl_nb) ? s.rempl_nb : 0) + ' remplissage'
+        + ((s.rempl_nb | 0) > 1 ? 's' : '')));
+      dp.appendChild(document.createTextNode(
+        ' · ' + (has(s.tiree_l) ? n(s.tiree_l) : '0') + ' L tirés · '
+        + (has(s.conso_totale_l) ? n(s.conso_totale_l) : '0') + ' L livrés'));
+      card.appendChild(dp);
+    }
 
     if (!s.ok) {
       const ch = el('div', 'chips'); ch.appendChild(el('div', 'chip bad', 'sans réponse'));
@@ -3384,20 +3442,24 @@ function rendreSats(d) {
           if (!av9.contains(cible9)) av9.insertBefore(cible9, av9.firstChild);
         }
       });
+      av9.appendChild(satJournalBloc(s.sat_id));   /* lot 73 : journal PAR cuve */
       const ind9 = el('div', 'sat-plus', 'cliquez la fiche : infos avancées & commandes');
       card._det9.appendChild(ind9);
       card._det9.appendChild(av9);
       const id9 = s.sat_id;
-      card.classList.toggle('ouverte', state.satOuverts.has(id9));
+      card.classList.toggle('ouverte', !!state.satTousOuverts);
       card.style.cursor = 'pointer';
       card._plie = true; card._satId = id9;   /* lot 72 : l'ancien plieur
          (satPlierTout) voit la carte comme déjà traitée — plus JAMAIS de
          second écouteur de clic (cause du double-toggle) */
       card.addEventListener('click', ev9 => {
+        /* Lot 73 (client 16/09) : affichage COLLECTIF — un clic sur une
+           fiche ouvre/ferme les infos avancées de TOUTES les fiches. */
         if (ev9.target.closest('button, input, select, a, textarea')) return;
         const o9 = !card.classList.contains('ouverte');
-        card.classList.toggle('ouverte', o9);
-        if (o9) state.satOuverts.add(id9); else state.satOuverts.delete(id9);
+        state.satTousOuverts = o9;
+        document.querySelectorAll('article.sat').forEach(c9 =>
+          c9.classList.toggle('ouverte', o9));
       });
     }
     box.appendChild(card);
@@ -3680,12 +3742,12 @@ function simulBrancher(btn) {
     const stS = state.simul;
     stS.clics++;
     document.querySelectorAll('.simul-etat').forEach(e2 =>
-      e2.textContent = stS.clics + ' L — envoi dans 4 s (cliquez pour ajouter)');
+      e2.textContent = stS.clics + ' L · envoi 4 s');
     if (stS.tEnvoi) clearTimeout(stS.tEnvoi);
     stS.tEnvoi = setTimeout(async () => {
       const dose = stS.clics; stS.clics = 0; stS.tEnvoi = null;
       document.querySelectorAll('.simul-etat').forEach(e2 =>
-        e2.textContent = dose + ' L — envoi…');
+        e2.textContent = dose + ' L · envoi…');
       await ordreRapide({simul_l: dose});
     }, 4000);
   });
@@ -3693,6 +3755,88 @@ function simulBrancher(btn) {
 function fichesEtat(txt, cls) {
   const e = $('#fichEtat'); if (!e) return;
   e.textContent = txt; e.className = cls || '';
+}
+/* =====================================================================
+   Lot 73 : JOURNAL DANS CHAQUE CARTE SATELLITE (client — « le filtre
+   central du lot 51 était à côté de la demande »). Trois boutons par
+   fiche : Remplissages / Réchauffages / Vanne de sortie. Un clic demande
+   les fiches (mécanique D183 partagée) et la carte n'affiche QUE les
+   lignes de SA cuve. Le choix est mémorisé par cuve ; la carte Journal
+   centrale reste. Les fiches vivent dans state.fich.data — le rendu 2 s
+   les repeint sans les redemander.
+   ===================================================================== */
+function satJournalBloc(id9) {
+  if (!state.satJournal) state.satJournal = {};
+  const chx = state.satJournal[id9] || 0;          /* 0 = replié */
+  const bloc = el('div', 'sat-journal');
+  const bar = el('div', 'sj-btns');
+  bar.appendChild(el('b', null, 'Journal de ' + id9 + ' : '));
+  [[2, 'Remplissages'], [1, 'Réchauffages'], [5, 'Vanne de sortie']]
+  .forEach(([t9, lb9]) => {
+    const b9 = el('button', chx === t9 ? 'on' : '', lb9);
+    b9.addEventListener('click', ev => {
+      ev.stopPropagation();
+      if (state.satJournal[id9] === t9) { state.satJournal[id9] = 0; rendre(true); return; }
+      state.satJournal[id9] = t9;
+      if (!(state.fich.data && state.fich.data[t9]) && !state.fich.attendu)
+        fichesDemander(t9);                        /* demande partagée D183 */
+      rendre(true);
+    });
+    bar.appendChild(b9);
+  });
+  bloc.appendChild(bar);
+  if (!chx) return bloc;
+  const st = state.fich || {};
+  const brutes = (st.data && st.data[chx]) || null;
+  if (!brutes) {
+    bloc.appendChild(el('div', 'sj-note',
+      st.attendu === chx ? 'demande envoyée — réponse sous ~10 s…'
+                         : 'fiches pas encore reçues — re-cliquez pour demander'));
+    return bloc;
+  }
+  const li = brutes.filter(f9 => (f9.cuve || f9.sat) === id9);
+  if (!li.length) {
+    bloc.appendChild(el('div', 'sj-note', 'aucune fiche de ' + id9
+      + ' dans les 30 dernières'
+      + (st.recuA && st.recuA[chx] ? ' (reçues à ' + st.recuA[chx] + ')' : '')));
+    return bloc;
+  }
+  const tb = document.createElement('table');
+  const tete = chx === 2 ? ['n°', 'date', 'L', 'L/min', 'attente']
+             : chx === 1 ? ['n°', 'date', 'avant °C', 'L', 'vidange']
+             : ['date', 'motif', 'durée', 'volume'];
+  const tr0 = document.createElement('tr');
+  tete.forEach(h9 => { const th = document.createElement('th');
+                       th.textContent = h9; tr0.appendChild(th); });
+  tb.appendChild(tr0);
+  const dt9 = ep => ep ? new Date(ep * 1000).toLocaleString('fr-FR',
+    {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}) : '—';
+  const MOTIF_VS = ['CNB sec', 'cuve isolée', 'secours', 'autre'];
+  li.slice(0, 12).forEach(f9 => {
+    const tr = document.createElement('tr');
+    let c9;
+    if (chx === 2)
+      c9 = [has(f9.n) ? f9.n : '—', dt9(f9.ep), has(f9.l) ? n(f9.l) : '—',
+            has(f9.l_min) ? n(f9.l_min) : '—',
+            has(f9.att_s) ? duree(f9.att_s) : '—'];
+    else if (chx === 1)
+      c9 = [has(f9.n) ? f9.n : '—', dt9(f9.ep),
+            has(f9.t0) ? n(f9.t0) : '—',
+            has(f9.rempl_l) ? n(f9.rempl_l) : '—',
+            has(f9.vid_l) ? n(f9.vid_l) + ' L' : '—'];
+    else
+      c9 = [dt9(f9.ep), MOTIF_VS[f9.motif | 0] || f9.motif,
+            has(f9.duree_s) ? (f9.duree_s ? duree(f9.duree_s) : 'en cours') : '—',
+            has(f9.vol_l) ? n(f9.vol_l) + ' L' : '—'];
+    c9.forEach(v9 => { const td = document.createElement('td');
+                       td.textContent = v9; tr.appendChild(td); });
+    tb.appendChild(tr);
+  });
+  bloc.appendChild(tb);
+  if (li.length > 12)
+    bloc.appendChild(el('div', 'sj-note', li.length + ' fiches — les 12 plus '
+      + 'récentes ici, tout est dans la carte Journal.'));
+  return bloc;
 }
 function fichesDemander(t) {
   const st = state.fich;
@@ -3810,25 +3954,39 @@ function rendreCompJournal(fiches) {
       return;
     }
     nb.appendChild(el('p', 'vide-msg',
-      "Cliquez « Compresseur (30) » : chaque allumage du compresseur d'air "
-      + "de la réserve y laisse sa fiche — date, durée, litres de puisage du "
-      + "cycle, fin normale (CNB sec) ou FORCÉE à 80 L (D182)."));
+      "Cliquez « Compresseur (30) » : chaque appoint d'air y laisse sa "
+      + "fiche (D206) — déclencheur (CNM ou CNH), objectif 25/50 L, litres "
+      + "d'ECS tirée, durée, cuves remplies, flotteurs avant/après."));
     return;
   }
   const thead = document.createElement('thead');
   const hr = document.createElement('tr');
-  ['Date · heure', 'Durée', 'Puisage du cycle', 'Fin']
+  ['Date · heure', 'Décl.', 'Objectif', 'Tirée', 'Durée', 'Cuves remplies',
+   'Flotteurs av.\u2192ap.', 'Fin']
     .forEach(h => { const th = document.createElement('th'); th.textContent = h; hr.appendChild(th); });
   thead.appendChild(hr); t.appendChild(thead);
   const tb = document.createElement('tbody');
+  const flot9 = b9 => !has(b9) ? '—'
+    : (b9 & 2) ? 'CNH mouillé' : (b9 & 1) ? 'CNM mouillé' : 'secs';
+  const NOMS9 = ['SA1', 'SA2', 'SA3', 'SB1'];
   fiches.forEach(f => {
     const tr = document.createElement('tr');
     const td = (txt, ko) => { const d2 = document.createElement('td');
       d2.textContent = txt; if (ko) d2.className = 'ko'; tr.appendChild(d2); };
+    const v2 = has(f.decl);                     /* nouvelle fiche D206 ? */
     td(f.ep ? fmtEpoque(f.ep) : '—');
-    td(has(f.duree_s) ? duree(f.duree_s) : '—');
+    td(v2 ? (f.decl ? 'CNH' : 'CNM') : '—', v2 && !!f.decl);
+    td(v2 && f.obj_l ? f.obj_l + ' L' : '—');
     td(has(f.l) ? n(f.l) + ' L' : '—');
-    td(f.fin ? 'FORCÉE (80 L, CNB jamais sec)' : 'normale — CNB sec', !!f.fin);
+    td(has(f.duree_s) ? duree(f.duree_s) : '—');
+    td(v2 && Array.isArray(f.rempl_l) && f.rempl_l.some(x9 => x9 > 0)
+       ? f.rempl_l.map((x9, i9) => x9 > 0 ? NOMS9[i9] + ' ' + n(x9) + ' L' : null)
+                  .filter(Boolean).join(' · ')
+       : v2 ? 'aucune' : '—');
+    td(v2 ? flot9(f.flot_av) + ' \u2192 ' + flot9(f.flot_ap) : '—');
+    td(v2 ? (f.fin === 1 ? 'fenêtre (19 h)' : f.fin === 2 ? 'autre' : 'objectif')
+          : (f.fin ? 'FORCÉE (ancienne garde)' : 'normale'),
+       v2 ? f.fin === 2 : !!f.fin);
     tb.appendChild(tr);
   });
   t.appendChild(tb);
@@ -3901,12 +4059,22 @@ function rendreCompresseur(d) {
     return;
   }
   const etat = cp.etat === 1
-    ? 'EN MARCHE — ' + (has(cp.litres) ? n(cp.litres) + ' L de puisage' : '')
+    ? 'EN MARCHE — ' + (has(cp.litres) ? n(cp.litres) : '0') + ' / '
+      + n(cp.objectif_l || 25) + ' L d\u2019ECS tirée'
       + (has(cp.depuis_s) ? ' · ' + duree(cp.depuis_s) : '')
-    : cp.etat === 2 ? 'VERROUILLÉ (arrêt forcé à 80 L)' : 'au repos';
-  ligne(box, 'État', etat, cp.etat === 2,
-    "Démarre quand CNM est mouillé 5 s dans la fenêtre ; ne s'arrête que "
-    + "CNB sec 5 s — un cycle entamé va à son terme même après 19 h (D182).");
+      + (cp.decl ? ' · déclenché par le CNH (grave)' : '')
+    : cp.etat === 2 ? 'VERROUILLÉ (vieux pilote — gardes retirées en 1609b)'
+    : 'au repos';
+  ligne(box, 'État', etat, cp.etat === 2 || !!cp.decl,
+    "D206 : démarre CNM mouillé 5 s dans la fenêtre ; s'arrête à l'objectif "
+    + "de litres d'ECS TIRÉE aux satellites, et à 19 h quoi qu'il arrive "
+    + "(reprise à 10 h si CNM encore mouillé — nouveau cycle).");
+  if (cp.grave)
+    ligne(box, 'CAS GRAVE', "CNH mouillé depuis "
+      + (cp.grave_ep ? fmtEpoque(cp.grave_ep) : '?')
+      + " — objectif " + n(cp.objectif_l || 50)
+      + " L, remplissages de tirage créés (circuit A à CNM sec, sinon les "
+      + "2 cuves les plus vides).", true);
   ligne(box, 'Fenêtre (bruit)', (cp.h_deb ?? 10) + ' h – ' + (cp.h_fin ?? 19) + ' h', false,
     "Le compresseur est bruyant : il ne DÉMARRE qu'en journée (réglable).");
   ligne(box, 'Allumages', has(cp.nb) ? i0(cp.nb) : '—', false,
@@ -3915,10 +4083,16 @@ function rendreCompresseur(d) {
     ligne(box, 'Dernier cycle', fmtEpoque(cp.dern_ep) + ' · '
       + (has(cp.dern_duree_s) ? duree(cp.dern_duree_s) : '—') + ' · '
       + (has(cp.dern_l) ? n(cp.dern_l) + ' L' : '—')
-      + (cp.dern_fin ? ' · FORCÉ' : ''), !!cp.dern_fin);
+      + (has(cp.dern_obj_l) && cp.dern_obj_l ? ' / ' + cp.dern_obj_l + ' L visés' : '')
+      + (cp.dern_decl ? ' · CNH' : '')
+      + (has(cp.dern_rempl_nb) && cp.dern_rempl_nb
+         ? ' · ' + cp.dern_rempl_nb + ' cuve(s) remplie(s)' : '')
+      + (cp.dern_fin === 1 ? ' · fin de fenêtre (19 h)'
+         : cp.dern_fin ? ' · interrompu' : ' · objectif atteint'),
+      cp.dern_fin === 2);
   if (cp.alarme)
-    ligne(box, 'Alarme', "60 L de puisage et CNB toujours mouillé — flotteur "
-      + "ou fuite d'air à vérifier", true);
+    ligne(box, 'Alarme (vieux pilote)', "garde 60 L du 1109a — retirée en "
+      + "1609b (D206)", true);
 }
 /* ── LOT 47 : vanne « Simul puisage SA1 » (D180, DO7) ──────────────────── */
 function simulSa1Row(d) {
@@ -3948,7 +4122,7 @@ function simulSa1Row(d) {
      (« 5 L ») et l'ordre part 4 s apres le DERNIER clic. */
   if (!state.simul) state.simul = {clics: 0, tEnvoi: null};
   if (state.simul.clics > 0)
-    et.textContent = state.simul.clics + ' L — envoi dans 4 s (cliquez pour ajouter)';
+    et.textContent = state.simul.clics + ' L · envoi 4 s';
   simulBrancher(plus);
   et.classList.add('simul-etat');
   const stop = el('button', null, 'Refermer');
@@ -3977,7 +4151,8 @@ function demoEnrichir(d) {
   ch.compresseur = {etat: (cyc === 5 || cyc === 6) ? 1 : 0, nb: 7,
                     h_deb: 10, h_fin: 19, depuis_s: 340, litres: 12.4,
                     dern_ep: Math.floor(Date.now() / 1000) - 5400,
-                    dern_l: 48.5, dern_duree_s: 1560, dern_fin: 0};
+                    dern_l: 48.5, dern_duree_s: 1560, dern_fin: 0,
+                    objectif_l: 25, dern_obj_l: 25, dern_decl: 0};
   d.rech_depuis_j = Math.floor(Date.now() / 86400000) - 5;
   let k = 0, sb1 = false;
   (d.circuits || []).forEach(c => (c.satellites || []).forEach(s => {
@@ -4683,6 +4858,8 @@ async function deposer(cfg, cle) {
       const v2 = versionDans409(texte409);
       if (v2) {
         corps.cfg_version = v2;
+        cfg.cfg_version = v2;   /* lot 73 : le message et le suivi disent la
+                                   version RÉELLEMENT déposée après rejeu */
         r = await fetch(API.config, {method: 'POST', headers: entetes, body: JSON.stringify(corps)});
       }
     }
@@ -4696,9 +4873,14 @@ async function deposer(cfg, cle) {
     sortie('Config v' + cfg.cfg_version + " déposée. Elle sera appliquée au prochain envoi de "
          + "l'automate, sous " + attente + ".\n"
          + 'Vérifiez que « config » passe bien à v' + cfg.cfg_version + ' en haut de page.', 'ok');
+    /* Lot 73 : le dépôt DIT s'il a réussi — la version déposée voyage avec. */
+    deposer.derniereVersion = cfg.cfg_version;
+    return true;
   } catch (e) {
     sortie("Le dépôt a échoué.\n\n" + e.message + "\n\nLe bloc reste valide :\n\n"
          + JSON.stringify(corps, null, 2), 'err');
+    deposer.derniereErreur = e.message;
+    return false;
   }
 }
 
@@ -5079,7 +5261,34 @@ async function exExtraire() {
       exTravail('construction de la feuille ' + jour + ' (' + lignes.length
               + ' lignes × ' + colonnes.length + ' colonnes)');
       await exSouffle();
-      XLSX.utils.book_append_sheet(classeur, XLSX.utils.aoa_to_sheet(aoa), jour);
+      /* Lot 73 (client : « Excel moins indigeste ») : une feuille
+         ESSENTIEL (~30 colonnes clés) passe DEVANT la feuille complète,
+         largeurs ajustées, nombres en nombres. Le gras et les volets
+         figés ne sont pas écrits par la bibliothèque embarquée (SheetJS
+         community) — dit honnêtement plutôt que promis. */
+      const ESSENTIEL = ['heure (Paris)', 't'];
+      ['SA1', 'SA2', 'SA3', 'SB1'].forEach(c9 => {
+        ['volume_l', 'temp_c', 'tiree_l', 'conso_totale_l', 'rempl_nb',
+         'niveau'].forEach(k9 => ESSENTIEL.push(c9 + '.' + k9));
+      });
+      ['chaufferie.pompe_pct', 'chaufferie.pression.bar',
+       'chaufferie.temp_pompe_c', 'chaufferie.temp_retour_c',
+       'chaufferie.temp_efs_c', 'chaufferie.eau.qa.litres',
+       'chaufferie.eau.qb.litres', 'chaufferie.reserve.milieu_mouille',
+       'chaufferie.reserve.haut_mouille', 'chaufferie.compresseur.etat',
+       'chaufferie.compresseur.litres'].forEach(k9 => ESSENTIEL.push(k9));
+      const colsE = ESSENTIEL.filter(c9 => colonnes.includes(c9));
+      if (colsE.length > 2) {
+        const aoaE = [colsE];
+        for (const l of lignes) aoaE.push(colsE.map(cc => (cc in l ? l[cc] : '')));
+        const wsE = XLSX.utils.aoa_to_sheet(aoaE);
+        wsE['!cols'] = colsE.map(c9 => ({wch: Math.max(9, Math.min(18, c9.length + 1))}));
+        XLSX.utils.book_append_sheet(classeur, wsE,
+          ('ESSENTIEL ' + jour).slice(0, 31));
+      }
+      const wsJ = XLSX.utils.aoa_to_sheet(aoa);
+      wsJ['!cols'] = colonnes.map(c9 => ({wch: Math.max(8, Math.min(22, c9.length + 1))}));
+      XLSX.utils.book_append_sheet(classeur, wsJ, jour);
       totalLignes += lignes.length; joursOk++;
       exEtat(jour + ' : ' + lignes.length + ' lignes ajoutées.');
     }
@@ -5256,8 +5465,294 @@ function instantaneAccepte(d, tEmisN) {
   if (d.seq > state.seqMax) state.seqMax = d.seq;
   return true;
 }
+/* =====================================================================
+   Lot 73 / D205 : FUSION rapide -> dernier complet.
+   Le pilote 1609b envoie toutes les 3 s un instantané RAPIDE (clés vives
+   seulement, tx_rapide=1) et 1 envoi COMPLET sur 10. Cette fonction pose
+   le rapide SUR le dernier complet : par satellite (sat_id), par
+   sous-objet chaufferie, et nettoie les drapeaux « présents seulement
+   quand vrais » pour qu'un état fini ne reste pas collé à l'écran.
+   ===================================================================== */
+const FUSION_SAT_VOLATILS = ['rech_en_cours', 'vid_manu', 'vid_manu_etat',
+  'sommeil', 'somm_etat', 'somm_depuis_s', 'somm_renouv_dans_s', 'puise',
+  'puisage_depuis_s', 'puisage_l_min', 'tiree_depuis_s'];
+function fusionRapide(complet, rapide) {
+  let out;
+  try { out = JSON.parse(JSON.stringify(complet)); } catch (_) { return rapide; }
+  delete out.tx_allege; delete out.tx_rapide;
+  delete out.boot_anormal; delete out.etat_err;
+  Object.keys(rapide).forEach(k => {
+    if (k === 'circuits' || k === 'chaufferie') return;
+    out[k] = rapide[k];
+  });
+  if (rapide.chaufferie) {
+    if (!out.chaufferie) out.chaufferie = {};
+    const cb = out.chaufferie, cr = rapide.chaufferie;
+    delete cb.pompe_fantome;                 /* présent seulement quand vrai */
+    Object.keys(cr).forEach(k => { cb[k] = cr[k]; });   /* sous-objets REMPLACÉS */
+  }
+  if (Array.isArray(rapide.circuits)) {
+    if (!Array.isArray(out.circuits)) out.circuits = [];
+    rapide.circuits.forEach(cr => {
+      let cb = out.circuits.find(c2 => c2.circuit_id === cr.circuit_id);
+      if (!cb) { cb = {circuit_id: cr.circuit_id, satellites: []}; out.circuits.push(cb); }
+      Object.keys(cr).forEach(k => { if (k !== 'satellites') cb[k] = cr[k]; });
+      if (!Array.isArray(cb.satellites)) cb.satellites = [];
+      (cr.satellites || []).forEach(sr => {
+        let sb = cb.satellites.find(s2 => s2.sat_id === sr.sat_id);
+        if (!sb || sr.ok === false) {        /* module muet : rien de vieux */
+          if (sb) cb.satellites[cb.satellites.indexOf(sb)] = sr;
+          else cb.satellites.push(sr);
+          return;
+        }
+        FUSION_SAT_VOLATILS.forEach(k => { delete sb[k]; });
+        Object.keys(sr).forEach(k => { sb[k] = sr[k]; });
+      });
+    });
+  }
+  return out;
+}
+
+/* =====================================================================
+   Lot 73 : DATE DE PRISE EN COMPTE DES DONNÉES (client 15-16/09).
+   La date choisie vit en trois endroits, par priorité :
+     1. l'écho du pilote (payload date_depart — pilote 1609b, persistée) ;
+     2. la config stockée au serveur (cfgServeur.date_depart) ;
+     3. la mémoire de CE navigateur (cache).
+   Les RÉFÉRENCES = la PREMIÈRE ligne du jour choisi, lue dans
+   l'historique (moteur v3) ; l'affichage devient partout
+   « aujourd'hui − alors » (delta), les totaux bruts restent dans un
+   panneau replié. Changer la date écrase la précédente.
+   EXCLUS des deltas : écart corrigé, juge quotidien, moyennes — vérités
+   du pilote qui portent déjà leur propre référence.
+   ===================================================================== */
+function dateLireLocal() {
+  try { return JSON.parse(localStorage.getItem('enovaq_date_depart') || 'null'); }
+  catch (_) { return null; }
+}
+function dateEcrireLocal(o) {
+  try { localStorage.setItem('enovaq_date_depart', JSON.stringify(o)); } catch (_) {}
+}
+function dateValide(t) {
+  const m = /^([0-3]?\d)\/([01]?\d)\/(20\d\d)$/.exec((t || '').trim());
+  if (!m) return null;
+  const j = +m[1], mo = +m[2], a = +m[3];
+  if (j < 1 || j > 31 || mo < 1 || mo > 12) return null;
+  const d2 = new Date(a, mo - 1, j);
+  if (d2.getFullYear() !== a || d2.getMonth() !== mo - 1 || d2.getDate() !== j) return null;
+  if (d2.getTime() > Date.now()) return null;              /* date PASSÉE */
+  return String(j).padStart(2, '0') + '/' + String(mo).padStart(2, '0') + '/' + a;
+}
+function dateVersIso(jma) {         /* JJ/MM/AAAA -> AAAA-MM-JJ */
+  return jma.slice(6) + '-' + jma.slice(3, 5) + '-' + jma.slice(0, 2);
+}
+function dateCourante() {
+  const brut = state.dataBrut || {};
+  return (brut.date_depart && dateValide(brut.date_depart))
+      || (state.cfgServeur && dateValide(state.cfgServeur.date_depart))
+      || (dateLireLocal() && dateValide((dateLireLocal() || {}).date))
+      || null;
+}
+function dateSource() {
+  const brut = state.dataBrut || {};
+  if (brut.date_depart && dateValide(brut.date_depart)) return 'pilote';
+  if (state.cfgServeur && dateValide(state.cfgServeur.date_depart)) return 'serveur';
+  if (dateLireLocal() && dateValide((dateLireLocal() || {}).date)) return 'navigateur';
+  return null;
+}
+/* première ligne PARSABLE d'un texte JSONL (l'index « d'alors ») */
+function dateRefsDeLigne(texte) {
+  const lignes = (texte || '').split('\n');
+  for (const l of lignes) {
+    if (!l.trim()) continue;
+    let d2;
+    try { d2 = JSON.parse(l); } catch (_) { continue; }
+    if (!Array.isArray(d2.circuits)) return {ancien: true};   /* format « trains » */
+    const sats = {};
+    d2.circuits.forEach(c2 => (c2.satellites || []).forEach(s2 => {
+      sats[s2.sat_id] = {
+        tiree_l: s2.tiree_l, conso_totale_l: s2.conso_totale_l,
+        rempl_nb: s2.rempl_nb,
+        rech_nb: has(s2.rech_nb) ? s2.rech_nb : s2.rempl_therm_nb,
+        rech_nb_vid: s2.rech_nb_vid
+      };
+    }));
+    const ch2 = d2.chaufferie || {};
+    return {tl: d2.tl || '', sats, ch: {
+      sdm_kwh: ch2.sdm120 && ch2.sdm120.energie_kwh,
+      aux_kwh: ch2.elec_aux && ch2.elec_aux.energie_kwh,
+      cum_kwh: ch2.elec_cumulus && ch2.elec_cumulus.energie_kwh,
+      ma_mwh:  ch2.maddalena && ch2.maddalena.energie_mwh
+    }};
+  }
+  return null;
+}
+async function dateChargerRefs(jma) {
+  const iso = dateVersIso(jma);
+  state.dateEtat = 'lecture de la première ligne du ' + jma + '…';
+  for (let h2 = 0; h2 < 24; h2++) {
+    const de = String(h2).padStart(2, '0') + ':00';
+    const a2 = h2 === 23 ? '24:00' : String(h2 + 1).padStart(2, '0') + ':00';
+    state.dateEtat = 'lecture du ' + jma + ' — tranche ' + de + '–' + a2 + '…';
+    let r2 = null;
+    for (let ess = 1; ess <= 2; ess++) {           /* microcoupures : 2 essais */
+      try { r2 = await fetch(API.histo + '?jour=' + iso + '&de=' + de + '&a=' + a2);
+            if (r2.ok || r2.status === 404) break;
+      } catch (_) { r2 = null; }
+      if (ess < 2) await new Promise(rz => setTimeout(rz, 600));
+    }
+    if (!r2) return {err: 'réseau coupé sur la tranche ' + de + ' malgré 2 essais'};
+    if (r2.status === 404) continue;
+    if (!r2.ok) return {err: 'lecteur en ligne : réponse ' + r2.status
+                             + ' — le moteur v3 est-il collé (Alex) ?'};
+    const refs = dateRefsDeLigne(await r2.text());
+    if (refs && refs.ancien)
+      return {err: 'les lignes du ' + jma + ' sont à l\u2019ancien format '
+                   + '(« trains », avant le 11/09) — choisissez une date '
+                   + 'à partir du 11/09/2026.'};
+    if (refs) return {refs};
+  }
+  return {err: 'aucune ligne archivée le ' + jma + ' — jour vide ?'};
+}
+async function dateChoisir() {
+  const t = prompt('Date de prise en compte des données (JJ/MM/AAAA, date '
+                 + 'passée) :', dateCourante() || '');
+  if (t === null) return;
+  const jma = dateValide(t);
+  if (!jma) { state.dateEtat = 'date refusée (attendu JJ/MM/AAAA, passée)';
+              state.dateEtatErr = true; return; }
+  state.dateEtatErr = false;
+  const r9 = await dateChargerRefs(jma);
+  if (r9.err) { state.dateEtat = r9.err; state.dateEtatErr = true; return; }
+  state.dateDep = {date: jma, refs: r9.refs};
+  dateEcrireLocal({date: jma, refs: r9.refs});
+  state.dateEtat = 'références du ' + jma + ' ' + (r9.refs.tl || '')
+                 + ' lues — dépôt de la date au serveur…';
+  const k9 = cleConfig(true);
+  const okDep = await deposer({date_depart: jma, cfg_version: versionSuivante()}, k9);
+  state.dateEtat = okDep
+    ? 'Date déposée : le pilote 1609b la retiendra et tout navigateur la verra.'
+    : 'Date mémorisée sur CE navigateur ; le dépôt serveur a échoué ('
+      + (deposer.derniereErreur || '?') + ') — re-cliquez « Changer la date » '
+      + 'pour retenter.';
+  state.dateEtatErr = !okDep;
+  rendre(true);
+}
+/* applique les deltas « depuis le JJ/MM » au NIVEAU DONNÉES : tout le
+   pupitre affiche alors naturellement aujourd'hui − alors. */
+function dateAppliquer(d) {
+  const jma = dateCourante();
+  if (!jma || !d) return d;
+  /* références : en mémoire si la date correspond, sinon cache navigateur */
+  if (!state.dateDep || state.dateDep.date !== jma) {
+    const loc = dateLireLocal();
+    if (loc && loc.date === jma && loc.refs) state.dateDep = loc;
+    else {
+      state.dateDep = {date: jma, refs: null};
+      if (!state.dateChargement && !DEMO) {      /* lecture UNE fois */
+        state.dateChargement = true;
+        dateChargerRefs(jma).then(r9 => {
+          state.dateChargement = false;
+          if (r9.err) { state.dateEtat = r9.err; state.dateEtatErr = true; return; }
+          state.dateDep = {date: jma, refs: r9.refs};
+          dateEcrireLocal(state.dateDep);
+          state.dateEtat = 'références du ' + jma + ' lues';
+          state.dateEtatErr = false;
+        });
+      }
+    }
+  }
+  const refs = state.dateDep && state.dateDep.refs;
+  if (!refs) return d;
+  let out;
+  try { out = JSON.parse(JSON.stringify(d)); } catch (_) { return d; }
+  const delta = (v, r, dec) => {
+    if (!has(v) || !isFinite(r)) return v;
+    const x = Math.max(0, v - r);
+    return dec ? Math.round(x * 10) / 10 : Math.round(x);
+  };
+  (out.circuits || []).forEach(c2 => (c2.satellites || []).forEach(s2 => {
+    const r2 = refs.sats && refs.sats[s2.sat_id];
+    if (!r2) return;
+    if (has(s2.tiree_l))        s2.tiree_l        = delta(s2.tiree_l, r2.tiree_l, 1);
+    if (has(s2.conso_totale_l)) s2.conso_totale_l = delta(s2.conso_totale_l, r2.conso_totale_l, 1);
+    if (has(s2.rempl_nb))       s2.rempl_nb       = delta(s2.rempl_nb, r2.rempl_nb);
+    if (has(s2.rempl_therm_nb)) s2.rempl_therm_nb = delta(s2.rempl_therm_nb, r2.rech_nb);
+    if (has(s2.rech_nb))        s2.rech_nb        = delta(s2.rech_nb, r2.rech_nb);
+    if (has(s2.rech_nb_vid))    s2.rech_nb_vid    = delta(s2.rech_nb_vid, r2.rech_nb_vid);
+  }));
+  const ch2 = out.chaufferie || {};
+  const rc = refs.ch || {};
+  if (ch2.sdm120 && has(ch2.sdm120.energie_kwh))
+    ch2.sdm120.energie_kwh = delta(ch2.sdm120.energie_kwh, rc.sdm_kwh, 1);
+  if (ch2.elec_aux && has(ch2.elec_aux.energie_kwh))
+    ch2.elec_aux.energie_kwh = delta(ch2.elec_aux.energie_kwh, rc.aux_kwh, 1);
+  if (ch2.elec_cumulus && has(ch2.elec_cumulus.energie_kwh))
+    ch2.elec_cumulus.energie_kwh = delta(ch2.elec_cumulus.energie_kwh, rc.cum_kwh, 1);
+  if (ch2.maddalena && has(ch2.maddalena.energie_mwh))
+    ch2.maddalena.energie_mwh =
+      Math.round(Math.max(0, ch2.maddalena.energie_mwh - (isFinite(rc.ma_mwh) ? rc.ma_mwh : 0)) * 1000) / 1000;
+  const dj = jma.slice(0, 5);
+  out.dates_deb = Object.assign({}, out.dates_deb,
+    {tiree: dj, livree: dj, rempl: dj});
+  out._depuis = jma;
+  return out;
+}
+/* bandeau vitrine « entre la fiche chaufferie et les satellites » */
+function dateBandeau(d) {
+  const b = el('div', 'date-bande');
+  b.appendChild(el('b', null, 'Date de prise en compte des données : '));
+  b.appendChild(el('span', 'date-val', dateCourante() || '— non définie'));
+  const bt = el('button', null, 'Changer la date de prise en compte des données');
+  bt.addEventListener('click', ev => { ev.stopPropagation(); dateChoisir(); });
+  b.appendChild(bt);
+  const src = dateSource();
+  let et = state.dateEtat || '';
+  if (!et && src === 'navigateur')
+    et = 'mémorisée sur ce navigateur — le pilote 1609b la retiendra pour tous';
+  if (!et && src === 'serveur')
+    et = 'déposée au serveur — en attente d\u2019application par le pilote';
+  if (dateCourante() && state.dateDep && !state.dateDep.refs && !et)
+    et = 'références en cours de lecture…';
+  if (et) b.appendChild(el('div', 'date-etat' + (state.dateEtatErr ? ' err' : ''), et));
+  /* totaux depuis l'installation : panneau SECONDAIRE replié (client) */
+  if (dateCourante() && d) {
+    const det = document.createElement('details'); det.className = 'date-brut';
+    const sum = document.createElement('summary');
+    sum.textContent = 'Totaux depuis l\u2019installation (compteurs bruts)';
+    det.appendChild(sum);
+    const tb = document.createElement('table');
+    const tr0 = document.createElement('tr');
+    ['Cuve', 'Remplissages', 'Réchauffages', 'Tirée (L)', 'Livrée (L)'].forEach(h2 => {
+      const th = document.createElement('th'); th.textContent = h2; tr0.appendChild(th);
+    });
+    tb.appendChild(tr0);
+    ((d.circuits) || []).forEach(c2 => (c2.satellites || []).forEach(s2 => {
+      const tr = document.createElement('tr');
+      [s2.sat_id, has(s2.rempl_nb) ? s2.rempl_nb : '—',
+       has(s2.rech_nb) ? s2.rech_nb : (has(s2.rempl_therm_nb) ? s2.rempl_therm_nb : '—'),
+       has(s2.tiree_l) ? n(s2.tiree_l) : '—',
+       has(s2.conso_totale_l) ? n(s2.conso_totale_l) : '—'].forEach(v => {
+        const td = document.createElement('td'); td.textContent = v; tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    }));
+    det.appendChild(tb);
+    const ch2 = d.chaufferie || {};
+    const en = [];
+    if (ch2.sdm120 && has(ch2.sdm120.energie_kwh)) en.push('élec pompe ' + n(ch2.sdm120.energie_kwh) + ' kWh');
+    if (ch2.elec_aux && has(ch2.elec_aux.energie_kwh)) en.push('auxiliaires ' + n(ch2.elec_aux.energie_kwh) + ' kWh');
+    if (ch2.elec_cumulus && has(ch2.elec_cumulus.energie_kwh)) en.push('cumulus ' + n(ch2.elec_cumulus.energie_kwh) + ' kWh');
+    if (ch2.maddalena && has(ch2.maddalena.energie_mwh)) en.push('thermique ' + n(ch2.maddalena.energie_mwh) + ' MWh');
+    if (en.length) det.appendChild(el('div', 'sj-note', en.join(' · ')));
+    b.appendChild(det);
+  }
+  return b;
+}
+
 async function relever() {
-  if (DEMO) { state.data = demo(); state.recuAt = Date.now(); state.emisAt = 0;
+  if (DEMO) { state.dataBrut = demo(); state.data = dateAppliquer(state.dataBrut);
+              state.recuAt = Date.now(); state.emisAt = 0;
               state.erreur = null; rendre(true); return; }
   try {
     const r = await fetch(API.telemetry, {cache: 'no-store'});
@@ -5280,7 +5775,19 @@ async function relever() {
       return;
     }
 
-    state.data = d;
+    /* Lot 73 / D205 : le pilote 1609b envoie 1 COMPLET sur 10 et des
+       RAPIDES (tx_rapide=1) entre : on FUSIONNE le rapide sur le dernier
+       complet — sinon les stats clignoteraient en tirets. La fusion se
+       fait par sat_id et par sous-objet chaufferie. */
+    if (d.tx_rapide && state.dernierComplet
+        && state.dernierComplet.device_id === d.device_id) {
+      state.data = fusionRapide(state.dernierComplet, d);
+    } else {
+      if (!d.tx_rapide) state.dernierComplet = d;
+      state.data = d;
+    }
+    state.dataBrut = state.data;          /* vérité pilote, AVANT date de départ */
+    state.data = dateAppliquer(state.data);   /* deltas « depuis le JJ/MM » */
     state.recuAt = Date.now();
     const t = tEmisN;
     const age = Date.now() - t;
@@ -5560,8 +6067,10 @@ async function retChercher() {
   return {duo: true, N: mN || mL, L: mL || mN};
 }
 function retActuel(id2) {
-  /* la valeur ACTUELLE publiee par l'automate, cuve par cuve */
-  const d = state.data || {};
+  /* la valeur ACTUELLE publiee par l'automate, cuve par cuve.
+     Lot 73 : on lit le BRUT (avant deltas « date de départ ») — les doses
+     du Rétablir sont historique − compteurs RÉELS, jamais − affichage. */
+  const d = state.dataBrut || state.data || {};
   let trouve = null;
   ((d.circuits) || []).forEach(c2 => (c2.satellites || []).forEach(s2 => {
     if (s2.sat_id === id2) trouve = s2;
@@ -5645,8 +6154,15 @@ function retMontrer2(tN, tL) {
   const ok2 = el('button', null, 'Confirmer — tout rétablir maintenant');
   ok2.style.fontWeight = '700';
   ok2.addEventListener('click', async () => {
+    /* Lot 73 — BUG DU 16/09 CORRIGÉ : le dépôt pouvait ÉCHOUER (401, réseau
+       — 5 envois sur 6 perdus ce matin-là) et ce texte affichait quand même
+       « déposé » en vidant le tableau : « rien ne se passe ». Désormais :
+       l'issue RÉELLE s'affiche ICI, l'échec garde le tableau et le bouton,
+       et le succès est SUIVI jusqu'à « config vN » vue en télémesure. */
     ok2.disabled = true;
-    $('#autoRetEtat').textContent = 'envoi de la repose groupée…';
+    const et9 = $('#autoRetEtat');
+    et9.style.color = '';
+    et9.textContent = 'envoi de la repose groupée…';
     const c9 = retMontrer._cases || {};
     const ordre9 = {};
     if (!c9.rempl || c9.rempl.checked)  ordre9.rempl_nb_ajout = doses.rempl;
@@ -5654,10 +6170,35 @@ function retMontrer2(tN, tL) {
     if (!c9.vid || c9.vid.checked)      ordre9.rech_vid_ajout = doses.vid;
     if (!c9.tiree || c9.tiree.checked)  ordre9.tiree_ajout    = doses.tiree;
     if (!c9.livree || c9.livree.checked) ordre9.livree_ajout  = doses.livree;
-    await ordreRapide(ordre9);
-    $('#autoRetEtat').textContent = "déposé — appliqué à l'instant sûr : "
-      + 'séries [D190]/[D201]/[D203], compteurs justes au tour suivant.';
+    deposer.derniereErreur = '';
+    const ok9 = await ordreRapide(ordre9);
+    if (!ok9) {
+      et9.style.color = '#b3261e';
+      et9.textContent = 'LE DÉPÔT A ÉCHOUÉ — ' + (deposer.derniereErreur || 'voir Réglages')
+        + ' — le tableau est conservé : re-cliquez « Confirmer » (sans risque, '
+        + 'les doses sont des différences).';
+      ok2.disabled = false;
+      return;
+    }
+    const v9 = deposer.derniereVersion;
+    et9.textContent = 'déposé (config v' + v9 + ") — appliqué à l'instant sûr : "
+      + 'vérifiez « config v' + v9 + ' » au bandeau ; séries [D190]/[D201]/[D203].';
     tab.textContent = '';
+    /* guetteur : la télémesure confirme l'application */
+    const t0 = Date.now();
+    const g9 = setInterval(() => {
+      const dv = state.dataBrut || state.data;
+      if (dv && (dv.cfg_version | 0) >= v9) {
+        clearInterval(g9);
+        et9.textContent = '✔ appliqué — config v' + v9 + ' vue à '
+          + new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})
+          + ' : les compteurs sont rétablis.';
+      } else if (Date.now() - t0 > 180000) {
+        clearInterval(g9);
+        et9.textContent = 'déposé (config v' + v9 + ') mais PAS ENCORE vue en télémesure '
+          + "après 3 min — l'automate est-il en ligne ? Le dépôt reste au serveur.";
+      }
+    }, 3000);
   });
   tab.appendChild(ok2);
 }
@@ -5713,7 +6254,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1609f — pupitre ' + LOT + ' · lot 72 — 16/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1609g — pupitre ' + LOT + ' · lot 73 — 16/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
@@ -5804,7 +6345,7 @@ const PHOTOS_ALB = {  /* lot 56 : albums (client 14/09) — sources 1280 px */
    points). Le survol previsualise ; un clic VERROUILLE l'album (croix,
    Echap ou clic sur le voile pour fermer). */
 const alb = {id: null, i: 0, fixe: false, tFerme: null, mx: -1, my: -1};
-if (!state.satOuverts) state.satOuverts = new Set();
+if (!('satTousOuverts' in state)) state.satTousOuverts = false;   /* lot 73 : collectif */
 /* Lot 60 (client, diagnostic EXACT : « quand elle apparait, la souris
    n'est plus sur la fiche ») : la photo s'ouvre au centre, elle recouvre
    le curseur -> la cuve recoit mouseleave -> fermeture -> la cuve repasse
@@ -5884,7 +6425,7 @@ function albumFermer(force) {
 function satPlierTout() {
   document.querySelectorAll('article.sat').forEach(cv => {
     if (cv._plie) {
-      cv.classList.toggle('ouverte', state.satOuverts.has(cv._satId || ''));
+      cv.classList.toggle('ouverte', !!state.satTousOuverts);
       return;
     }
     const id9 = ((cv.textContent || '').match(/\b(SA1|SA2|SA3|SB1)\b/) || [])[1];
@@ -5948,11 +6489,12 @@ function satPlierTout() {
     cv.addEventListener('click', ev => {
       if (ev.target.closest('button, input, select, a, textarea')) return;
       const ouvre = !cv.classList.contains('ouverte');
-      cv.classList.toggle('ouverte', ouvre);
-      if (ouvre) state.satOuverts.add(id9); else state.satOuverts.delete(id9);
+      state.satTousOuverts = ouvre;                    /* lot 73 : collectif */
+      document.querySelectorAll('article.sat').forEach(c9 =>
+        c9.classList.toggle('ouverte', ouvre));
     });
     cv._plie = true;
-    cv.classList.toggle('ouverte', state.satOuverts.has(id9));
+    cv.classList.toggle('ouverte', !!state.satTousOuverts);
   });
 }
 function albumFixSouris() {           /* pose une seule fois, des que #schPhoto existe */
@@ -6052,7 +6594,7 @@ function schCuve(s, d) {
           + (has(ch9.simul_dose_l)
              ? ' / ' + n((ch9.simul_faits_l || 0) + ch9.simul_dose_l) + ' L' : '')
         : (state.simul && state.simul.clics
-           ? state.simul.clics + ' L — envoi dans 4 s' : 'fermée')));
+           ? state.simul.clics + ' L · envoi 4 s' : 'fermée')));
     dr.appendChild(rg);
   }
   cv.appendChild(dr);
@@ -6104,6 +6646,9 @@ function rendreSalon(d) {
     });
   });
   g.appendChild(el('div', 'sch-etg sch-etgC', 'chaufferie'));
+  /* Lot 73 : bandeau DATE — « entre la fiche chaufferie et les
+     satellites » (emplacement acté verbatim, client 16/09). */
+  g.appendChild(dateBandeau(state.dataBrut || d));
   const bande = el('div', 'sch-chauf sch-encadre');
   bande.appendChild(el('div', 'sch-chauf-titre',
     'CHAUFFERIE COLLECTIVE — ' + totalLogements() + ' logements desservis'));
@@ -6121,10 +6666,15 @@ function rendreSalon(d) {
   if (d && pilotePlusVieux(d.prog))                /* lot 68 : sobre */
     bande.appendChild(chip('Pilote', d.prog,
       'mise à jour ' + PILOTE_ATTENDU + ' disponible (câble USB)'));
-  if (d && d.boot_anormal)                     /* lot 57 : reboot anormal */
-    bande.appendChild(chip('REDÉMARRAGE ANORMAL',
-      d.boot_raison || 'raison inconnue',
-      'démarrage n° ' + (d.boot_n || '?'), 'alerte'));
+  if (d && d.boot_anormal) {                   /* lot 57 -> 73 : SOBRE
+       (client : l'encadré criard était « abusif et laid ») */
+    const rb = el('div', 'sch-note',
+      'redémarrages : ' + (d.boot_n || '?') + ' · dernier : '
+      + (d.boot_raison || 'raison inconnue'));
+    rb.style.cssText = 'grid-column:1/-1;font-family:var(--fs-cond);'
+      + 'font-size:11.5px;color:#8a5a00;padding:0 2px';
+    bande.appendChild(rb);
+  }
   if (d && has(d.etat_lu) && !d.etat_lu)       /* lot 55 : visible en vitrine */
     bande.appendChild(chip('ÉTAT NON RELU', 'au démarrage',
       (d.etat_err || '') + ' — voir Réglages > Réparation', 'alerte'));
@@ -6161,17 +6711,21 @@ function rendreSalon(d) {
                  + duree(meilleur.rempl_dernier_age_s) + ')'
                : 'au prochain remplissage', pOn ? 'chaud' : ''));
   }
-  { /* lot 65 : réserve — l'essentiel : le niveau d'AIR (CNB mort ignoré) */
+  { /* lot 65 -> 73 : réserve — le niveau d'AIR, en TAILLE NORMALE
+       (client : « écrit trop gros ») + sous-texte CNB rouge HS (D206). */
     const rs = ch.reserve || {};
     if (has(rs.milieu_mouille)) {
       const grave = !!rs.haut_mouille;
-      bande.appendChild(chip('Réserve 300 L',
+      const c9 = chip('Réserve 300 L',
         grave ? "MANQUE D'AIR" : rs.milieu_mouille ? "appoint d'air requis"
               : "niveau d'air OK",
-        grave ? "l'eau a atteint le haut — appoint renforcé"
-              : rs.milieu_mouille ? 'eau au milieu — compresseur en fenêtre 10-19 h'
-              : 'eau sous le milieu',
-        grave ? 'alerte' : rs.milieu_mouille ? 'chaud' : ''));
+        (grave ? "l'eau a atteint le haut (CNH) — appoint renforcé"
+              : rs.milieu_mouille ? 'eau au milieu (CNM) — compresseur en fenêtre 10-19 h'
+              : 'eau sous le milieu')
+        + ' · CNB rouge HS / non raccordé / ignoré',
+        grave ? 'alerte' : rs.milieu_mouille ? 'chaud' : '');
+      c9.classList.add('val-normale');
+      bande.appendChild(c9);
     }
   }
   { /* lot 65 : eau tirée TOTALE depuis la date de comptage */
@@ -6187,7 +6741,10 @@ function rendreSalon(d) {
   const pr = ch.pression || {};
   if (has(pr.bar)) bande.appendChild(chip('Pression', n(pr.bar) + ' bar', ' '));
   const rs = ch.reserve || {};
-  if (has(rs.bas_mouille)) {
+  /* D206 : le pilote 1609b publie bas_present = 0 (CNB mort) — la
+     fourchette sur le flotteur bas n'a plus de sens ; on ne la montre
+     qu'aux vieux pilotes qui la publient encore. */
+  if (has(rs.bas_mouille) && rs.bas_present !== 0) {
     const mp2 = !has(rs.milieu_present) || !!rs.milieu_present;
     const hp2 = !has(rs.haut_present) || !!rs.haut_present;
     bande.appendChild(chip('Réserve 300 L',
@@ -6197,11 +6754,20 @@ function rendreSalon(d) {
       hp2 ? ' ' : 'flotteur haut non raccordé'));
   }
   const cp = ch.compresseur;
+  if (cp && cp.grave)                          /* D206 : cas grave TRES visible */
+    bande.appendChild(chip('RÉSERVE — CAS GRAVE',
+      "MANQUE D'AIR (CNH)",
+      'depuis ' + (cp.grave_ep ? fmtEpoque(cp.grave_ep) : '?')
+      + ' — objectif porté à ' + n(cp.objectif_l || 50) + ' L, tirage créé',
+      'alerte'));
   if (cp && (cp.etat === 1 || cp.alarme || cp.etat === 2))
     bande.appendChild(chip('Compresseur d\u2019air',
       cp.etat === 1 ? 'en marche' : 'verrouillé',
-      cp.etat === 1 ? n(cp.litres || 0) + ' L de puisage' : 'arrêt forcé 80 L',
-      (cp.alarme || cp.etat === 2) ? 'alerte' : ''));
+      cp.etat === 1
+        ? n(cp.litres || 0) + ' / ' + n(cp.objectif_l || 25) + ' L d\u2019ECS tirée'
+          + (cp.decl ? ' · déclenché CNH' : '')
+        : 'arrêt forcé (vieux pilote)',
+      (cp.alarme || cp.etat === 2 || cp.decl) ? 'alerte' : ''));
   if (has(ch.simul_sa1) && ch.simul_sa1)
     bande.appendChild(chip('Simul SA1', 'OUVERTE',
       n(ch.simul_faits_l || 0) + ' L faits', 'alerte'));
