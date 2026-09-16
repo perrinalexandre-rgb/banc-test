@@ -9,7 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609j.76 (lot 76, 16/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1609k.77 (lot 77, 16/09/2026)
+   Lot 77 (Claude Fable 5, « au travail » client, panne du 16/09) :
+   bannière claire en français quand l'automate n'a pas relu sa mémoire,
+   avec le bouton « Remettre les compteurs » qui mène droit au Rétablir ;
+   garde « compteurs sous la référence » sur les mesures depuis-la-date ;
+   choix de date par CALENDRIER + raccourcis (installation, il y a 7 j,
+   1er du mois) ; tuyaux d'UNE seule couleur, collecteur hors des textes,
+   fond plein sous la chaufferie ; ligne date intégrée à la bande ;
+   niveaux CNB/CNM/CNH discrets sur chaque cuve de la vitrine ; Excel :
+   gras d'en-tête + volets figés écrits par retouche du zip (stored).
    Lot 76 (Claude Fable 5, go client « quelque chose de top ») :
    ① la quantité EN GRAND, marquée dans chaque cuve de la vitrine ;
    ② la liaison satellites -> module maître redessinée : UNE couche SVG
@@ -1048,6 +1057,10 @@ body.salon #salonVue{padding:3vh 4vw 2vh}
 .sch-jg.grande .sch-vol{font-size:24px}
 .sch-jg .sch-vol small{font-size:12px;font-weight:700;margin-left:2px;
   color:#6a4d18}
+/* lot 77 : niveaux de flotteurs, discrets, au flanc droit de la jauge */
+.sch-flot{position:absolute;right:-3px;width:9px;height:2px;border-radius:1px;
+  background:rgba(0,0,0,.22)}
+.sch-flot.mouille{background:#b3261e;height:3px;right:-4px;width:11px}
 /* Lot 76 : énergies « depuis le » dans la bande chaufferie */
 .sch-ener{flex-basis:100%;text-align:center;font-family:var(--fs-cond);
   font-size:14px;padding:2px 4px;color:var(--ink)}
@@ -1070,7 +1083,9 @@ body.salon #salonVue{padding:3vh 4vw 2vh}
 .sch-simul b{font-size:11.5px;color:var(--ink2)}
 .sch-simul b.ouv{color:var(--ecs,#c06712)}
 .sch-chauf{grid-column:2/4;display:flex;gap:10px;flex-wrap:wrap;
-  align-items:stretch;justify-content:center;padding:14px 6px 4px}
+  align-items:stretch;justify-content:center;padding:14px 6px 4px;
+  background:var(--card,#fff);border-radius:12px}   /* lot 77 : fond plein,
+  aucun tracé ne traverse plus l'écriture */
 .sch-chip{background:var(--card,#fff);border:1px solid rgba(0,0,0,.12);
   border-radius:12px;padding:8px 14px;text-align:center;min-width:96px}
 .sch-chip b{display:block;font-family:var(--fs-cond);font-weight:600;font-size:11px;
@@ -1456,7 +1471,7 @@ const DEVICE     = 'chaufferie-01';
 /* Lot 64 : le pupitre CONNAIT le pilote qu'il attend — s'il voit un autre
    programme tourner dans l'automate, il le dit en ROUGE. Fini la
    confusion page/puce. A mettre a jour a chaque livraison pilote. */
-const PILOTE_ATTENDU = '1609b';   /* lot 73 : D205/D206 + date de départ */
+const PILOTE_ATTENDU = '1609c';   /* lot 77 : D207 sauvegarde blindée */
 /* Lot 68 : on ne crie plus a l'egalite stricte — un pilote PLUS RECENT
    que l'attendu est une bonne nouvelle, pas une alerte. Et le ton
    redevient SOBRE (client : « etre clair, pas en faire des tonnes »). */
@@ -1467,7 +1482,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1609j.76';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1609k.77';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -2170,7 +2185,9 @@ function rendreBandeau(d) {
     const bw = $('#mBootWrap'), bb = $('#mBoot');
     if (bw && bb) {
       if (has(d.boot_n)) {
-        bb.textContent = d.boot_n + (d.boot_raison ? ' (' + d.boot_raison + ')' : '');
+        bb.textContent = d.boot_n
+          + (d.boot_raison ? ' (' + String(d.boot_raison).toLowerCase() + ')' : '')
+          + (d.boot_passage ? ' — pendant : ' + d.boot_passage : '');
         bw.classList.toggle('m-anormal', !!d.boot_anormal);
       } else bb.textContent = '—';
     }
@@ -3648,8 +3665,8 @@ function rendreMesures(d) {
      demarrage, il le PUBLIE — pastille rouge, plus jamais de zeros muets. */
   const dd2 = state.data || {};
   if (has(dd2.etat_lu) && !dd2.etat_lu)
-    ligne(box, 'ÉTAT NON RELU', 'au démarrage'
-      + (dd2.etat_err ? ' (' + dd2.etat_err + ')' : '')
+    ligne(box, 'ÉTAT NON RELU', "l'automate n'a pas pu relire sa mémoire"
+      + (dd2.etat_err ? ' (fichier incomplet : ' + dd2.etat_err + ')' : '')
       + ' — compteurs repartis de zéro ; reposez-les via Réglages > '
       + 'Réparation (D201)', true);
   const {vfd, sdm, madd, at} = state.mesures;
@@ -3870,6 +3887,124 @@ function satJournalBloc(id9) {
     bloc.appendChild(el('div', 'sj-note', li.length + ' fiches — les 12 plus '
       + 'récentes ici, tout est dans la carte Journal.'));
   return bloc;
+}
+/* =====================================================================
+   Lot 77 : RETOUCHE du classeur Excel — gras de la ligne d'en-tête et
+   volets figés (ligne 1), que la bibliothèque embarquée n'écrit pas.
+   Le .xlsx est une archive zip NON compressée (compression:false) : on la
+   déballe entrée par entrée, on retouche deux XML (styles + feuilles), on
+   ré-emballe en zip « stored » avec les CRC recalculés. Si quoi que ce
+   soit ne colle pas (entrée compressée, XML inattendu), le fichier
+   D'ORIGINE est rendu tel quel — jamais de classeur cassé.
+   ===================================================================== */
+function xlsxCrc32(u8) {
+  if (!xlsxCrc32.T) {
+    const T = new Uint32Array(256);
+    for (let n2 = 0; n2 < 256; n2++) {
+      let c2 = n2;
+      for (let k2 = 0; k2 < 8; k2++) c2 = (c2 & 1) ? 0xEDB88320 ^ (c2 >>> 1) : c2 >>> 1;
+      T[n2] = c2 >>> 0;
+    }
+    xlsxCrc32.T = T;
+  }
+  let c9 = 0xFFFFFFFF;
+  for (let i9 = 0; i9 < u8.length; i9++)
+    c9 = xlsxCrc32.T[(c9 ^ u8[i9]) & 0xFF] ^ (c9 >>> 8);
+  return (c9 ^ 0xFFFFFFFF) >>> 0;
+}
+function xlsxFigerEtGras(u8) {
+  try {
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    const txt = new TextDecoder(), enc = new TextEncoder();
+    const entrees = [];
+    let p9 = 0;
+    while (p9 + 4 <= u8.length && dv.getUint32(p9, true) === 0x04034b50) {
+      const method = dv.getUint16(p9 + 8, true);
+      const mtime = dv.getUint16(p9 + 10, true), mdate = dv.getUint16(p9 + 12, true);
+      const csize = dv.getUint32(p9 + 18, true);
+      const nlen = dv.getUint16(p9 + 26, true), elen = dv.getUint16(p9 + 28, true);
+      const nom9 = txt.decode(u8.subarray(p9 + 30, p9 + 30 + nlen));
+      if (method !== 0) { console.log('[xlsx] entrée compressée — retouche sautée'); return u8; }
+      const deb9 = p9 + 30 + nlen + elen;
+      entrees.push({nom: nom9, mtime, mdate, donnees: u8.slice(deb9, deb9 + csize)});
+      p9 = deb9 + csize;
+    }
+    if (!entrees.length) return u8;
+    const lireXml = e9 => txt.decode(e9.donnees);
+    const poserXml = (e9, x9) => { e9.donnees = enc.encode(x9); };
+    /* 1. styles.xml : une police GRASSE + un style de cellule qui l'emploie */
+    const eSt = entrees.find(e9 => e9.nom === 'xl/styles.xml');
+    if (!eSt) return u8;
+    let st = lireXml(eSt);
+    const mF = st.match(/<fonts count="(\d+)"/);
+    const mX = st.match(/<cellXfs count="(\d+)"/);
+    if (!mF || !mX) return u8;
+    const idF = +mF[1], idS = +mX[1];
+    st = st.replace(/<fonts count="\d+"/, '<fonts count="' + (idF + 1) + '"')
+           .replace('</fonts>', '<font><b/><sz val="11"/><name val="Calibri"/></font></fonts>')
+           .replace(/<cellXfs count="\d+"/, '<cellXfs count="' + (idS + 1) + '"')
+           .replace('</cellXfs>', '<xf numFmtId="0" fontId="' + idF
+             + '" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>');
+    poserXml(eSt, st);
+    /* 2. chaque feuille : volets figés sous la ligne 1 + gras de la ligne 1 */
+    entrees.forEach(e9 => {
+      if (!/^xl\/worksheets\/sheet\d+\.xml$/.test(e9.nom)) return;
+      let x9 = lireXml(e9);
+      if (x9.indexOf('<sheetViews>') < 0) {
+        const vue9 = '<sheetViews><sheetView workbookViewId="0">'
+          + '<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>'
+          + '</sheetView></sheetViews>';
+        if (/<dimension[^>]*\/>/.test(x9))
+          x9 = x9.replace(/(<dimension[^>]*\/>)/, '$1' + vue9);
+        else x9 = x9.replace(/(<worksheet[^>]*>)/, '$1' + vue9);
+      }
+      x9 = x9.replace(/<row r="1"([^>]*)>([\s\S]*?)<\/row>/, (tout9, at9, corps9) =>
+        '<row r="1"' + at9 + '>'
+        + corps9.replace(/<c r="([A-Z]+1)"(?![^>]*\ss=")/g,
+                         '<c r="$1" s="' + idS + '"')
+        + '</row>');
+      poserXml(e9, x9);
+    });
+    /* 3. ré-emballage zip « stored », CRC et tailles recalculés */
+    const morceaux = [], centraux = [];
+    let off9 = 0, total9 = 0;
+    const u16 = v9 => new Uint8Array([v9 & 255, (v9 >> 8) & 255]);
+    const u32 = v9 => new Uint8Array([v9 & 255, (v9 >> 8) & 255, (v9 >> 16) & 255, (v9 >>> 24) & 255]);
+    const pousse9 = a9 => { morceaux.push(a9); total9 += a9.length; };
+    entrees.forEach(e9 => {
+      const nomB = enc.encode(e9.nom);
+      const crc9 = xlsxCrc32(e9.donnees), tl9 = e9.donnees.length;
+      const loc9 = e9.offset = off9;
+      pousse9(u32(0x04034b50)); pousse9(u16(20)); pousse9(u16(0)); pousse9(u16(0));
+      pousse9(u16(e9.mtime)); pousse9(u16(e9.mdate));
+      pousse9(u32(crc9)); pousse9(u32(tl9)); pousse9(u32(tl9));
+      pousse9(u16(nomB.length)); pousse9(u16(0));
+      pousse9(nomB); pousse9(e9.donnees);
+      off9 = total9;
+      centraux.push({nomB, crc9, tl9, loc9, mtime: e9.mtime, mdate: e9.mdate});
+    });
+    const debCent = total9;
+    centraux.forEach(c9 => {
+      pousse9(u32(0x02014b50)); pousse9(u16(20)); pousse9(u16(20));
+      pousse9(u16(0)); pousse9(u16(0));
+      pousse9(u16(c9.mtime)); pousse9(u16(c9.mdate));
+      pousse9(u32(c9.crc9)); pousse9(u32(c9.tl9)); pousse9(u32(c9.tl9));
+      pousse9(u16(c9.nomB.length)); pousse9(u16(0)); pousse9(u16(0));
+      pousse9(u16(0)); pousse9(u16(0)); pousse9(u32(0)); pousse9(u32(c9.loc9));
+      pousse9(c9.nomB);
+    });
+    const tailleCent = total9 - debCent;
+    pousse9(u32(0x06054b50)); pousse9(u16(0)); pousse9(u16(0));
+    pousse9(u16(centraux.length)); pousse9(u16(centraux.length));
+    pousse9(u32(tailleCent)); pousse9(u32(debCent)); pousse9(u16(0));
+    const sortie9 = new Uint8Array(total9);
+    let q9 = 0;
+    morceaux.forEach(m9 => { sortie9.set(m9, q9); q9 += m9.length; });
+    return sortie9;
+  } catch (err9) {
+    console.log('[xlsx] retouche impossible (' + err9.message + ') — fichier d\u2019origine rendu');
+    return u8;
+  }
 }
 function fichesDemander(t) {
   const st = state.fich;
@@ -5331,7 +5466,19 @@ async function exExtraire() {
                 + ' - ' + j2 + ' ' + h2.replace(':', 'h') + '.xlsx';
       exTravail("écriture du fichier Excel (c'est l'étape la plus longue)");
       await exSouffle();
-      XLSX.writeFile(classeur, nom);
+      { /* lot 77 : gras d'en-tête + volets figés — la bibliothèque ne les
+           écrit pas, alors le fichier est RETOUCHÉ après coup (zip non
+           compressé, voir xlsxFigerEtGras). Si la retouche ne peut pas se
+           faire, le fichier part tel quel, rien n'est perdu. */
+        const brut9 = XLSX.write(classeur,
+          {bookType: 'xlsx', type: 'array', compression: false});
+        const fini9 = xlsxFigerEtGras(new Uint8Array(brut9));
+        const bl9 = new Blob([fini9],
+          {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+        const a9 = document.createElement('a');
+        a9.href = URL.createObjectURL(bl9); a9.download = nom;
+        document.body.appendChild(a9); a9.click();
+        setTimeout(() => { URL.revokeObjectURL(a9.href); a9.remove(); }, 4000); }
       exEtat('Terminé : ' + joursOk + ' feuille(s), ' + totalLignes
            + ' lignes.\nFichier téléchargé : ' + nom);
     }
@@ -5651,9 +5798,11 @@ async function dateChargerRefs(jma) {
   }
   return {err: 'aucune ligne archivée le ' + jma + ' — jour vide ?'};
 }
-async function dateChoisir() {
-  const t = prompt('Date de prise en compte des données (JJ/MM/AAAA, date '
-                 + 'passée) :', dateCourante() || '');
+async function dateChoisir(tDonne) {   /* lot 77 : le prompt ne sert plus
+   que de secours — le bandeau porte un vrai champ calendrier. */
+  const t = (tDonne !== undefined) ? tDonne
+    : prompt('Date de prise en compte des données (JJ/MM/AAAA, date '
+           + 'passée) :', dateCourante() || '');
   if (t === null) return;
   const jma = dateValide(t);
   if (!jma) { state.dateEtat = 'date refusée (attendu JJ/MM/AAAA, passée)';
@@ -5703,6 +5852,17 @@ function dateAppliquer(d) {
   if (!refs) return d;
   let out;
   try { out = JSON.parse(JSON.stringify(d)); } catch (_) { return d; }
+  state.dateSousRef = false;   /* lot 77 : détecter des compteurs REPARTIS
+     de zéro (état perdu) — des zéros muets mentiraient */
+  (d.circuits || []).forEach(c8 => (c8.satellites || []).forEach(s8 => {
+    const r8 = refs.sats && refs.sats[s8.sat_id];
+    if (!r8) return;
+    if ((isFinite(r8.rempl_nb) && r8.rempl_nb > 3 && has(s8.rempl_nb)
+         && s8.rempl_nb < r8.rempl_nb)
+     || (isFinite(r8.tiree_l) && r8.tiree_l > 10 && has(s8.tiree_l)
+         && s8.tiree_l < r8.tiree_l - 1))
+      state.dateSousRef = true;
+  }));
   const delta = (v, r, dec) => {
     if (!has(v) || !isFinite(r)) return v;
     const x = Math.max(0, v - r);
@@ -5765,9 +5925,38 @@ function dateBandeau(d) {
   const b = el('div', 'date-bande');
   b.appendChild(el('b', null, 'Date de prise en compte des données : '));
   b.appendChild(el('span', 'date-val', dateCourante() || '— non définie'));
-  const bt = el('button', null, 'Changer la date de prise en compte des données');
-  bt.addEventListener('click', ev => { ev.stopPropagation(); dateChoisir(); });
-  b.appendChild(bt);
+  { /* lot 77 : « une méthode plus pratique » — calendrier natif + raccourcis */
+    const ch9 = document.createElement('input');
+    ch9.type = 'date';
+    ch9.max = new Date().toISOString().slice(0, 10);
+    ch9.min = '2026-08-20';
+    const cur9 = dateCourante();
+    if (cur9) ch9.value = dateVersIso(cur9);
+    ch9.addEventListener('click', ev => ev.stopPropagation());
+    const ok9 = el('button', null, 'Appliquer');
+    ok9.style.fontWeight = '700';
+    ok9.addEventListener('click', ev => {
+      ev.stopPropagation();
+      if (!ch9.value) { state.dateEtat = 'choisissez une date dans le champ';
+                        state.dateEtatErr = true; rendre(true); return; }
+      const [a9, m9, j9] = ch9.value.split('-');
+      dateChoisir(j9 + '/' + m9 + '/' + a9);
+    });
+    b.appendChild(ch9); b.appendChild(ok9);
+    const rac9 = (lb9, jma9) => {
+      const r9 = el('button', null, lb9);
+      r9.style.fontSize = '11.5px';
+      r9.addEventListener('click', ev => { ev.stopPropagation(); dateChoisir(jma9); });
+      return r9;
+    };
+    const auj9 = new Date();
+    const fmt9 = d9 => String(d9.getDate()).padStart(2, '0') + '/'
+      + String(d9.getMonth() + 1).padStart(2, '0') + '/' + d9.getFullYear();
+    const inst9 = dateInstallation();
+    if (inst9) b.appendChild(rac9('installation (' + inst9.slice(0, 5) + ')', inst9));
+    b.appendChild(rac9('il y a 7 j', fmt9(new Date(auj9 - 7 * 86400000))));
+    b.appendChild(rac9('1er du mois',
+      fmt9(new Date(auj9.getFullYear(), auj9.getMonth(), 1)))); }
   const inst = dateInstallation();
   if (inst) b.appendChild(el('div', 'date-etat',
     'Installation en service depuis le ' + inst + '.'));
@@ -5790,6 +5979,13 @@ function dateBandeau(d) {
     et = 'déposée au serveur — en attente d\u2019application par le pilote';
   if (dateCourante() && state.dateDep && !state.dateDep.refs && !et)
     et = 'références en cours de lecture…';
+  if (state.dateSousRef) {
+    b.appendChild(el('div', 'date-etat err',
+      '\u26a0 Les compteurs actuels sont SOUS la référence du '
+      + (dateCourante() || '?') + " — l'automate a perdu ses compteurs "
+      + '(redémarrage, état non relu). Remettez-les avec « Rétablir » '
+      + 'ci-dessous : les mesures « depuis le » reprendront toutes seules.'));
+  }
   if (et) b.appendChild(el('div', 'date-etat' + (state.dateEtatErr ? ' err' : ''), et));
   /* totaux depuis l'installation : panneau SECONDAIRE replié (client) */
   if (dateCourante() && d) {
@@ -6330,7 +6526,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1609j — pupitre ' + LOT + ' · lot 76 — 16/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1609k — pupitre ' + LOT + ' · lot 77 — 16/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
@@ -6410,10 +6606,13 @@ function salonTuyaux() {
   sv.setAttribute('preserveAspectRatio', 'none');
   sv.textContent = '';
   const rb = bd.getBoundingClientRect();
-  const yColl = rb.top - rg.top + 30;              /* collecteur DANS la bande */
+  /* lot 77 (client : « brouillon, passe sur l'écriture ») : le collecteur
+     vit AU-DESSUS de la bande, dans l'interstice — plus jamais sur un
+     texte — et les deux circuits portent LA MEME couleur. */
+  const yColl = rb.top - rg.top - 10;
   const xCentre = rb.left - rg.left + rb.width / 2;
   const R = 14;                                    /* rayon des coudes */
-  [['A', '#c06712'], ['B', '#2a7a8c']].forEach(([circ, coul]) => {
+  [['A', '#c06712'], ['B', '#c06712']].forEach(([circ, coul]) => {
     const cuves = [];
     g.querySelectorAll('.sch-cell[data-circ="' + circ + '"] .sch-cuve')
      .forEach(cv => cuves.push(cv.getBoundingClientRect()));
@@ -6437,7 +6636,15 @@ function salonTuyaux() {
     path.setAttribute('opacity', '0.5');
     sv.appendChild(path);
   });
-  /* la goutte du module maître, au point de jonction */
+  /* l'entrée dans la chaufferie : petite descente au bord, sans toucher
+     le titre, et la goutte du module maître au point de jonction */
+  const ent = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  ent.setAttribute('d', 'M ' + xCentre.toFixed(1) + ' ' + yColl.toFixed(1)
+    + ' L ' + xCentre.toFixed(1) + ' ' + (rb.top - rg.top + 4).toFixed(1));
+  ent.setAttribute('fill', 'none'); ent.setAttribute('stroke', '#c06712');
+  ent.setAttribute('stroke-width', '6'); ent.setAttribute('stroke-linecap', 'round');
+  ent.setAttribute('opacity', '0.5');
+  sv.appendChild(ent);
   const pt = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
   pt.setAttribute('cx', xCentre.toFixed(1)); pt.setAttribute('cy', yColl.toFixed(1));
   pt.setAttribute('r', '7'); pt.setAttribute('fill', '#8a5a20');
@@ -6688,6 +6895,17 @@ function schCuve(s, d) {
       has(s.volume_l) ? i0(Math.round(s.volume_l)) : '—');
     vol.appendChild(el('small', null, 'L'));
     jg.appendChild(vol); }
+  { /* lot 77 : les niveaux CNB/CNM/CNH, discrets (client 16/09) — cotes
+       réelles de l'installation : classe 59 L (SA1) et classe 39 L. */
+    const cotes = (s.X_l === 59) ? [8.2, 17.3, 26.5] : [4.2, 13.3, 22.5];
+    [['cnb', 'CNB', cotes[0]], ['cnm', 'CNM', cotes[1]], ['cnh', 'CNH', cotes[2]]]
+    .forEach(([k9, nm9, cote9]) => {
+      const mou9 = s[k9] === 1;
+      const t9 = el('span', 'sch-flot' + (mou9 ? ' mouille' : ''));
+      t9.style.bottom = Math.min(96, cote9 / (s.X_l || 39) * 100).toFixed(0) + '%';
+      t9.title = nm9 + ' ' + n(cote9) + ' L — ' + (mou9 ? 'mouillé' : 'sec');
+      jg.appendChild(t9);
+    }); }
   gauche.appendChild(jg);
   gauche.appendChild(el('div', 'sch-litres',
     (has(s.volume_l) ? n(s.volume_l) : '—') + ' / ' + i0(s.X_l || 39) + ' L'));
@@ -6786,22 +7004,21 @@ function rendreSalon(d) {
     });
   });
   g.appendChild(el('div', 'sch-etg sch-etgC', 'chaufferie'));
-  /* Lot 73 -> 74 : la vitrine INDIQUE clairement (client : « la date
-     doit être indiquée clairement sur le pupitre simple ») — la
-     fonctionnalité (bouton, références, totaux bruts) vit au pupitre
-     avancé. */
-  { const lb = el('div', 'date-bande');
-    const dj9 = dateCourante();
-    lb.appendChild(el('b', null, dj9 ? 'Données depuis le ' : 'Données depuis l\u2019origine'));
-    if (dj9) lb.appendChild(el('span', 'date-val', dj9));
-    const inst9 = dateInstallation();
-    if (inst9) lb.appendChild(el('span', null,
-      '· installation en service depuis le ' + inst9));
-    g.appendChild(lb); }
   const bande = el('div', 'sch-chauf sch-encadre');
   bande.id = 'schBande';                             /* lot 76 : cible du tracé */
   bande.appendChild(el('div', 'sch-chauf-titre',
     'CHAUFFERIE COLLECTIVE — ' + totalLogements() + ' logements desservis'));
+  { /* lot 77 : la date vit DANS la bande, discrète et hors du chemin des
+       tuyaux (l'ancien bandeau flottant était « brouillon »). */
+    const dj9 = dateCourante(), inst9 = dateInstallation();
+    let t9 = dj9 ? 'Données depuis le ' + dj9 : 'Données depuis l\u2019origine';
+    if (inst9) t9 += ' · installation en service depuis le ' + inst9;
+    if (state.dateSousRef)
+      t9 += ' — \u26a0 compteurs sous la référence, voir le bandeau du pupitre avancé';
+    const ld9 = el('div', 'sch-note', t9);
+    ld9.style.cssText = 'flex-basis:100%;text-align:center;font-family:'
+      + 'var(--fs-cond);font-size:12.5px;color:var(--ink2);padding:0 2px';
+    bande.appendChild(ld9); }
   schPhotoAttacher(bande, 'CHAUF');            /* lot 54 : album chaufferie */
   g.classList.toggle('fluxOn',
     (((d && d.chaufferie) || {}).pompe_pct || 0) > 0);   /* eau chaude en route */
@@ -6820,14 +7037,37 @@ function rendreSalon(d) {
        (client : l'encadré criard était « abusif et laid ») */
     const rb = el('div', 'sch-note',
       'redémarrages : ' + (d.boot_n || '?') + ' · dernier : '
-      + (d.boot_raison || 'raison inconnue'));
+      + String(d.boot_raison || 'raison inconnue').toLowerCase()
+      + (d.boot_passage ? ' (pendant : ' + d.boot_passage + ')' : ''));
     rb.style.cssText = 'grid-column:1/-1;font-family:var(--fs-cond);'
       + 'font-size:11.5px;color:#8a5a00;padding:0 2px';
     bande.appendChild(rb);
   }
   if (d && has(d.etat_lu) && !d.etat_lu)       /* lot 55 : visible en vitrine */
-    bande.appendChild(chip('ÉTAT NON RELU', 'au démarrage',
-      (d.etat_err || '') + ' — voir Réglages > Réparation', 'alerte'));
+    { const bn = el('div', 'sch-note');
+      bn.style.cssText = 'flex-basis:100%;background:#fdf3df;border:1px solid '
+        + '#e0b25a;border-radius:10px;padding:8px 12px;font-family:var(--fs-cond);'
+        + 'font-size:13px;text-align:center';
+      bn.appendChild(el('b', null, "L'automate n'a pas pu relire sa mémoire "
+        + 'au dernier démarrage'));
+      bn.appendChild(document.createTextNode(
+        (d.etat_err ? ' (fichier incomplet : ' + d.etat_err + ')' : '') + '. '
+        + 'Vos compteurs sont conservés dans l\u2019historique. '));
+      const bt9 = el('button', null, 'Remettre les compteurs');
+      bt9.style.cssText = 'font-weight:700;cursor:pointer;margin-left:6px';
+      bt9.addEventListener('click', ev => {
+        ev.stopPropagation();
+        salonBasculer(false);
+        setTimeout(() => {
+          const b0 = $('#autoRet');
+          if (b0) { b0.scrollIntoView({behavior: 'smooth', block: 'center'}); b0.click(); }
+        }, 250);
+      });
+      bn.appendChild(bt9);
+      bande.appendChild(bn); }
+  if (d && d.etat_source === 1)                 /* D207 : secours = rassurer */
+    bande.appendChild(chip('Mémoire', 'copie de secours',
+      'compteurs repris automatiquement (D207)', ''));
   const pOn = (ch.pompe_pct || 0) > 0;
   { /* lot 54 : la pompe SE VOIT tourner pendant les usages */
     const cp2 = el('div', 'sch-chip sch-pompe' + (pOn ? ' pompeOn' : ''));
