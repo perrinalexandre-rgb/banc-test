@@ -9,7 +9,13 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609o.81 (lot 81, 17/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1609p.82 (lot 82, 17/09/2026)
+   Lot 82 (Claude Fable 5, go client) : LE bug du changement de date —
+   le bandeau, reconstruit toutes les 2 s, reposait l'ancienne date dans
+   le champ PENDANT la saisie ; « Appliquer » redemandait donc l'ancienne
+   date. La saisie en cours survit désormais aux rafraîchissements
+   (state.dateSaisie), consommée au succès d'Appliquer, le champ suivant
+   ensuite la date active.
    Lot 81 (Claude Fable 5, go client) : le CHANGEMENT DE DATE s'applique
    IMMÉDIATEMENT (le choix frais domine l'écho du pilote jusqu'à
    « config vN vue », puis l'écho reprend la main — navigateurs alignés) ;
@@ -1518,7 +1524,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1609o.81';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1609p.82';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -5940,8 +5946,10 @@ async function dateChoisir(tDonne) {   /* lot 77 : le prompt ne sert plus
                  + ' lues — dépôt de la date au serveur…';
   const k9 = cleConfig(true);
   const okDep = await deposer({date_depart: jma, cfg_version: versionSuivante()}, k9);
-  if (okDep)   /* lot 81 : le choix domine jusqu'à confirmation du pilote */
+  if (okDep) { /* lot 81 : le choix domine jusqu'à confirmation du pilote */
     dateEcrireLocal({date: jma, refs: r9.refs, vDepose: deposer.derniereVersion});
+    state.dateSaisie = null;   /* lot 82 : saisie consommée, le champ suit */
+  }
   state.dateEtat = okDep
     ? 'Date déposée : le pilote 1609b la retiendra et tout navigateur la verra.'
     : 'Date mémorisée sur CE navigateur ; le dépôt serveur a échoué ('
@@ -6037,6 +6045,14 @@ function energiesDepuis(d) {   /* lot 76 : « la conso de la pompe, du
   }
   return m9.length ? m9.join(' \u00b7 ') : null;
 }
+function dateChampValeur(saisie, courante) {
+  /* Lot 82 — LE bug du « changement de date impossible » : le bandeau se
+     reconstruit toutes les 2 s et REPOSAIT l'ancienne date dans le champ
+     pendant la saisie. Règle : une saisie en cours (même vide) gagne ;
+     sans saisie, le champ suit la date active. */
+  if (saisie !== undefined && saisie !== null) return saisie;
+  return courante ? dateVersIso(courante) : '';
+}
 /* bandeau complet — pupitre AVANCÉ (lot 74) */
 function dateBandeau(d) {
   (void 0);   /* lot 79 : d ne sert plus (totaux bruts retirés du bandeau) */
@@ -6048,8 +6064,8 @@ function dateBandeau(d) {
     ch9.type = 'date';
     ch9.max = new Date().toISOString().slice(0, 10);
     ch9.min = dateVersIso(DATE_MIN);   /* lot 81 : borne lisible */
-    const cur9 = dateCourante();
-    if (cur9) ch9.value = dateVersIso(cur9);
+    ch9.value = dateChampValeur(state.dateSaisie, dateCourante());
+    ch9.addEventListener('input', () => { state.dateSaisie = ch9.value; });
     ch9.addEventListener('click', ev => ev.stopPropagation());
     const ok9 = el('button', null, 'Appliquer');
     ok9.style.fontWeight = '700';
@@ -6827,7 +6843,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1609o — pupitre ' + LOT + ' · lot 81 — 17/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1609p — pupitre ' + LOT + ' · lot 82 — 17/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
