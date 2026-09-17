@@ -9,7 +9,15 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609q.83 (lot 83, 17/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1609r.84 (lot 84, 17/09/2026)
+   Lot 84 (Claude Fable 5, go client) : (1) date active SANS sa référence
+   n'affiche PLUS le compteur brut sous l'étiquette « depuis le JJ/MM »
+   (le mensonge des captures) — bascule sur « depuis le début » (honnête)
+   en attendant, en le DISANT ; (2) la lecture des références dans Azure
+   rapporte le DIAGNOSTIC EXACT (URL, code HTTP, extrait reçu, étape :
+   réseau / HTTP / vide / non-JSON / ancien format / illisible), affiché
+   sous le bandeau — pour voir ENFIN pourquoi le 14/09 ne se lit pas au
+   lieu de deviner.
    Lot 83 (Claude Fable 5, go client « reprends tout depuis le début ») :
    module DATE repris à la racine — bandeau PERSISTANT (construit une
    fois : le calendrier natif ne se referme plus, la saisie ne bouge
@@ -1534,7 +1542,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1609q.83';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1609r.84';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -5907,31 +5915,56 @@ function dateRefsDeLigne(texte) {
   return null;
 }
 async function dateChargerRefs(jma) {
+  /* Lot 84 : diagnostic PRÉCIS — au lieu de « le moteur v3 est-il collé »,
+     on rapporte l'URL, le code HTTP, un extrait de la réponse et où ça a
+     buté ; state.dateDiag garde tout pour l'afficher au bandeau. On
+     distingue : réseau (fetch jeté), HTTP != 200, réponse VIDE (jour sans
+     archive), réponse NON-JSON (mauvaise route/HTML d'erreur), lignes à
+     l'ancien format. La 1re tranche NON VIDE tranche le sort du jour :
+     on ne balaie pas 24 h pour rien si le serveur renvoie du HTML. */
   const iso = dateVersIso(jma);
-  state.dateEtat = 'lecture de la première ligne du ' + jma + '…';
+  const diag = {jma, url: null, statut: null, extrait: null, etape: 'début'};
+  state.dateDiag = diag;
+  let repVue = false;
   for (let h2 = 0; h2 < 24; h2++) {
     const de = String(h2).padStart(2, '0') + ':00';
     const a2 = h2 === 23 ? '24:00' : String(h2 + 1).padStart(2, '0') + ':00';
-    state.dateEtat = 'lecture du ' + jma + ' — tranche ' + de + '–' + a2 + '…';
-    let r2 = null;
-    for (let ess = 1; ess <= 2; ess++) {           /* microcoupures : 2 essais */
-      try { r2 = await fetch(API.histo + '?jour=' + iso + '&de=' + de + '&a=' + a2);
-            if (r2.ok || r2.status === 404) break;
-      } catch (_) { r2 = null; }
+    const url = API.histo + '?jour=' + iso + '&de=' + de + '&a=' + a2;
+    diag.url = url;
+    dateDire('référence du ' + jma + ' : lecture ' + de + '–' + a2 + '…');
+    let r2 = null, jete = null;
+    for (let ess = 1; ess <= 2; ess++) {
+      try { jete = null; r2 = await fetch(url); if (r2.ok || r2.status === 404) break; }
+      catch (e2) { jete = e2; r2 = null; }
       if (ess < 2) await new Promise(rz => setTimeout(rz, 600));
     }
-    if (!r2) return {err: 'réseau coupé sur la tranche ' + de + ' malgré 2 essais'};
-    if (r2.status === 404) continue;
-    if (!r2.ok) return {err: 'lecteur en ligne : réponse ' + r2.status
-                             + ' — le moteur v3 est-il collé (Alex) ?'};
-    const refs = dateRefsDeLigne(await r2.text());
-    if (refs && refs.ancien)
+    if (!r2) { diag.etape = 'réseau'; diag.statut = String(jete && jete.message || jete);
+      return {err: 'réseau coupé (' + diag.statut + ') sur ' + de + ' — 2 essais.', diag}; }
+    diag.statut = r2.status;
+    if (r2.status === 404) { if (!repVue) continue; else continue; }
+    const texte = await r2.text();
+    repVue = true;
+    diag.extrait = (texte || '').slice(0, 120).replace(/\s+/g, ' ');
+    if (!r2.ok) { diag.etape = 'HTTP ' + r2.status;
+      return {err: 'lecteur : réponse HTTP ' + r2.status + '.', diag}; }
+    if (!texte || !texte.trim()) { diag.etape = 'vide'; continue; }  /* heure creuse */
+    /* JSON ou pas ? une route erronée renvoie du HTML : on le DIT */
+    const t0 = texte.trim()[0];
+    if (t0 !== '{' && t0 !== '[') {
+      diag.etape = 'non-JSON';
+      return {err: 'la réponse n\u2019est pas des données JSON (reçu : « '
+        + diag.extrait + ' »). Route d\u2019historique inattendue ?', diag};
+    }
+    const refs = dateRefsDeLigne(texte);
+    if (refs && refs.ancien) { diag.etape = 'ancien format';
       return {err: 'les lignes du ' + jma + ' sont à l\u2019ancien format '
-                   + '(« trains », avant le 11/09) — choisissez une date '
-                   + 'à partir du 11/09/2026.'};
-    if (refs) return {refs};
+        + '(avant le 11/09).', diag}; }
+    if (refs) { diag.etape = 'ok'; return {refs, diag}; }
+    diag.etape = 'ligne illisible'; /* JSON mais pas exploitable : tranche suivante */
   }
-  return {err: 'aucune ligne archivée le ' + jma + ' — jour vide ?'};
+  diag.etape = repVue ? 'aucune ligne exploitable' : 'aucune réponse';
+  return {err: repVue ? 'aucune ligne exploitable le ' + jma + '.'
+                      : 'aucune archive lue le ' + jma + '.', diag};
 }
 async function dateChoisir(jmaDonne) {
   /* Lot 83 : réécrit à la racine. Trois chemins (dateRoute) ; le succès
@@ -5939,6 +5972,7 @@ async function dateChoisir(jmaDonne) {
      erreurs parlent. */
   const jma = dateValide(jmaDonne);
   if (!jma) { dateDire('date refusée (attendu JJ/MM/AAAA, passée)', true); return; }
+  state.dateDiag = null; state.dateEtatErr = false;   /* lot 84 : on repart net */
   const route = dateRoute(jma);
   if (route === 'ancien') {
     dateDire('les archives du 21/08 au 10/09 sont à l\u2019ancien format — '
@@ -6011,9 +6045,23 @@ function dateAppliquer(d) {
     });
   }
   const refs = state.dateDep && state.dateDep.refs;
-  if (!refs) return d;
+  if (!refs) {
+    /* Lot 84 : date active SANS sa référence (lecture en cours ou en
+       échec) — on n'affiche PLUS le brut sous l'étiquette « depuis le
+       JJ/MM » (c'était le mensonge visible). On affiche « depuis le
+       début » (référence zéro, honnête) en attendant la vraie référence ;
+       la date choisie reste la date active, la lecture continue. */
+    const z9 = dateRefsZero();
+    state.dateRefProvisoire = jma;
+    let o0; try { o0 = JSON.parse(JSON.stringify(d)); } catch (_) { return d; }
+    return dateAppliquerAvec(o0, z9, DATE_DEBUT);
+  }
+  state.dateRefProvisoire = null;
   let out;
   try { out = JSON.parse(JSON.stringify(d)); } catch (_) { return d; }
+  return dateAppliquerAvec(out, refs, jma);
+}
+function dateAppliquerAvec(out, refs, jma) {
   /* lot 79 (client) : l'alerte « sous la référence » est SUPPRIMÉE — la
      remise automatique rend le cas invisible. */
   const delta = (v, r, dec) => {
@@ -6130,9 +6178,12 @@ function dateBandeauConstruire() {
     } }
   const et9 = el('div', 'date-etat', ''); et9.id = 'dateEtatLigne';
   et9.style.display = 'none';
+  const dg9 = el('div', 'date-etat', ''); dg9.id = 'dateDiagLigne';
+  dg9.style.cssText = 'flex-basis:100%;font-size:11px;color:var(--ink2);'
+    + 'font-family:var(--fs-mono);word-break:break-all;display:none';
   const rm9 = el('div', 'date-etat', ''); rm9.id = 'dateRemLigne';
   rm9.style.display = 'none';
-  b.appendChild(et9); b.appendChild(rm9);
+  b.appendChild(et9); b.appendChild(dg9); b.appendChild(rm9);
   return b;
 }
 function dateDire(texte, err) {
@@ -6144,9 +6195,24 @@ function dateBandeauMaj() {
   if (val) val.textContent = dateCourante() || '— non définie';
   const et9 = $('#dateEtatLigne');
   if (et9) {
-    et9.textContent = state.dateEtat || '';
+    let t9 = state.dateEtat || '';
+    if (state.dateRefProvisoire)          /* lot 84 : honnête pendant l'attente */
+      t9 = 'référence du ' + state.dateRefProvisoire + ' pas encore lue — '
+         + 'affichage « depuis le début » en attendant. ' + t9;
+    et9.textContent = t9;
     et9.classList.toggle('err', !!state.dateEtatErr);
-    et9.style.display = state.dateEtat ? '' : 'none';
+    et9.style.display = t9 ? '' : 'none';
+  }
+  const dg9 = $('#dateDiagLigne');         /* lot 84 : le diagnostic exact */
+  if (dg9) {
+    const dd = state.dateDiag;
+    if (dd && state.dateEtatErr) {
+      dg9.textContent = 'diagnostic — ' + (dd.etape || '?')
+        + (dd.statut !== null ? ' · HTTP ' + dd.statut : '')
+        + (dd.url ? ' · ' + dd.url : '')
+        + (dd.extrait ? ' · reçu « ' + dd.extrait + ' »' : '');
+      dg9.style.display = '';
+    } else dg9.style.display = 'none';
   }
   const rm9 = $('#dateRemLigne');
   if (rm9) {
@@ -6854,7 +6920,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1609q — pupitre ' + LOT + ' · lot 83 — 17/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1609r — pupitre ' + LOT + ' · lot 84 — 17/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
