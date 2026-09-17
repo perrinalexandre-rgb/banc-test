@@ -9,7 +9,17 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609m.79 (lot 79, 17/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1609n.80 (lot 80, 17/09/2026)
+   Lot 80 (Claude Fable 5, client « exceptionnellement ») : le bouton
+   Rétablir du lot 58 est RENDU (ceinture-bretelles tant que le 1609b est
+   en place) ; et BUG DU LOT 79 CORRIGÉ — la remise automatique cherchait
+   la dernière ligne d'avant le DERNIER redémarrage, or la perte datait
+   d'un redémarrage plus ancien : tout l'intervalle était à zéros, elle
+   concluait « rien à remettre ». Nouveau critère : la dernière ligne
+   dont les remplissages DÉPASSENT l'actuel (7 jours de balayage) ;
+   nouvelle clé de marque pour que la fausse marque du lot 79 ne bloque
+   pas ; la remise part donc TOUTE SEULE dès cette page ouverte, même
+   face au 1609b (qui publie déjà etat_lu = 0).
    Lot 79 (Claude Fable 5, go client « on va essayer ») : REMISE
    AUTOMATIQUE des compteurs (perte déclarée par l'automate -> dernière
    ligne d'Azure AVANT le redémarrage -> repose déposée et suivie, une
@@ -1423,11 +1433,13 @@ Exemple : hier 10:00 → hier 11:00 = 720 lignes.</div>
           RÉPARER LES COMPTEURS EFFACÉS — remettre les vrais totaux (automatique)
         </summary>
         <div class="fich-ctrl" id="poseRempl" style="margin-top:8px">
-          <!-- lot 79 : le bouton « Rétablir » du lot 58 a disparu de
-               l'écran — la remise des compteurs est AUTOMATIQUE (une
-               ligne sobre l'annonce au bandeau et en vitrine). -->
-          <span id="autoRetEtat" style="display:none"></span>
-          <div id="autoRetTab" style="display:none"></div>
+          <!-- lot 80 (client, « exceptionnellement ») : le bouton du
+               lot 58 est RENDU, en ceinture-bretelles de la remise
+               automatique — utile tant que le 1609b est en place. -->
+          <button id="autoRet" style="font-weight:700">Rétablir AUTOMATIQUEMENT
+            depuis l'historique</button>
+          <span id="autoRetEtat"></span>
+          <div id="autoRetTab" style="flex-basis:100%"></div>
           <span style="flex-basis:100%;height:0"></span>
           <span style="font-size:12.5px;color:var(--ink3)">Ou à la main — la migration du pilote
             1109a a remis à zéro les nombres de remplissages (erreur corrigée
@@ -1497,7 +1509,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1609m.79';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1609n.80';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -6348,10 +6360,14 @@ const RET_SATS = ['SA1', 'SA2', 'SA3', 'SB1'];
    nouvel essai sous 60 s si le réseau tousse. Le bouton du lot 58 a
    disparu de l'écran : cette mécanique le remplace.
    ===================================================================== */
-function remLireDerniere(texte) {
-  /* la DERNIÈRE ligne parsable d'une tranche, avec au moins 3 cuves
-     lisibles — les tranches balayées sont ENTIÈREMENT antérieures au
-     redémarrage, donc aucune ligne à zéros ne peut être ramassée. */
+function remLireDerniere(texte, sommeMin) {
+  /* Lot 80 — LE BUG DU 17/09 CORRIGÉ : la perte peut précéder le dernier
+     redémarrage (perte hier soir, reboot ce matin) — tout ce qui s'est
+     archivé ENTRE les deux est à zéro. Le repère n'est donc plus
+     l'instant du boot : c'est la SANTÉ de la ligne — on retient la
+     dernière ligne parsable dont la somme des remplissages DÉPASSE
+     l'actuel (sommeMin) : les lignes à zéros post-perte sont rejetées
+     d'elles-mêmes, quel que soit le nombre de redémarrages depuis. */
   const lignes = (texte || '').split('\n').filter(x => x.trim());
   for (let i = lignes.length - 1; i >= 0; i--) {
     try {
@@ -6360,9 +6376,11 @@ function remLireDerniere(texte) {
       ((d2.circuits) || []).forEach(c2 => (c2.satellites || []).forEach(s2 => {
         par[s2.sat_id] = s2;
       }));
-      let n2 = 0;
-      RET_SATS.forEach(id2 => { if (par[id2] && has(par[id2].rempl_nb)) n2++; });
-      if (n2 >= 3) return {par, tl: d2.tl || '?'};
+      let n2 = 0, somme = 0;
+      RET_SATS.forEach(id2 => {
+        if (par[id2] && has(par[id2].rempl_nb)) { n2++; somme += par[id2].rempl_nb; }
+      });
+      if (n2 >= 3 && somme > sommeMin) return {par, tl: d2.tl || '?', somme};
     } catch (e2) { /* ligne abîmée : la précédente */ }
   }
   return null;
@@ -6392,7 +6410,6 @@ function remDoses(par, actuels) {
 function remDue(d, faite) {
   if (!d || !d.device_id || DEMO) return false;
   if (!(d.etat_lu === 0 || d.etat_source === 2)) return false;
-  if (!has(d.uptime_s)) return false;
   const cle = d.device_id + '#' + (d.boot_n || 0);
   return faite !== cle ? cle : false;
 }
@@ -6400,13 +6417,18 @@ async function remExecuter(d, cle) {
   state.remEnCours = true;
   const dire = (t2, err2) => { state.remEtat = {texte: t2, err: !!err2}; };
   try {
-    /* l'instant du redémarrage, heure locale — on ne balaie QUE des
-       tranches entièrement antérieures (marge 60 s) */
-    const boot = new Date(Date.now() - (d.uptime_s + 60) * 1000);
+    /* Lot 80 : balayage à rebours depuis MAINTENANT — le critère de
+       santé (somme > actuel) écarte seul les lignes à zéros, la perte
+       peut dater d'il y a plusieurs redémarrages. 7 jours maxi. */
+    const sommeMin = RET_SATS.reduce((a9, id9) => {
+      const s9 = retActuel(id9);
+      return a9 + (has(s9.rempl_nb) ? s9.rempl_nb : 0);
+    }, 0) + 2;
+    const boot = new Date();
     let jour = new Date(boot.getFullYear(), boot.getMonth(), boot.getDate());
-    let hFin = boot.getHours();          /* dernière tranche close : hFin-1 -> hFin */
+    let hFin = boot.getHours() + 1;
     let trouve = null, faits = 0;
-    for (let k2 = 0; k2 < 36 && !trouve; k2++) {
+    for (let k2 = 0; k2 < 168 && !trouve; k2++) {
       let h2 = hFin - 1 - k2;
       let j2 = new Date(jour);
       while (h2 < 0) { h2 += 24; j2 = new Date(j2 - 86400000); }
@@ -6427,22 +6449,24 @@ async function remExecuter(d, cle) {
       if (!r2) throw new Error('réseau coupé (tranche ' + de + ')');
       if (r2.status === 404) continue;
       if (!r2.ok) throw new Error('lecteur en ligne : réponse ' + r2.status);
-      trouve = remLireDerniere(await r2.text());
+      trouve = remLireDerniere(await r2.text(), sommeMin);
     }
     if (!trouve) {
-      dire('compteurs perdus mais AUCUNE ligne lisible dans l\u2019historique '
-         + 'récent — rien remis (me le signaler).', true);
+      dire('compteurs perdus mais AUCUNE ligne au-dessus des compteurs '
+         + 'actuels sur 7 jours d\u2019historique — rien remis (me le signaler).', true);
       state.remFaite = cle;              /* pas de boucle sur un histo vide */
-      try { localStorage.setItem('enovaq_remise', cle); } catch (e2) {}
+      try { localStorage.setItem('enovaq_remise2', cle); } catch (e2) {}
+      state.remEnCours = false;
       return;
     }
     const actuels = {};
     RET_SATS.forEach(id2 => { actuels[id2] = retActuel(id2); });
     const doses = remDoses(trouve.par, actuels);
     state.remFaite = cle;
-    try { localStorage.setItem('enovaq_remise', cle); } catch (e2) {}
+    try { localStorage.setItem('enovaq_remise2', cle); } catch (e2) {}
     if (doses.total <= 0) {
       dire('redémarrage détecté — les compteurs étaient déjà justes, rien à remettre.');
+      state.remEnCours = false;
       return;
     }
     dire('remise automatique : dépôt des compteurs (référence '
@@ -6454,7 +6478,7 @@ async function remExecuter(d, cle) {
       livree_ajout: doses.livree});
     if (!ok9) {
       state.remFaite = null;             /* on retentera */
-      try { localStorage.removeItem('enovaq_remise'); } catch (e2) {}
+      try { localStorage.removeItem('enovaq_remise2'); } catch (e2) {}
       dire('remise automatique : dépôt en échec ('
            + (deposer.derniereErreur || 'réseau') + ') — nouvel essai sous 60 s.', true);
       setTimeout(() => { state.remEnCours = false; }, 60000);
@@ -6487,7 +6511,9 @@ async function remExecuter(d, cle) {
 function remVerifier(d) {
   if (state.remEnCours) return;
   if (state.remFaite === undefined) {
-    try { state.remFaite = localStorage.getItem('enovaq_remise') || null; }
+    try { state.remFaite = localStorage.getItem('enovaq_remise2') || null; }
+    /* lot 80 : nouvelle clé — la marque « rien à remettre » posée à tort
+       par le lot 79 (le bug ci-dessus) ne bloque pas la reprise. */
     catch (e2) { state.remFaite = null; }
   }
   const cle = remDue(d, state.remFaite);
@@ -6757,7 +6783,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1609m — pupitre ' + LOT + ' · lot 79 — 17/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1609n — pupitre ' + LOT + ' · lot 80 — 17/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
