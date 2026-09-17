@@ -9,7 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609n.80 (lot 80, 17/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1609o.81 (lot 81, 17/09/2026)
+   Lot 81 (Claude Fable 5, go client) : le CHANGEMENT DE DATE s'applique
+   IMMÉDIATEMENT (le choix frais domine l'écho du pilote jusqu'à
+   « config vN vue », puis l'écho reprend la main — navigateurs alignés) ;
+   raccourcis bornés au plus ancien jour lisible (11/09, bascule du
+   format d'archive — « installation 20/08 » retiré : illisible), champ
+   borné pareil, dates trop anciennes refusées avec la raison ; et la
+   remise automatique se déclenche AUSSI sur des compteurs visiblement à
+   zéro (3 cuves lisibles, somme nulle), plus seulement sur la perte
+   déclarée.
    Lot 80 (Claude Fable 5, client « exceptionnellement ») : le bouton
    Rétablir du lot 58 est RENDU (ceinture-bretelles tant que le 1609b est
    en place) ; et BUG DU LOT 79 CORRIGÉ — la remise automatique cherchait
@@ -1509,7 +1518,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1609n.80';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1609o.81';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -5827,11 +5836,23 @@ function dateValide(t) {
 function dateVersIso(jma) {         /* JJ/MM/AAAA -> AAAA-MM-JJ */
   return jma.slice(6) + '-' + jma.slice(3, 5) + '-' + jma.slice(0, 2);
 }
+const DATE_MIN = '11/09/2026';   /* bascule du format d'archive — les
+   jours d'avant sont à l'ancien format, illisibles pour les références */
 function dateCourante() {
+  /* Lot 81 (client : « le changement de date ne fonctionne pas ») : un
+     choix FRAIS s'applique IMMÉDIATEMENT — il domine l'écho du pilote
+     tant que la config déposée avec lui (vDepose) n'a pas été vue en
+     télémesure. Dès que le pilote confirme, l'écho redevient le maître :
+     tous les navigateurs s'alignent, et un choix fait ailleurs reprend
+     naturellement la main. */
   const brut = state.dataBrut || {};
+  const loc = dateLireLocal();
+  if (loc && dateValide(loc.date) && loc.vDepose
+      && (brut.cfg_version | 0) < loc.vDepose)
+    return dateValide(loc.date);
   return (brut.date_depart && dateValide(brut.date_depart))
       || (state.cfgServeur && dateValide(state.cfgServeur.date_depart))
-      || (dateLireLocal() && dateValide((dateLireLocal() || {}).date))
+      || (loc && dateValide(loc.date))
       || null;
 }
 function dateSource() {
@@ -5905,6 +5926,12 @@ async function dateChoisir(tDonne) {   /* lot 77 : le prompt ne sert plus
   if (!jma) { state.dateEtat = 'date refusée (attendu JJ/MM/AAAA, passée)';
               state.dateEtatErr = true; return; }
   state.dateEtatErr = false;
+  if (dateVersIso(jma) < dateVersIso(DATE_MIN)) {   /* lot 81 : borne dite */
+    state.dateEtat = 'les archives d\u2019avant le ' + DATE_MIN
+      + ' sont à l\u2019ancien format — plus ancienne date possible : '
+      + DATE_MIN + '.';
+    state.dateEtatErr = true; rendre(true); return;
+  }
   const r9 = await dateChargerRefs(jma);
   if (r9.err) { state.dateEtat = r9.err; state.dateEtatErr = true; return; }
   state.dateDep = {date: jma, refs: r9.refs};
@@ -5913,6 +5940,8 @@ async function dateChoisir(tDonne) {   /* lot 77 : le prompt ne sert plus
                  + ' lues — dépôt de la date au serveur…';
   const k9 = cleConfig(true);
   const okDep = await deposer({date_depart: jma, cfg_version: versionSuivante()}, k9);
+  if (okDep)   /* lot 81 : le choix domine jusqu'à confirmation du pilote */
+    dateEcrireLocal({date: jma, refs: r9.refs, vDepose: deposer.derniereVersion});
   state.dateEtat = okDep
     ? 'Date déposée : le pilote 1609b la retiendra et tout navigateur la verra.'
     : 'Date mémorisée sur CE navigateur ; le dépôt serveur a échoué ('
@@ -6018,7 +6047,7 @@ function dateBandeau(d) {
     const ch9 = document.createElement('input');
     ch9.type = 'date';
     ch9.max = new Date().toISOString().slice(0, 10);
-    ch9.min = '2026-08-20';
+    ch9.min = dateVersIso(DATE_MIN);   /* lot 81 : borne lisible */
     const cur9 = dateCourante();
     if (cur9) ch9.value = dateVersIso(cur9);
     ch9.addEventListener('click', ev => ev.stopPropagation());
@@ -6041,11 +6070,16 @@ function dateBandeau(d) {
     const auj9 = new Date();
     const fmt9 = d9 => String(d9.getDate()).padStart(2, '0') + '/'
       + String(d9.getMonth() + 1).padStart(2, '0') + '/' + d9.getFullYear();
-    const inst9 = dateInstallation();
-    if (inst9) b.appendChild(rac9('installation (' + inst9.slice(0, 5) + ')', inst9));
-    b.appendChild(rac9('il y a 7 j', fmt9(new Date(auj9 - 7 * 86400000))));
+    /* lot 81 : plus de raccourcis-pièges — tout est borné au plus ancien
+       jour LISIBLE (11/09, bascule du format d'archive). */
+    const bornee9 = d9 => {
+      const j9 = fmt9(d9);
+      return dateVersIso(j9) < dateVersIso(DATE_MIN) ? DATE_MIN : j9;
+    };
+    b.appendChild(rac9('le plus ancien (' + DATE_MIN.slice(0, 5) + ')', DATE_MIN));
+    b.appendChild(rac9('il y a 7 j', bornee9(new Date(auj9 - 7 * 86400000))));
     b.appendChild(rac9('1er du mois',
-      fmt9(new Date(auj9.getFullYear(), auj9.getMonth(), 1)))); }
+      bornee9(new Date(auj9.getFullYear(), auj9.getMonth(), 1)))); }
   { const inst = dateInstallation();             /* lot 79 : discret, en fin
        de LA ligne — plus de paragraphes en dessous */
     if (inst) {
@@ -6407,9 +6441,19 @@ function remDoses(par, actuels) {
   doses.total = Math.round(total * 10) / 10;
   return doses;
 }
+function remZeros(d) {   /* lot 81 (client : « le html voit bien que les
+   compteurs sont à zéro ») : au moins 3 cuves lisibles, somme des
+   remplissages NULLE — perte visible, même si l'automate a fini par
+   sauver ses zéros et croit son état sain. */
+  let n9 = 0, somme = 0;
+  ((d.circuits) || []).forEach(c9 => (c9.satellites || []).forEach(s9 => {
+    if (has(s9.rempl_nb)) { n9++; somme += s9.rempl_nb; }
+  }));
+  return n9 >= 3 && somme === 0;
+}
 function remDue(d, faite) {
   if (!d || !d.device_id || DEMO) return false;
-  if (!(d.etat_lu === 0 || d.etat_source === 2)) return false;
+  if (!(d.etat_lu === 0 || d.etat_source === 2 || remZeros(d))) return false;
   const cle = d.device_id + '#' + (d.boot_n || 0);
   return faite !== cle ? cle : false;
 }
@@ -6783,7 +6827,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1609n — pupitre ' + LOT + ' · lot 80 — 17/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1609o — pupitre ' + LOT + ' · lot 81 — 17/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
