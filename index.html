@@ -9,7 +9,21 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609k.77 (lot 77, 16/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1609m.79 (lot 79, 17/09/2026)
+   Lot 79 (Claude Fable 5, go client « on va essayer ») : REMISE
+   AUTOMATIQUE des compteurs (perte déclarée par l'automate -> dernière
+   ligne d'Azure AVANT le redémarrage -> repose déposée et suivie, une
+   ligne sobre, jamais en silence ; le bouton du lot 58 disparaît de
+   l'écran) ; bandeau date en UNE ligne (énergies, totaux, phrases de
+   confirmation : retirés) ; alerte « sous la référence » supprimée ;
+   doublon « Depuis le » des fiches retiré ; partout la même logique :
+   affiché = depuis la date, le COMPTEUR BRUT au clic (électricité,
+   Maddalena, satellites en infos avancées).
+   Lot 78 (Claude Fable 5) : pilote attendu 1609d (D208 — chasse au
+   plantage : pile TLS, gardes mémoire, puits borné) ; la MÉMOIRE de
+   l'automate se lit à chaque envoi (tas libre, plus-bas, pile cloud) :
+   chip « MÉMOIRE BASSE » en vitrine sous 20 ko, lignes temps réel dans
+   Santé, reports mémoire comptés.
    Lot 77 (Claude Fable 5, « au travail » client, panne du 16/09) :
    bannière claire en français quand l'automate n'a pas relu sa mémoire,
    avec le bouton « Remettre les compteurs » qui mène droit au Rétablir ;
@@ -1409,10 +1423,11 @@ Exemple : hier 10:00 → hier 11:00 = 720 lignes.</div>
           RÉPARER LES COMPTEURS EFFACÉS — remettre les vrais totaux (automatique)
         </summary>
         <div class="fich-ctrl" id="poseRempl" style="margin-top:8px">
-          <button id="autoRet" style="font-weight:700">Rétablir AUTOMATIQUEMENT
-            depuis l'historique</button>
-          <span id="autoRetEtat"></span>
-          <div id="autoRetTab" style="flex-basis:100%"></div>
+          <!-- lot 79 : le bouton « Rétablir » du lot 58 a disparu de
+               l'écran — la remise des compteurs est AUTOMATIQUE (une
+               ligne sobre l'annonce au bandeau et en vitrine). -->
+          <span id="autoRetEtat" style="display:none"></span>
+          <div id="autoRetTab" style="display:none"></div>
           <span style="flex-basis:100%;height:0"></span>
           <span style="font-size:12.5px;color:var(--ink3)">Ou à la main — la migration du pilote
             1109a a remis à zéro les nombres de remplissages (erreur corrigée
@@ -1471,7 +1486,7 @@ const DEVICE     = 'chaufferie-01';
 /* Lot 64 : le pupitre CONNAIT le pilote qu'il attend — s'il voit un autre
    programme tourner dans l'automate, il le dit en ROUGE. Fini la
    confusion page/puce. A mettre a jour a chaque livraison pilote. */
-const PILOTE_ATTENDU = '1609c';   /* lot 77 : D207 sauvegarde blindée */
+const PILOTE_ATTENDU = '1609d';   /* lots 78-79 */
 /* Lot 68 : on ne crie plus a l'egalite stricte — un pilote PLUS RECENT
    que l'attendu est une bonne nouvelle, pas une alerte. Et le ton
    redevient SOBRE (client : « etre clair, pas en faire des tonnes »). */
@@ -1482,7 +1497,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1609k.77';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1609m.79';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -1627,6 +1642,17 @@ const ELEC_LIGNES = [
 
 const DIAG = [
   {k:'Mémoire libre',       champ:'diag.tas_libre',        unite:'o', dec:0},
+  {k:'Mémoire libre (à chaque envoi)', champ:'tas_libre',  unite:'o', dec:0,
+   aide:"D208 : publiée dans CHAQUE envoi (~3 s) — la tendance se lit ici."},
+  {k:'Mémoire, plus bas (à chaque envoi)', champ:'tas_min', unite:'o', dec:0,
+   aide:"Le point le plus bas depuis le démarrage. S'il fond d'heure en "
+      + "heure, la panne mémoire approche : me le signaler."},
+  {k:'Pile cloud (à chaque envoi)', champ:'pile_cloud',    unite:'o', dec:0,
+   aide:"Marge de la tâche d'envoi (TLS). Sous ~1500 o : me le signaler."},
+  {k:'Envois COMPLETS repoussés (mémoire)', champ:'tx_report_mem', dec:0,
+   aide:"D208 : mémoire maigre au moment d'un envoi complet — envoyé "
+      + "RAPIDE à la place, rien de perdu, juste compté."},
+  {k:'Sauvegardes différées (mémoire)', champ:'etat_sauve_report', dec:0},
   {k:'Mémoire, plus bas',   champ:'diag.tas_mini',         unite:'o', dec:0},
   {k:'Pile de la tâche cloud', champ:'diag.pile_cloud_libre', unite:'o', dec:0,
    aide:"Marge restante sur la pile de la tâche qui envoie vers le cloud."},
@@ -3087,19 +3113,8 @@ function rendreSats(d) {
     hero.appendChild(dessinerCuve(s, K));
     if (s.ok) hero.appendChild(heroNums(s, s.X_l, progNeuf));
     card.appendChild(hero);
-    /* Lot 73 : la fiche dit d'un coup d'œil « depuis le JJ/MM » — les
-       valeurs de s sont DÉJÀ les deltas (dateAppliquer). */
-    if (s.ok && d && d._depuis) {
-      const dp = el('div', 'sat-depuis');
-      dp.appendChild(document.createTextNode('Depuis le ' + d._depuis + ' : '));
-      dp.appendChild(el('b', null,
-        (has(s.rempl_nb) ? s.rempl_nb : 0) + ' remplissage'
-        + ((s.rempl_nb | 0) > 1 ? 's' : '')));
-      dp.appendChild(document.createTextNode(
-        ' · ' + (has(s.tiree_l) ? n(s.tiree_l) : '0') + ' L tirés · '
-        + (has(s.conso_totale_l) ? n(s.conso_totale_l) : '0') + ' L livrés'));
-      card.appendChild(dp);
-    }
+    /* lot 79 (client, « pourquoi répéter ») : la ligne « Depuis le … »
+       est retirée — le bloc EAU la porte déjà, une seule fois. */
 
     if (!s.ok) {
       const ch = el('div', 'chips'); ch.appendChild(el('div', 'chip bad', 'sans réponse'));
@@ -3495,6 +3510,21 @@ function rendreSats(d) {
           if (!av9.contains(cible9)) av9.insertBefore(cible9, av9.firstChild);
         }
       });
+      { /* lot 79 : « les infos lues directement dans le compteur » — le
+           brut de l'automate, depuis le démarrage du comptage. */
+        const sb9 = satBrutDe(s.sat_id);
+        if (sb9) {
+          const lb9 = el('div', 'sat-depuis');
+          lb9.appendChild(el('b', null, 'Compteur, depuis le démarrage : '));
+          lb9.appendChild(document.createTextNode(
+            (has(sb9.tiree_l) ? n(sb9.tiree_l) : '—') + ' L tirés · '
+            + (has(sb9.conso_totale_l) ? n(sb9.conso_totale_l) : '—') + ' L livrés · '
+            + (has(sb9.rempl_nb) ? sb9.rempl_nb : '—') + ' remplissages · '
+            + (has(sb9.rech_nb) ? sb9.rech_nb
+               : has(sb9.rempl_therm_nb) ? sb9.rempl_therm_nb : '—')
+            + ' réchauffages'));
+          av9.appendChild(lb9);
+        } }
       av9.appendChild(satJournalBloc(s.sat_id));   /* lot 73 : journal PAR cuve */
       const ind9 = el('div', 'sat-plus', 'cliquez la fiche : infos avancées & commandes');
       card._det9.appendChild(ind9);
@@ -3706,12 +3736,42 @@ function rendreElecTable(d) {
   const t = $('#elecTable'); t.textContent = '';
   const thead = document.createElement('thead');
   const hr = document.createElement('tr');
-  ['Compteur', 'Énergie', 'Puissance', 'Tension', 'Courant'].forEach(h => {
+  const dep9 = (state.data && state.data._depuis) ? state.data._depuis : null;
+  ['Compteur', dep9 ? 'Énergie · depuis le ' + dep9 : 'Énergie',
+   'Puissance', 'Tension', 'Courant'].forEach(h => {
     const th = document.createElement('th'); th.textContent = h; hr.appendChild(th);
   });
   thead.appendChild(hr); t.appendChild(thead);
   const tbody = document.createElement('tbody');
   const nb = $('#elecNote'); nb.textContent = '';
+  { /* lot 79 : un clic sur la fiche montre le COMPTEUR (brut, depuis le
+       démarrage) — même logique partout. */
+    const carte9 = t.closest('.card');
+    if (carte9 && !carte9._brutClic) {
+      carte9._brutClic = true;
+      carte9.style.cursor = 'pointer';
+      carte9.addEventListener('click', ev9 => {
+        if (ev9.target.closest('button, input, select, a, textarea')) return;
+        state.elecBrut = !state.elecBrut;
+        rendre(true);
+      });
+    }
+    if (state.elecBrut && dep9) {
+      const chB = (state.dataBrut && state.dataBrut.chaufferie) || {};
+      const mB = [];
+      if (chB.sdm120 && has(chB.sdm120.energie_kwh))
+        mB.push('P1 ' + n(chB.sdm120.energie_kwh) + ' kWh');
+      if (chB.elec_aux && has(chB.elec_aux.energie_kwh))
+        mB.push('auxiliaires ' + n(chB.elec_aux.energie_kwh) + ' kWh');
+      if (chB.elec_cumulus && has(chB.elec_cumulus.energie_kwh))
+        mB.push('cumulus ' + n(chB.elec_cumulus.energie_kwh) + ' kWh');
+      if (mB.length)
+        nb.appendChild(el('p', 'note', 'Compteur, depuis le démarrage : '
+          + mB.join(' · ') + '.'));
+    } else if (dep9)
+      nb.appendChild(el('p', 'note',
+        'Énergies « depuis le ' + dep9 + ' » — cliquez la fiche : le compteur brut.'));
+  }
   let unMuet = false, unAbsent = false;
   ELEC_LIGNES.forEach(lg => {
     const app = ch[lg.cle];
@@ -4436,6 +4496,30 @@ function rendreProduction(d) {
       'Relevé il y a ' + duree(ch.mesures_age_s) + '.'));
   };
   note('#prodThNote', ch.maddalena, 'Maddalena');
+  { /* lot 79 : même logique — depuis-la-date affiché, brut au clic. */
+    const nb9 = $('#prodThNote');
+    const dep9 = (state.data && state.data._depuis) ? state.data._depuis : null;
+    const carte9 = nb9 && nb9.closest('.card');
+    if (carte9 && !carte9._brutClic) {
+      carte9._brutClic = true;
+      carte9.style.cursor = 'pointer';
+      carte9.addEventListener('click', ev9 => {
+        if (ev9.target.closest('button, input, select, a, textarea')) return;
+        state.prodBrut = !state.prodBrut;
+        rendre(true);
+      });
+    }
+    if (nb9 && dep9) {
+      const maB = state.dataBrut && state.dataBrut.chaufferie
+                  && state.dataBrut.chaufferie.maddalena;
+      if (state.prodBrut && maB && has(maB.energie_mwh))
+        nb9.appendChild(el('p', 'note', 'Compteur Maddalena, depuis le '
+          + 'démarrage : ' + maB.energie_mwh.toLocaleString('fr-FR',
+            {minimumFractionDigits: 3}) + ' MWh.'));
+      else
+        nb9.appendChild(el('p', 'note', 'Chaleur « depuis le ' + dep9
+          + ' » — cliquez la fiche : le compteur brut.'));
+    } }
   const ma = ch.maddalena;
   if (ma && ma.ok) {
     const b = $('#prodThNote');
@@ -5585,6 +5669,7 @@ function rendre(force) {
   rendreRail($('#railB'), d && d.trains && d.trains[1], 'B', 505, d);
   rendreOrganes(d);
   if (DEMO) demoEnrichir(d);   /* lot 47 */
+  remVerifier(state.dataBrut || d);            /* lot 79 : remise AUTO */
   { const zb = $('#dateBandeauAv');            /* lot 74 : la fonctionnalité
       DATE vit au pupitre avancé (client : « les données sont
       principalement sur le pupitre avancé ») */
@@ -5852,17 +5937,8 @@ function dateAppliquer(d) {
   if (!refs) return d;
   let out;
   try { out = JSON.parse(JSON.stringify(d)); } catch (_) { return d; }
-  state.dateSousRef = false;   /* lot 77 : détecter des compteurs REPARTIS
-     de zéro (état perdu) — des zéros muets mentiraient */
-  (d.circuits || []).forEach(c8 => (c8.satellites || []).forEach(s8 => {
-    const r8 = refs.sats && refs.sats[s8.sat_id];
-    if (!r8) return;
-    if ((isFinite(r8.rempl_nb) && r8.rempl_nb > 3 && has(s8.rempl_nb)
-         && s8.rempl_nb < r8.rempl_nb)
-     || (isFinite(r8.tiree_l) && r8.tiree_l > 10 && has(s8.tiree_l)
-         && s8.tiree_l < r8.tiree_l - 1))
-      state.dateSousRef = true;
-  }));
+  /* lot 79 (client) : l'alerte « sous la référence » est SUPPRIMÉE — la
+     remise automatique rend le cas invisible. */
   const delta = (v, r, dec) => {
     if (!has(v) || !isFinite(r)) return v;
     const x = Math.max(0, v - r);
@@ -5922,6 +5998,7 @@ function energiesDepuis(d) {   /* lot 76 : « la conso de la pompe, du
 }
 /* bandeau complet — pupitre AVANCÉ (lot 74) */
 function dateBandeau(d) {
+  (void 0);   /* lot 79 : d ne sert plus (totaux bruts retirés du bandeau) */
   const b = el('div', 'date-bande');
   b.appendChild(el('b', null, 'Date de prise en compte des données : '));
   b.appendChild(el('span', 'date-val', dateCourante() || '— non définie'));
@@ -5957,38 +6034,24 @@ function dateBandeau(d) {
     b.appendChild(rac9('il y a 7 j', fmt9(new Date(auj9 - 7 * 86400000))));
     b.appendChild(rac9('1er du mois',
       fmt9(new Date(auj9.getFullYear(), auj9.getMonth(), 1)))); }
-  const inst = dateInstallation();
-  if (inst) b.appendChild(el('div', 'date-etat',
-    'Installation en service depuis le ' + inst + '.'));
-  { const dd9 = state.data;                     /* lot 76 : énergies en clair */
-    if (dd9 && dd9._depuis) {
-      const en9 = energiesDepuis(dd9);
-      if (en9) {
-        const le9 = el('div', 'date-etat');
-        le9.style.fontSize = '13px';
-        le9.appendChild(el('b', null, 'Depuis le ' + dd9._depuis + ' — '));
-        le9.appendChild(document.createTextNode(en9));
-        b.appendChild(le9);
-      }
+  { const inst = dateInstallation();             /* lot 79 : discret, en fin
+       de LA ligne — plus de paragraphes en dessous */
+    if (inst) {
+      const sp9 = el('span', null, '· en service depuis le ' + inst.slice(0, 5)
+        + inst.slice(5));
+      sp9.style.cssText = 'font-size:11.5px;color:var(--ink2)';
+      b.appendChild(sp9);
     } }
-  const src = dateSource();
-  let et = state.dateEtat || '';
-  if (!et && src === 'navigateur')
-    et = 'mémorisée sur ce navigateur — le pilote 1609b la retiendra pour tous';
-  if (!et && src === 'serveur')
-    et = 'déposée au serveur — en attente d\u2019application par le pilote';
-  if (dateCourante() && state.dateDep && !state.dateDep.refs && !et)
-    et = 'références en cours de lecture…';
-  if (state.dateSousRef) {
-    b.appendChild(el('div', 'date-etat err',
-      '\u26a0 Les compteurs actuels sont SOUS la référence du '
-      + (dateCourante() || '?') + " — l'automate a perdu ses compteurs "
-      + '(redémarrage, état non relu). Remettez-les avec « Rétablir » '
-      + 'ci-dessous : les mesures « depuis le » reprendront toutes seules.'));
-  }
-  if (et) b.appendChild(el('div', 'date-etat' + (state.dateEtatErr ? ' err' : ''), et));
-  /* totaux depuis l'installation : panneau SECONDAIRE replié (client) */
-  if (dateCourante() && d) {
+  /* lot 79 : seuls les PROBLEMES parlent (erreur de lecture des
+     références) et la remise automatique dit son mot — une ligne. */
+  if (state.dateEtatErr && state.dateEtat)
+    b.appendChild(el('div', 'date-etat err', state.dateEtat));
+  if (state.remEtat && state.remEtat.texte)
+    b.appendChild(el('div', 'date-etat' + (state.remEtat.err ? ' err' : ''),
+      state.remEtat.texte));
+  /* lot 79 : totaux bruts retirés du bandeau (les fiches portent le brut
+     au clic, voir « Compteur depuis le démarrage »). */
+  if (false && dateCourante() && d) {
     const det = document.createElement('details'); det.className = 'date-brut';
     const sum = document.createElement('summary');
     sum.textContent = 'Totaux depuis l\u2019installation (compteurs bruts)';
@@ -6271,6 +6334,165 @@ $('#fichEff').addEventListener('click', async () => {  /* lot 51 : D196 */
    livree) en UN SEUL ordre — le pilote 1509a les applique a l'instant sur,
    traces série [D190]/[D201]/[D203]. */
 const RET_SATS = ['SA1', 'SA2', 'SA3', 'SB1'];
+/* =====================================================================
+   Lot 79 (client, 17/09) : REMISE AUTOMATIQUE des compteurs.
+   « Si le pupitre a perdu les infos pour une raison x ou y, il va
+   piocher dans la base de données et remet automatiquement à jour. »
+   Déclencheur : l'automate déclare lui-même la perte (etat_lu = 0 ou
+   etat_source = 2 « état neuf »). Le pupitre lit alors dans Azure la
+   DERNIÈRE ligne d'AVANT le redémarrage (jamais celle de la date de
+   départ — le comptage entre les deux serait perdu ; jamais une ligne
+   d'après — elle porte les zéros), calcule les différences et dépose UN
+   ordre de repose. Une ligne sobre le dit, un suivi va jusqu'à
+   « config vN vue ». Une fois par redémarrage, jamais en silence,
+   nouvel essai sous 60 s si le réseau tousse. Le bouton du lot 58 a
+   disparu de l'écran : cette mécanique le remplace.
+   ===================================================================== */
+function remLireDerniere(texte) {
+  /* la DERNIÈRE ligne parsable d'une tranche, avec au moins 3 cuves
+     lisibles — les tranches balayées sont ENTIÈREMENT antérieures au
+     redémarrage, donc aucune ligne à zéros ne peut être ramassée. */
+  const lignes = (texte || '').split('\n').filter(x => x.trim());
+  for (let i = lignes.length - 1; i >= 0; i--) {
+    try {
+      const d2 = JSON.parse(lignes[i]);
+      const par = {};
+      ((d2.circuits) || []).forEach(c2 => (c2.satellites || []).forEach(s2 => {
+        par[s2.sat_id] = s2;
+      }));
+      let n2 = 0;
+      RET_SATS.forEach(id2 => { if (par[id2] && has(par[id2].rempl_nb)) n2++; });
+      if (n2 >= 3) return {par, tl: d2.tl || '?'};
+    } catch (e2) { /* ligne abîmée : la précédente */ }
+  }
+  return null;
+}
+function remDoses(par, actuels) {
+  const doses = {rempl: [], rech: [], vid: [], tiree: [], livree: []};
+  const dose9 = (hist, act, dec) => {
+    if (!has(hist)) return 0;
+    const d9 = Math.max(0, hist - (has(act) ? act : 0));
+    return dec ? Math.round(d9 * 10) / 10 : Math.round(d9);
+  };
+  let total = 0;
+  RET_SATS.forEach(id2 => {
+    const h2 = par[id2] || {}, a2 = actuels[id2] || {};
+    const hRech = has(h2.rech_nb) ? h2.rech_nb : h2.rempl_therm_nb;
+    const aRech = has(a2.rech_nb) ? a2.rech_nb : a2.rempl_therm_nb;
+    doses.rempl.push(dose9(h2.rempl_nb, a2.rempl_nb));
+    doses.rech.push(dose9(hRech, aRech));
+    doses.vid.push(dose9(h2.rech_nb_vid, a2.rech_nb_vid));
+    doses.tiree.push(dose9(h2.tiree_l, a2.tiree_l, 1));
+    doses.livree.push(dose9(h2.conso_totale_l, a2.conso_totale_l, 1));
+  });
+  Object.keys(doses).forEach(k2 => doses[k2].forEach(v2 => { total += v2; }));
+  doses.total = Math.round(total * 10) / 10;
+  return doses;
+}
+function remDue(d, faite) {
+  if (!d || !d.device_id || DEMO) return false;
+  if (!(d.etat_lu === 0 || d.etat_source === 2)) return false;
+  if (!has(d.uptime_s)) return false;
+  const cle = d.device_id + '#' + (d.boot_n || 0);
+  return faite !== cle ? cle : false;
+}
+async function remExecuter(d, cle) {
+  state.remEnCours = true;
+  const dire = (t2, err2) => { state.remEtat = {texte: t2, err: !!err2}; };
+  try {
+    /* l'instant du redémarrage, heure locale — on ne balaie QUE des
+       tranches entièrement antérieures (marge 60 s) */
+    const boot = new Date(Date.now() - (d.uptime_s + 60) * 1000);
+    let jour = new Date(boot.getFullYear(), boot.getMonth(), boot.getDate());
+    let hFin = boot.getHours();          /* dernière tranche close : hFin-1 -> hFin */
+    let trouve = null, faits = 0;
+    for (let k2 = 0; k2 < 36 && !trouve; k2++) {
+      let h2 = hFin - 1 - k2;
+      let j2 = new Date(jour);
+      while (h2 < 0) { h2 += 24; j2 = new Date(j2 - 86400000); }
+      const iso = j2.getFullYear() + '-' + String(j2.getMonth() + 1).padStart(2, '0')
+                + '-' + String(j2.getDate()).padStart(2, '0');
+      const de = String(h2).padStart(2, '0') + ':00';
+      const a2 = h2 === 23 ? '24:00' : String(h2 + 1).padStart(2, '0') + ':00';
+      faits++;
+      dire('remise automatique des compteurs : lecture de l\u2019historique ('
+           + iso + ' ' + de + '\u2013' + a2 + ', tranche ' + faits + ')\u2026');
+      let r2 = null;
+      for (let ess = 1; ess <= 2; ess++) {
+        try { r2 = await fetch(API.histo + '?jour=' + iso + '&de=' + de + '&a=' + a2);
+              if (r2.ok || r2.status === 404) break;
+        } catch (e2) { r2 = null; }
+        if (ess < 2) await new Promise(rz => setTimeout(rz, 600));
+      }
+      if (!r2) throw new Error('réseau coupé (tranche ' + de + ')');
+      if (r2.status === 404) continue;
+      if (!r2.ok) throw new Error('lecteur en ligne : réponse ' + r2.status);
+      trouve = remLireDerniere(await r2.text());
+    }
+    if (!trouve) {
+      dire('compteurs perdus mais AUCUNE ligne lisible dans l\u2019historique '
+         + 'récent — rien remis (me le signaler).', true);
+      state.remFaite = cle;              /* pas de boucle sur un histo vide */
+      try { localStorage.setItem('enovaq_remise', cle); } catch (e2) {}
+      return;
+    }
+    const actuels = {};
+    RET_SATS.forEach(id2 => { actuels[id2] = retActuel(id2); });
+    const doses = remDoses(trouve.par, actuels);
+    state.remFaite = cle;
+    try { localStorage.setItem('enovaq_remise', cle); } catch (e2) {}
+    if (doses.total <= 0) {
+      dire('redémarrage détecté — les compteurs étaient déjà justes, rien à remettre.');
+      return;
+    }
+    dire('remise automatique : dépôt des compteurs (référence '
+         + (trouve.tl || '?') + ')\u2026');
+    deposer.derniereErreur = '';
+    const ok9 = await ordreRapide({
+      rempl_nb_ajout: doses.rempl, rech_nb_ajout: doses.rech,
+      rech_vid_ajout: doses.vid, tiree_ajout: doses.tiree,
+      livree_ajout: doses.livree});
+    if (!ok9) {
+      state.remFaite = null;             /* on retentera */
+      try { localStorage.removeItem('enovaq_remise'); } catch (e2) {}
+      dire('remise automatique : dépôt en échec ('
+           + (deposer.derniereErreur || 'réseau') + ') — nouvel essai sous 60 s.', true);
+      setTimeout(() => { state.remEnCours = false; }, 60000);
+      return;
+    }
+    const v9 = deposer.derniereVersion;
+    dire('\u2714 compteurs déposés (config v' + v9 + ') — application à l\u2019instant sûr\u2026');
+    const t0 = Date.now();
+    const g9 = setInterval(() => {
+      const dv = state.dataBrut || state.data;
+      if (dv && (dv.cfg_version | 0) >= v9) {
+        clearInterval(g9);
+        dire('\u2714 compteurs remis depuis l\u2019historique à '
+          + new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})
+          + ' (config v' + v9 + ') — référence ' + (trouve.tl || '?') + '.');
+      } else if (Date.now() - t0 > 240000) {
+        clearInterval(g9);
+        dire('compteurs déposés (config v' + v9 + ') mais pas encore vus en '
+           + 'télémesure après 4 min — l\u2019automate est-il en ligne ?', true);
+      }
+    }, 3000);
+  } catch (e9) {
+    state.remFaite = null;
+    dire('remise automatique : ' + e9.message + ' — nouvel essai sous 60 s.', true);
+    setTimeout(() => { state.remEnCours = false; }, 60000);
+    return;
+  }
+  state.remEnCours = false;
+}
+function remVerifier(d) {
+  if (state.remEnCours) return;
+  if (state.remFaite === undefined) {
+    try { state.remFaite = localStorage.getItem('enovaq_remise') || null; }
+    catch (e2) { state.remFaite = null; }
+  }
+  const cle = remDue(d, state.remFaite);
+  if (cle) remExecuter(d, cle);
+}
 function retLireLigne(texte) {
   const lignes = texte.split('\n').filter(x => x.trim());
   for (let i = lignes.length - 1; i >= 0; i--) {
@@ -6337,6 +6559,14 @@ async function retChercher() {
   }
   if (!mN && !mL) return {vide: true};
   return {duo: true, N: mN || mL, L: mL || mN};
+}
+function satBrutDe(id2) {      /* lot 79 : la cuve au BRUT (dataBrut) */
+  const d = state.dataBrut || {};
+  let t9 = null;
+  ((d.circuits) || []).forEach(c2 => (c2.satellites || []).forEach(s2 => {
+    if (s2.sat_id === id2) t9 = s2;
+  }));
+  return t9;
 }
 function retActuel(id2) {
   /* la valeur ACTUELLE publiee par l'automate, cuve par cuve.
@@ -6474,12 +6704,13 @@ function retMontrer2(tN, tL) {
   });
   tab.appendChild(ok2);
 }
-$('#autoRet').addEventListener('click', async () => {
+const _autoRetB = $('#autoRet');
+if (_autoRetB) _autoRetB.addEventListener('click', async () => {
   const et = $('#autoRetEtat'); $('#autoRetTab').textContent = '';
   if (DEMO) { et.textContent = 'démonstration — rien lu'; return; }
-  $('#autoRet').disabled = true;
+  if (_autoRetB) _autoRetB.disabled = true;
   const t9 = await retChercher();
-  $('#autoRet').disabled = false;
+  if (_autoRetB) _autoRetB.disabled = false;
   if (t9.duo) { $('#autoRetEtat').textContent = 'trouvé — vérifiez puis confirmez :'; retMontrer(t9); return; }
   if (t9.err500) {
     et.textContent = 'le lecteur v1 en ligne bloque la lecture (500 sur '
@@ -6526,7 +6757,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1609k — pupitre ' + LOT + ' · lot 77 — 16/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1609m — pupitre ' + LOT + ' · lot 79 — 17/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
@@ -7013,12 +7244,17 @@ function rendreSalon(d) {
     const dj9 = dateCourante(), inst9 = dateInstallation();
     let t9 = dj9 ? 'Données depuis le ' + dj9 : 'Données depuis l\u2019origine';
     if (inst9) t9 += ' · installation en service depuis le ' + inst9;
-    if (state.dateSousRef)
-      t9 += ' — \u26a0 compteurs sous la référence, voir le bandeau du pupitre avancé';
     const ld9 = el('div', 'sch-note', t9);
     ld9.style.cssText = 'flex-basis:100%;text-align:center;font-family:'
       + 'var(--fs-cond);font-size:12.5px;color:var(--ink2);padding:0 2px';
-    bande.appendChild(ld9); }
+    bande.appendChild(ld9);
+    if (state.remEtat && state.remEtat.texte) {   /* lot 79 : remise AUTO */
+      const lr9 = el('div', 'sch-note', state.remEtat.texte);
+      lr9.style.cssText = 'flex-basis:100%;text-align:center;font-family:'
+        + 'var(--fs-cond);font-size:12.5px;padding:0 2px;color:'
+        + (state.remEtat.err ? '#b3261e' : '#2a7a4b');
+      bande.appendChild(lr9);
+    } }
   schPhotoAttacher(bande, 'CHAUF');            /* lot 54 : album chaufferie */
   g.classList.toggle('fluxOn',
     (((d && d.chaufferie) || {}).pompe_pct || 0) > 0);   /* eau chaude en route */
@@ -7051,20 +7287,15 @@ function rendreSalon(d) {
       bn.appendChild(el('b', null, "L'automate n'a pas pu relire sa mémoire "
         + 'au dernier démarrage'));
       bn.appendChild(document.createTextNode(
-        (d.etat_err ? ' (fichier incomplet : ' + d.etat_err + ')' : '') + '. '
-        + 'Vos compteurs sont conservés dans l\u2019historique. '));
-      const bt9 = el('button', null, 'Remettre les compteurs');
-      bt9.style.cssText = 'font-weight:700;cursor:pointer;margin-left:6px';
-      bt9.addEventListener('click', ev => {
-        ev.stopPropagation();
-        salonBasculer(false);
-        setTimeout(() => {
-          const b0 = $('#autoRet');
-          if (b0) { b0.scrollIntoView({behavior: 'smooth', block: 'center'}); b0.click(); }
-        }, 250);
-      });
-      bn.appendChild(bt9);
+        (d.etat_err ? ' (fichier incomplet : ' + d.etat_err + ')' : '') + ' — '
+        + 'remise automatique des compteurs en cours, voir la ligne '
+        + 'ci-dessous.'));
       bande.appendChild(bn); }
+  if (d && has(d.tas_min) && d.tas_min < 20000)   /* D208 : avant le mur */
+    bande.appendChild(chip('MÉMOIRE BASSE',
+      i0(d.tas_min) + ' o au plus bas',
+      'l\u2019automate approche de la panne mémoire — me le signaler',
+      'alerte'));
   if (d && d.etat_source === 1)                 /* D207 : secours = rassurer */
     bande.appendChild(chip('Mémoire', 'copie de secours',
       'compteurs repris automatiquement (D207)', ''));
