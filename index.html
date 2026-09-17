@@ -9,7 +9,15 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609r.84 (lot 84, 17/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1609s.85 (lot 85, 17/09/2026)
+   Lot 85 (Claude Fable 5) : lecture des références RÉÉCRITE sur le format
+   réel du serveur (confirmé par capture : « tl » en tête de ligne,
+   circuits à la racine, une ligne toutes les ~3 s, fichier de plusieurs
+   Mo par heure). La réponse est lue EN FLUX et s'arrête à la 1re ligne
+   exploitable — plus de rapatriement de tout le texte d'un coup (cause
+   probable de l'échec silencieux sur un si gros fichier). Diagnostic
+   enrichi (octets lus, lignes vues, réf SA1 extraite) + bouton « copier
+   le diagnostic » pour le transmettre en un clic.
    Lot 84 (Claude Fable 5, go client) : (1) date active SANS sa référence
    n'affiche PLUS le compteur brut sous l'étiquette « depuis le JJ/MM »
    (le mensonge des captures) — bascule sur « depuis le début » (honnête)
@@ -1542,7 +1550,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1609r.84';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1609s.85';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -5915,17 +5923,16 @@ function dateRefsDeLigne(texte) {
   return null;
 }
 async function dateChargerRefs(jma) {
-  /* Lot 84 : diagnostic PRÉCIS — au lieu de « le moteur v3 est-il collé »,
-     on rapporte l'URL, le code HTTP, un extrait de la réponse et où ça a
-     buté ; state.dateDiag garde tout pour l'afficher au bandeau. On
-     distingue : réseau (fetch jeté), HTTP != 200, réponse VIDE (jour sans
-     archive), réponse NON-JSON (mauvaise route/HTML d'erreur), lignes à
-     l'ancien format. La 1re tranche NON VIDE tranche le sort du jour :
-     on ne balaie pas 24 h pour rien si le serveur renvoie du HTML. */
+  /* Lot 85 : la vraie cause, tracée sur le format RÉEL du serveur (une
+     ligne JSON toutes les ~3 s, « tl » en TÊTE de ligne). Le fichier
+     d'une heure fait plusieurs Mo — on lit la RÉPONSE en flux et on
+     s'arrête à la PREMIÈRE ligne complète exploitable, sans charger tout
+     le texte d'un coup ni le parser en entier. Tout est consigné dans
+     state.dateDiag (copiable au bandeau). */
   const iso = dateVersIso(jma);
-  const diag = {jma, url: null, statut: null, extrait: null, etape: 'début'};
+  const diag = {jma, url: null, statut: null, octets: 0, lignes: 0,
+                extrait: null, etape: 'début', ts: new Date().toLocaleTimeString('fr-FR')};
   state.dateDiag = diag;
-  let repVue = false;
   for (let h2 = 0; h2 < 24; h2++) {
     const de = String(h2).padStart(2, '0') + ':00';
     const a2 = h2 === 23 ? '24:00' : String(h2 + 1).padStart(2, '0') + ':00';
@@ -5939,32 +5946,57 @@ async function dateChargerRefs(jma) {
       if (ess < 2) await new Promise(rz => setTimeout(rz, 600));
     }
     if (!r2) { diag.etape = 'réseau'; diag.statut = String(jete && jete.message || jete);
-      return {err: 'réseau coupé (' + diag.statut + ') sur ' + de + ' — 2 essais.', diag}; }
+      return {err: 'réseau coupé (' + diag.statut + ') sur ' + de + '.', diag}; }
     diag.statut = r2.status;
-    if (r2.status === 404) { if (!repVue) continue; else continue; }
-    const texte = await r2.text();
-    repVue = true;
-    diag.extrait = (texte || '').slice(0, 120).replace(/\s+/g, ' ');
+    if (r2.status === 404) continue;
     if (!r2.ok) { diag.etape = 'HTTP ' + r2.status;
-      return {err: 'lecteur : réponse HTTP ' + r2.status + '.', diag}; }
-    if (!texte || !texte.trim()) { diag.etape = 'vide'; continue; }  /* heure creuse */
-    /* JSON ou pas ? une route erronée renvoie du HTML : on le DIT */
-    const t0 = texte.trim()[0];
-    if (t0 !== '{' && t0 !== '[') {
-      diag.etape = 'non-JSON';
-      return {err: 'la réponse n\u2019est pas des données JSON (reçu : « '
-        + diag.extrait + ' »). Route d\u2019historique inattendue ?', diag};
+      diag.extrait = (await r2.text().catch(() => '')).slice(0, 120);
+      return {err: 'lecteur : HTTP ' + r2.status + '.', diag}; }
+    /* lecture en FLUX : on s'arrête à la 1re ligne exploitable */
+    let refs = null, tampon = '', fini = false;
+    if (r2.body && r2.body.getReader) {
+      const lecteur = r2.body.getReader();
+      const dec = new TextDecoder();
+      while (!fini) {
+        const {done, value} = await lecteur.read();
+        if (done) break;
+        diag.octets += value ? value.length : 0;
+        tampon += dec.decode(value, {stream: true});
+        let nl;
+        while ((nl = tampon.indexOf('\n')) >= 0) {
+          const ligne = tampon.slice(0, nl); tampon = tampon.slice(nl + 1);
+          if (!ligne.trim()) continue;
+          diag.lignes++;
+          if (!diag.extrait) diag.extrait = ligne.slice(0, 120).replace(/\s+/g, ' ');
+          const t0 = ligne.trim()[0];
+          if (t0 !== '{' && t0 !== '[') {
+            diag.etape = 'non-JSON';
+            try { lecteur.cancel(); } catch (_) {}
+            return {err: 'réponse non-JSON (« ' + diag.extrait + ' »).', diag};
+          }
+          const rr = dateRefsDeLigne(ligne);
+          if (rr && rr.ancien) { diag.etape = 'ancien format';
+            try { lecteur.cancel(); } catch (_) {}
+            return {err: 'lignes du ' + jma + ' à l\u2019ancien format.', diag}; }
+          if (rr) { refs = rr; fini = true; break; }
+        }
+      }
+      try { lecteur.cancel(); } catch (_) {}
+    } else {                                   /* pas de flux : repli texte */
+      const txt = await r2.text();
+      diag.octets = txt.length;
+      refs = dateRefsDeLigne(txt);
+      diag.lignes = (txt.match(/\n/g) || []).length;
+      if (!diag.extrait) diag.extrait = txt.slice(0, 120).replace(/\s+/g, ' ');
     }
-    const refs = dateRefsDeLigne(texte);
-    if (refs && refs.ancien) { diag.etape = 'ancien format';
-      return {err: 'les lignes du ' + jma + ' sont à l\u2019ancien format '
-        + '(avant le 11/09).', diag}; }
-    if (refs) { diag.etape = 'ok'; return {refs, diag}; }
-    diag.etape = 'ligne illisible'; /* JSON mais pas exploitable : tranche suivante */
+    if (refs) { diag.etape = 'ok';
+      diag.refsSA1 = refs.sats && refs.sats.SA1 ? JSON.stringify(refs.sats.SA1) : '?';
+      return {refs, diag}; }
+    /* tranche lue mais aucune ligne exploitable : heure suivante */
+    diag.etape = 'tranche sans ligne exploitable';
   }
-  diag.etape = repVue ? 'aucune ligne exploitable' : 'aucune réponse';
-  return {err: repVue ? 'aucune ligne exploitable le ' + jma + '.'
-                      : 'aucune archive lue le ' + jma + '.', diag};
+  diag.etape = 'aucune ligne sur 24 h';
+  return {err: 'aucune ligne exploitable le ' + jma + '.', diag};
 }
 async function dateChoisir(jmaDonne) {
   /* Lot 83 : réécrit à la racine. Trois chemins (dateRoute) ; le succès
@@ -6169,7 +6201,18 @@ function dateBandeauConstruire() {
   });
   const deb9 = el('button', null, 'depuis le début');
   deb9.addEventListener('click', ev => { ev.stopPropagation(); dateChoisir(DATE_DEBUT); });
-  b.appendChild(ch9); b.appendChild(ok9); b.appendChild(deb9);
+  const cp9 = el('button', null, 'copier le diagnostic');
+  cp9.style.fontSize = '11px';
+  cp9.addEventListener('click', ev => {
+    ev.stopPropagation();
+    const dd = state.dateDiag || {};
+    const t9 = 'enovaQ diagnostic date\n' + JSON.stringify(dd, null, 2);
+    if (navigator.clipboard) navigator.clipboard.writeText(t9)
+      .then(() => dateDire('diagnostic copié — collez-le dans la conversation'))
+      .catch(() => { window.prompt('Copiez ce diagnostic :', t9); });
+    else window.prompt('Copiez ce diagnostic :', t9);
+  });
+  b.appendChild(ch9); b.appendChild(ok9); b.appendChild(deb9); b.appendChild(cp9);
   { const inst = dateInstallation();
     if (inst) {
       const sp9 = el('span', null, '· en service depuis le ' + inst);
@@ -6920,7 +6963,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1609r — pupitre ' + LOT + ' · lot 84 — 17/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1609s — pupitre ' + LOT + ' · lot 85 — 17/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
