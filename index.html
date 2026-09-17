@@ -9,7 +9,14 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609t.86 (lot 86, 17/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1609u.87 (lot 87, 17/09/2026)
+   Lot 87 (Claude Fable 5, diagnostic client 18:58) : la remise reposait
+   la dernière ligne « au-dessus de l'actuel » — or le 1609b a replanté
+   l'après-midi et la ligne d'avant le flash portait 7/29/8,5 L : reposés
+   fidèlement, à tort. Nouveau critère : la ligne la plus PLEINE des
+   7 jours (max de remplissages = dernière photo saine), arrêt quand elle
+   plafonne 12 tranches, recherche AFFICHÉE au fil de l'eau (meilleure :
+   N remplissages) ; clé neuve (remise3) : repart seule au rechargement.
    Lot 86 (Claude Fable 5) : pilote attendu 1609e — le 1609d ne compilait
    pas (writeToStream exige un Stream*, erreur Claude, jamais flashé) ;
    réception réécrite et jouée au banc (4/4) : flux borné à taille
@@ -1554,7 +1561,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1609t.86';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1609u.87';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -6534,14 +6541,15 @@ const RET_SATS = ['SA1', 'SA2', 'SA3', 'SB1'];
    nouvel essai sous 60 s si le réseau tousse. Le bouton du lot 58 a
    disparu de l'écran : cette mécanique le remplace.
    ===================================================================== */
-function remLireDerniere(texte, sommeMin) {
-  /* Lot 80 — LE BUG DU 17/09 CORRIGÉ : la perte peut précéder le dernier
-     redémarrage (perte hier soir, reboot ce matin) — tout ce qui s'est
-     archivé ENTRE les deux est à zéro. Le repère n'est donc plus
-     l'instant du boot : c'est la SANTÉ de la ligne — on retient la
-     dernière ligne parsable dont la somme des remplissages DÉPASSE
-     l'actuel (sommeMin) : les lignes à zéros post-perte sont rejetées
-     d'elles-mêmes, quel que soit le nombre de redémarrages depuis. */
+function remLireDerniere(texte) {
+  /* Lot 87 — LE VRAI CRITÈRE, appris du 17/09 au soir : « au-dessus de
+     l'actuel » ne suffit pas quand la perte précède le redémarrage (le
+     1609b a replanté l'après-midi : la dernière ligne d'avant le flash
+     portait 7/29/8,5 L — la remise les a fidèlement reposés). Ici on
+     rend la dernière ligne parsable de la tranche AVEC sa somme ; le
+     CHOIX — garder la ligne la plus PLEINE des 7 jours — se fait
+     au-dessus : les compteurs ne font que monter, la ligne au maximum
+     EST la dernière photo saine. */
   const lignes = (texte || '').split('\n').filter(x => x.trim());
   for (let i = lignes.length - 1; i >= 0; i--) {
     try {
@@ -6554,10 +6562,18 @@ function remLireDerniere(texte, sommeMin) {
       RET_SATS.forEach(id2 => {
         if (par[id2] && has(par[id2].rempl_nb)) { n2++; somme += par[id2].rempl_nb; }
       });
-      if (n2 >= 3 && somme > sommeMin) return {par, tl: d2.tl || '?', somme};
+      if (n2 >= 3) return {par, tl: d2.tl || '?', somme};
     } catch (e2) { /* ligne abîmée : la précédente */ }
   }
   return null;
+}
+function remMieux(a2, b2) {           /* la plus PLEINE gagne */
+  if (!a2) return b2;
+  if (!b2) return a2;
+  return b2.somme > a2.somme ? b2 : a2;
+}
+function remValable(l2, sommeMin) {   /* et il faut qu'elle DÉPASSE l'actuel */
+  return !!l2 && l2.somme > sommeMin;
 }
 function remDoses(par, actuels) {
   const doses = {rempl: [], rech: [], vid: [], tiree: [], livree: []};
@@ -6611,8 +6627,12 @@ async function remExecuter(d, cle) {
     const boot = new Date();
     let jour = new Date(boot.getFullYear(), boot.getMonth(), boot.getDate());
     let hFin = boot.getHours() + 1;
-    let trouve = null, faits = 0;
-    for (let k2 = 0; k2 < 168 && !trouve; k2++) {
+    let meilleure = null, sansMieux = 0, faits = 0;
+    for (let k2 = 0; k2 < 168; k2++) {
+      /* arrêt : la meilleure n'a plus progressé sur 12 tranches ET elle
+         dépasse déjà l'actuel — remonter plus loin ne donne que du plus
+         vieux, donc du plus petit. */
+      if (remValable(meilleure, sommeMin) && sansMieux >= 12) break;
       let h2 = hFin - 1 - k2;
       let j2 = new Date(jour);
       while (h2 < 0) { h2 += 24; j2 = new Date(j2 - 86400000); }
@@ -6633,13 +6653,21 @@ async function remExecuter(d, cle) {
       if (!r2) throw new Error('réseau coupé (tranche ' + de + ')');
       if (r2.status === 404) continue;
       if (!r2.ok) throw new Error('lecteur en ligne : réponse ' + r2.status);
-      trouve = remLireDerniere(await r2.text(), sommeMin);
+      const lue = remLireDerniere(await r2.text());
+      const avant = meilleure;
+      meilleure = remMieux(meilleure, lue);
+      sansMieux = (meilleure === avant) ? sansMieux + 1 : 0;
+      if (meilleure)
+        dire('remise automatique : recherche de la dernière ligne SAINE… '
+           + 'meilleure : ' + meilleure.somme + ' remplissages ('
+           + (meilleure.tl || '?') + ')');
     }
+    const trouve = remValable(meilleure, sommeMin) ? meilleure : null;
     if (!trouve) {
       dire('compteurs perdus mais AUCUNE ligne au-dessus des compteurs '
          + 'actuels sur 7 jours d\u2019historique — rien remis (me le signaler).', true);
       state.remFaite = cle;              /* pas de boucle sur un histo vide */
-      try { localStorage.setItem('enovaq_remise2', cle); } catch (e2) {}
+      try { localStorage.setItem('enovaq_remise3', cle); } catch (e2) {}
       state.remEnCours = false;
       return;
     }
@@ -6647,7 +6675,7 @@ async function remExecuter(d, cle) {
     RET_SATS.forEach(id2 => { actuels[id2] = retActuel(id2); });
     const doses = remDoses(trouve.par, actuels);
     state.remFaite = cle;
-    try { localStorage.setItem('enovaq_remise2', cle); } catch (e2) {}
+    try { localStorage.setItem('enovaq_remise3', cle); } catch (e2) {}
     if (doses.total <= 0) {
       dire('redémarrage détecté — les compteurs étaient déjà justes, rien à remettre.');
       state.remEnCours = false;
@@ -6662,7 +6690,7 @@ async function remExecuter(d, cle) {
       livree_ajout: doses.livree});
     if (!ok9) {
       state.remFaite = null;             /* on retentera */
-      try { localStorage.removeItem('enovaq_remise2'); } catch (e2) {}
+      try { localStorage.removeItem('enovaq_remise3'); } catch (e2) {}
       dire('remise automatique : dépôt en échec ('
            + (deposer.derniereErreur || 'réseau') + ') — nouvel essai sous 60 s.', true);
       setTimeout(() => { state.remEnCours = false; }, 60000);
@@ -6695,9 +6723,9 @@ async function remExecuter(d, cle) {
 function remVerifier(d) {
   if (state.remEnCours) return;
   if (state.remFaite === undefined) {
-    try { state.remFaite = localStorage.getItem('enovaq_remise2') || null; }
-    /* lot 80 : nouvelle clé — la marque « rien à remettre » posée à tort
-       par le lot 79 (le bug ci-dessus) ne bloque pas la reprise. */
+    try { state.remFaite = localStorage.getItem('enovaq_remise3') || null; }
+    /* lot 87 : clé neuve (remise3) — la remise CORRIGÉE repart d'elle-
+       même sur ce redémarrage, malgré la marque posée hier soir. */
     catch (e2) { state.remFaite = null; }
   }
   const cle = remDue(d, state.remFaite);
@@ -6967,7 +6995,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1609t — pupitre ' + LOT + ' · lot 86 — 17/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1609u — pupitre ' + LOT + ' · lot 87 — 17/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
