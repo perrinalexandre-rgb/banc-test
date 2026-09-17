@@ -9,7 +9,11 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609s.85 (lot 85, 17/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1609t.86 (lot 86, 17/09/2026)
+   Lot 86 (Claude Fable 5) : pilote attendu 1609e — le 1609d ne compilait
+   pas (writeToStream exige un Stream*, erreur Claude, jamais flashé) ;
+   réception réécrite et jouée au banc (4/4) : flux borné à taille
+   connue, repli getString pour le chunked, publication sous verrou.
    Lot 85 (Claude Fable 5) : lecture des références RÉÉCRITE sur le format
    réel du serveur (confirmé par capture : « tl » en tête de ligne,
    circuits à la racine, une ligne toutes les ~3 s, fichier de plusieurs
@@ -1539,7 +1543,7 @@ const DEVICE     = 'chaufferie-01';
 /* Lot 64 : le pupitre CONNAIT le pilote qu'il attend — s'il voit un autre
    programme tourner dans l'automate, il le dit en ROUGE. Fini la
    confusion page/puce. A mettre a jour a chaque livraison pilote. */
-const PILOTE_ATTENDU = '1609d';   /* lots 78-79 */
+const PILOTE_ATTENDU = '1609e';   /* lot 86 : le 1609d ne compilait pas */
 /* Lot 68 : on ne crie plus a l'egalite stricte — un pilote PLUS RECENT
    que l'attendu est une bonne nouvelle, pas une alerte. Et le ton
    redevient SOBRE (client : « etre clair, pas en faire des tonnes »). */
@@ -1550,7 +1554,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1609s.85';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1609t.86';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -6963,7 +6967,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1609s — pupitre ' + LOT + ' · lot 85 — 17/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1609t — pupitre ' + LOT + ' · lot 86 — 17/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
