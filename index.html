@@ -9,7 +9,17 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609p.82 (lot 82, 17/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1609q.83 (lot 83, 17/09/2026)
+   Lot 83 (Claude Fable 5, go client « reprends tout depuis le début ») :
+   module DATE repris à la racine — bandeau PERSISTANT (construit une
+   fois : le calendrier natif ne se referme plus, la saisie ne bouge
+   plus) ; UN bouton « depuis le début » (20/08 = référence ZÉRO, sans
+   lecture — l'affiché est le brut, à sa vraie date) ; champ ouvert du
+   20/08 à aujourd'hui, jours 21/08-10/09 refusés avec la raison (ancien
+   format d'archive) ; lecture des références BLINDÉE : étiquetée à sa
+   date (résultats périmés jetés), échec DIT + réessai auto sous 30 s,
+   ligne « en cours » pendant le travail — la cause du « 14/09 affiché,
+   20/08 partout » est éteinte.
    Lot 82 (Claude Fable 5, go client) : LE bug du changement de date —
    le bandeau, reconstruit toutes les 2 s, reposait l'ancienne date dans
    le champ PENDANT la saisie ; « Appliquer » redemandait donc l'ancienne
@@ -1524,7 +1534,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1609p.82';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1609q.83';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -5697,10 +5707,11 @@ function rendre(force) {
   rendreOrganes(d);
   if (DEMO) demoEnrichir(d);   /* lot 47 */
   remVerifier(state.dataBrut || d);            /* lot 79 : remise AUTO */
-  { const zb = $('#dateBandeauAv');            /* lot 74 : la fonctionnalité
-      DATE vit au pupitre avancé (client : « les données sont
-      principalement sur le pupitre avancé ») */
-    if (zb) { zb.textContent = ''; zb.appendChild(dateBandeau(state.dataBrut || d)); } }
+  { const zb = $('#dateBandeauAv');            /* lot 83 : PERSISTANT — le
+      champ et son calendrier ne sont plus jamais détruits */
+    if (zb && !zb._construit) { zb._construit = true;
+      zb.appendChild(dateBandeauConstruire()); }
+    dateBandeauMaj(); }
   rendreSats(d);
   remplirStats('#statRendement', RENDEMENT, d);
   remplirStats('#statEnergie',   ENERGIE,   d);
@@ -5922,40 +5933,41 @@ async function dateChargerRefs(jma) {
   }
   return {err: 'aucune ligne archivée le ' + jma + ' — jour vide ?'};
 }
-async function dateChoisir(tDonne) {   /* lot 77 : le prompt ne sert plus
-   que de secours — le bandeau porte un vrai champ calendrier. */
-  const t = (tDonne !== undefined) ? tDonne
-    : prompt('Date de prise en compte des données (JJ/MM/AAAA, date '
-           + 'passée) :', dateCourante() || '');
-  if (t === null) return;
-  const jma = dateValide(t);
-  if (!jma) { state.dateEtat = 'date refusée (attendu JJ/MM/AAAA, passée)';
-              state.dateEtatErr = true; return; }
-  state.dateEtatErr = false;
-  if (dateVersIso(jma) < dateVersIso(DATE_MIN)) {   /* lot 81 : borne dite */
-    state.dateEtat = 'les archives d\u2019avant le ' + DATE_MIN
-      + ' sont à l\u2019ancien format — plus ancienne date possible : '
-      + DATE_MIN + '.';
-    state.dateEtatErr = true; rendre(true); return;
+async function dateChoisir(jmaDonne) {
+  /* Lot 83 : réécrit à la racine. Trois chemins (dateRoute) ; le succès
+     se voit à la grande date elle-même — pas de roman ; seules les
+     erreurs parlent. */
+  const jma = dateValide(jmaDonne);
+  if (!jma) { dateDire('date refusée (attendu JJ/MM/AAAA, passée)', true); return; }
+  const route = dateRoute(jma);
+  if (route === 'ancien') {
+    dateDire('les archives du 21/08 au 10/09 sont à l\u2019ancien format — '
+      + 'choisissez « depuis le début » (20/08) ou une date à partir du '
+      + DATE_MIN.slice(0, 5) + '.', true);
+    return;
   }
-  const r9 = await dateChargerRefs(jma);
-  if (r9.err) { state.dateEtat = r9.err; state.dateEtatErr = true; return; }
-  state.dateDep = {date: jma, refs: r9.refs};
-  dateEcrireLocal({date: jma, refs: r9.refs});
-  state.dateEtat = 'références du ' + jma + ' ' + (r9.refs.tl || '')
-                 + ' lues — dépôt de la date au serveur…';
+  let refs;
+  if (route === 'debut') refs = dateRefsZero();
+  else {
+    const r9 = await dateChargerRefs(jma);
+    if (r9.err) { dateDire(r9.err, true); return; }
+    refs = r9.refs;
+  }
+  state.dateDep = {date: jma, refs};
+  dateEcrireLocal({date: jma, refs});
+  dateDire('dépôt de la date au serveur…');
   const k9 = cleConfig(true);
   const okDep = await deposer({date_depart: jma, cfg_version: versionSuivante()}, k9);
-  if (okDep) { /* lot 81 : le choix domine jusqu'à confirmation du pilote */
-    dateEcrireLocal({date: jma, refs: r9.refs, vDepose: deposer.derniereVersion});
-    state.dateSaisie = null;   /* lot 82 : saisie consommée, le champ suit */
+  if (okDep) {
+    dateEcrireLocal({date: jma, refs, vDepose: deposer.derniereVersion});
+    dateDire('');                        /* la grande date EST la preuve */
+  } else {
+    dateDire('date mémorisée sur CE navigateur ; dépôt serveur en échec ('
+      + (deposer.derniereErreur || '?') + ') — re-cliquez Appliquer pour '
+      + 'retenter.', true);
   }
-  state.dateEtat = okDep
-    ? 'Date déposée : le pilote 1609b la retiendra et tout navigateur la verra.'
-    : 'Date mémorisée sur CE navigateur ; le dépôt serveur a échoué ('
-      + (deposer.derniereErreur || '?') + ') — re-cliquez « Changer la date » '
-      + 'pour retenter.';
-  state.dateEtatErr = !okDep;
+  const ch9 = $('#dateChamp');
+  if (ch9) ch9.value = dateVersIso(jma);
   rendre(true);
 }
 /* applique les deltas « depuis le JJ/MM » au NIVEAU DONNÉES : tout le
@@ -5963,24 +5975,40 @@ async function dateChoisir(tDonne) {   /* lot 77 : le prompt ne sert plus
 function dateAppliquer(d) {
   const jma = dateCourante();
   if (!jma || !d) return d;
-  /* références : en mémoire si la date correspond, sinon cache navigateur */
+  /* Lot 83 : références — en mémoire, sinon cache, sinon lecture Azure
+     ÉTIQUETÉE à sa date (un résultat pour une date qui n'est plus la
+     courante est JETÉ : fini les écrasements croisés), avec réessai
+     automatique sous 30 s en cas d'échec (jamais figé, jamais muet) et
+     ligne « en cours » pendant le travail. « Depuis le début » ne lit
+     rien : référence zéro. */
   if (!state.dateDep || state.dateDep.date !== jma) {
     const loc = dateLireLocal();
     if (loc && loc.date === jma && loc.refs) state.dateDep = loc;
-    else {
-      state.dateDep = {date: jma, refs: null};
-      if (!state.dateChargement && !DEMO) {      /* lecture UNE fois */
-        state.dateChargement = true;
-        dateChargerRefs(jma).then(r9 => {
-          state.dateChargement = false;
-          if (r9.err) { state.dateEtat = r9.err; state.dateEtatErr = true; return; }
-          state.dateDep = {date: jma, refs: r9.refs};
-          dateEcrireLocal(state.dateDep);
-          state.dateEtat = 'références du ' + jma + ' lues';
-          state.dateEtatErr = false;
-        });
+    else if (dateRoute(jma) === 'debut') {
+      state.dateDep = {date: jma, refs: dateRefsZero()};
+      dateEcrireLocal(state.dateDep);
+    } else if (dateRoute(jma) === 'ancien') {
+      state.dateDep = {date: jma, refs: null};   /* rien à lire, rien à dire */
+    } else state.dateDep = {date: jma, refs: null};
+  }
+  if (state.dateDep && state.dateDep.date === jma && !state.dateDep.refs
+      && dateRoute(jma) === 'lire' && !state.dateChargement && !DEMO) {
+    state.dateChargement = jma;                  /* étiquette */
+    dateDire('références du ' + jma + ' en cours de lecture…');
+    dateChargerRefs(jma).then(r9 => {
+      const encore = (state.dateChargement === jma);
+      state.dateChargement = false;
+      if (!encore || dateCourante() !== jma) return;   /* résultat périmé */
+      if (r9.err) {
+        dateDire(r9.err + ' — nouvel essai sous 30 s.', true);
+        setTimeout(() => { if (dateCourante() === jma && state.dateDep
+          && !state.dateDep.refs) state.dateDep = null; }, 30000);
+        return;
       }
-    }
+      state.dateDep = {date: jma, refs: r9.refs};
+      dateEcrireLocal(state.dateDep);
+      dateDire('');
+    });
   }
   const refs = state.dateDep && state.dateDep.refs;
   if (!refs) return d;
@@ -6045,106 +6073,89 @@ function energiesDepuis(d) {   /* lot 76 : « la conso de la pompe, du
   }
   return m9.length ? m9.join(' \u00b7 ') : null;
 }
-function dateChampValeur(saisie, courante) {
-  /* Lot 82 — LE bug du « changement de date impossible » : le bandeau se
-     reconstruit toutes les 2 s et REPOSAIT l'ancienne date dans le champ
-     pendant la saisie. Règle : une saisie en cours (même vide) gagne ;
-     sans saisie, le champ suit la date active. */
-  if (saisie !== undefined && saisie !== null) return saisie;
-  return courante ? dateVersIso(courante) : '';
-}
 /* bandeau complet — pupitre AVANCÉ (lot 74) */
-function dateBandeau(d) {
-  (void 0);   /* lot 79 : d ne sert plus (totaux bruts retirés du bandeau) */
+const DATE_DEBUT = '20/08/2026';     /* mise en service : compteurs = 0 */
+function dateRefsZero() {
+  /* « depuis le début » : la référence est ZÉRO par définition — rien à
+     lire dans Azure, l'affichage = les compteurs bruts, à leur vraie
+     date. C'est le modèle du client, exactement. */
+  const sats = {};
+  RET_SATS.forEach(id9 => { sats[id9] = {tiree_l: 0, conso_totale_l: 0,
+    rempl_nb: 0, rech_nb: 0, rech_nb_vid: 0}; });
+  return {tl: 'mise en service', sats,
+          ch: {sdm_kwh: 0, aux_kwh: 0, cum_kwh: 0, ma_mwh: 0}};
+}
+function dateRoute(jma) {
+  /* trois chemins, un seul juge : début (référence zéro, immédiat),
+     ancien format (21/08 -> 10/09 : refusé avec la raison), lecture Azure
+     (>= 11/09). */
+  if (jma === DATE_DEBUT) return 'debut';
+  if (dateVersIso(jma) < dateVersIso(DATE_MIN)) return 'ancien';
+  return 'lire';
+}
+/* =====================================================================
+   Lot 83 : bandeau PERSISTANT — construit UNE fois, puis seuls les
+   textes bougent. Le champ n'est plus jamais recréé ni réécrit pendant
+   la saisie : le calendrier natif ne se referme plus sous le doigt
+   (c'était LA cause du chaos). Un seul bouton : « depuis le début ».
+   ===================================================================== */
+function dateBandeauConstruire() {
   const b = el('div', 'date-bande');
   b.appendChild(el('b', null, 'Date de prise en compte des données : '));
-  b.appendChild(el('span', 'date-val', dateCourante() || '— non définie'));
-  { /* lot 77 : « une méthode plus pratique » — calendrier natif + raccourcis */
-    const ch9 = document.createElement('input');
-    ch9.type = 'date';
-    ch9.max = new Date().toISOString().slice(0, 10);
-    ch9.min = dateVersIso(DATE_MIN);   /* lot 81 : borne lisible */
-    ch9.value = dateChampValeur(state.dateSaisie, dateCourante());
-    ch9.addEventListener('input', () => { state.dateSaisie = ch9.value; });
-    ch9.addEventListener('click', ev => ev.stopPropagation());
-    const ok9 = el('button', null, 'Appliquer');
-    ok9.style.fontWeight = '700';
-    ok9.addEventListener('click', ev => {
-      ev.stopPropagation();
-      if (!ch9.value) { state.dateEtat = 'choisissez une date dans le champ';
-                        state.dateEtatErr = true; rendre(true); return; }
-      const [a9, m9, j9] = ch9.value.split('-');
-      dateChoisir(j9 + '/' + m9 + '/' + a9);
-    });
-    b.appendChild(ch9); b.appendChild(ok9);
-    const rac9 = (lb9, jma9) => {
-      const r9 = el('button', null, lb9);
-      r9.style.fontSize = '11.5px';
-      r9.addEventListener('click', ev => { ev.stopPropagation(); dateChoisir(jma9); });
-      return r9;
-    };
-    const auj9 = new Date();
-    const fmt9 = d9 => String(d9.getDate()).padStart(2, '0') + '/'
-      + String(d9.getMonth() + 1).padStart(2, '0') + '/' + d9.getFullYear();
-    /* lot 81 : plus de raccourcis-pièges — tout est borné au plus ancien
-       jour LISIBLE (11/09, bascule du format d'archive). */
-    const bornee9 = d9 => {
-      const j9 = fmt9(d9);
-      return dateVersIso(j9) < dateVersIso(DATE_MIN) ? DATE_MIN : j9;
-    };
-    b.appendChild(rac9('le plus ancien (' + DATE_MIN.slice(0, 5) + ')', DATE_MIN));
-    b.appendChild(rac9('il y a 7 j', bornee9(new Date(auj9 - 7 * 86400000))));
-    b.appendChild(rac9('1er du mois',
-      bornee9(new Date(auj9.getFullYear(), auj9.getMonth(), 1)))); }
-  { const inst = dateInstallation();             /* lot 79 : discret, en fin
-       de LA ligne — plus de paragraphes en dessous */
+  const val = el('span', 'date-val', '—'); val.id = 'dateVal';
+  b.appendChild(val);
+  const ch9 = document.createElement('input');
+  ch9.type = 'date'; ch9.id = 'dateChamp';
+  ch9.min = dateVersIso(DATE_DEBUT);
+  ch9.max = new Date().toISOString().slice(0, 10);
+  const cur9 = dateCourante();
+  if (cur9) ch9.value = dateVersIso(cur9);
+  ch9.addEventListener('click', ev => ev.stopPropagation());
+  const ok9 = el('button', null, 'Appliquer');
+  ok9.style.fontWeight = '700';
+  ok9.addEventListener('click', ev => {
+    ev.stopPropagation();
+    if (!ch9.value) { dateDire('choisissez une date dans le champ', true); return; }
+    const [a9, m9, j9] = ch9.value.split('-');
+    dateChoisir(j9 + '/' + m9 + '/' + a9);
+  });
+  const deb9 = el('button', null, 'depuis le début');
+  deb9.addEventListener('click', ev => { ev.stopPropagation(); dateChoisir(DATE_DEBUT); });
+  b.appendChild(ch9); b.appendChild(ok9); b.appendChild(deb9);
+  { const inst = dateInstallation();
     if (inst) {
-      const sp9 = el('span', null, '· en service depuis le ' + inst.slice(0, 5)
-        + inst.slice(5));
+      const sp9 = el('span', null, '· en service depuis le ' + inst);
       sp9.style.cssText = 'font-size:11.5px;color:var(--ink2)';
       b.appendChild(sp9);
     } }
-  /* lot 79 : seuls les PROBLEMES parlent (erreur de lecture des
-     références) et la remise automatique dit son mot — une ligne. */
-  if (state.dateEtatErr && state.dateEtat)
-    b.appendChild(el('div', 'date-etat err', state.dateEtat));
-  if (state.remEtat && state.remEtat.texte)
-    b.appendChild(el('div', 'date-etat' + (state.remEtat.err ? ' err' : ''),
-      state.remEtat.texte));
-  /* lot 79 : totaux bruts retirés du bandeau (les fiches portent le brut
-     au clic, voir « Compteur depuis le démarrage »). */
-  if (false && dateCourante() && d) {
-    const det = document.createElement('details'); det.className = 'date-brut';
-    const sum = document.createElement('summary');
-    sum.textContent = 'Totaux depuis l\u2019installation (compteurs bruts)';
-    det.appendChild(sum);
-    const tb = document.createElement('table');
-    const tr0 = document.createElement('tr');
-    ['Cuve', 'Remplissages', 'Réchauffages', 'Tirée (L)', 'Livrée (L)'].forEach(h2 => {
-      const th = document.createElement('th'); th.textContent = h2; tr0.appendChild(th);
-    });
-    tb.appendChild(tr0);
-    ((d.circuits) || []).forEach(c2 => (c2.satellites || []).forEach(s2 => {
-      const tr = document.createElement('tr');
-      [s2.sat_id, has(s2.rempl_nb) ? s2.rempl_nb : '—',
-       has(s2.rech_nb) ? s2.rech_nb : (has(s2.rempl_therm_nb) ? s2.rempl_therm_nb : '—'),
-       has(s2.tiree_l) ? n(s2.tiree_l) : '—',
-       has(s2.conso_totale_l) ? n(s2.conso_totale_l) : '—'].forEach(v => {
-        const td = document.createElement('td'); td.textContent = v; tr.appendChild(td);
-      });
-      tb.appendChild(tr);
-    }));
-    det.appendChild(tb);
-    const ch2 = d.chaufferie || {};
-    const en = [];
-    if (ch2.sdm120 && has(ch2.sdm120.energie_kwh)) en.push('élec pompe ' + n(ch2.sdm120.energie_kwh) + ' kWh');
-    if (ch2.elec_aux && has(ch2.elec_aux.energie_kwh)) en.push('auxiliaires ' + n(ch2.elec_aux.energie_kwh) + ' kWh');
-    if (ch2.elec_cumulus && has(ch2.elec_cumulus.energie_kwh)) en.push('cumulus ' + n(ch2.elec_cumulus.energie_kwh) + ' kWh');
-    if (ch2.maddalena && has(ch2.maddalena.energie_mwh)) en.push('thermique ' + n(ch2.maddalena.energie_mwh) + ' MWh');
-    if (en.length) det.appendChild(el('div', 'sj-note', en.join(' · ')));
-    b.appendChild(det);
-  }
+  const et9 = el('div', 'date-etat', ''); et9.id = 'dateEtatLigne';
+  et9.style.display = 'none';
+  const rm9 = el('div', 'date-etat', ''); rm9.id = 'dateRemLigne';
+  rm9.style.display = 'none';
+  b.appendChild(et9); b.appendChild(rm9);
   return b;
+}
+function dateDire(texte, err) {
+  state.dateEtat = texte || ''; state.dateEtatErr = !!err;
+  dateBandeauMaj();
+}
+function dateBandeauMaj() {
+  const val = $('#dateVal');
+  if (val) val.textContent = dateCourante() || '— non définie';
+  const et9 = $('#dateEtatLigne');
+  if (et9) {
+    et9.textContent = state.dateEtat || '';
+    et9.classList.toggle('err', !!state.dateEtatErr);
+    et9.style.display = state.dateEtat ? '' : 'none';
+  }
+  const rm9 = $('#dateRemLigne');
+  if (rm9) {
+    const t9 = (state.remEtat && state.remEtat.texte) || '';
+    rm9.textContent = t9;
+    rm9.classList.toggle('err', !!(state.remEtat && state.remEtat.err));
+    rm9.style.color = (state.remEtat && !state.remEtat.err) ? '#2a7a4b' : '';
+    rm9.style.display = t9 ? '' : 'none';
+  }
 }
 
 async function relever() {
@@ -6843,7 +6854,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1609p — pupitre ' + LOT + ' · lot 82 — 17/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1609q — pupitre ' + LOT + ' · lot 83 — 17/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
