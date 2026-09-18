@@ -9,7 +9,25 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1809a.89 (lot 89, 18/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1809b.90 (lot 90, 18/09/2026)
+   Lot 90 (go client 18/09) : (1) RÉFÉRENCES v2.1 — une ligne d'état NON
+   FIABLE ne fait pas référence : même juge que la remise automatique
+   (lot 79/81 : etat_lu = 0, etat_source = 2 « état neuf », ou compteurs
+   à zéros remZeros) ; la référence attend la première ligne SAINE du
+   jour (le 16/09, jour des plantages en boucle, prenait des zéros de
+   remise comme référence -> litres délirants sur les quatre cartes).
+   Lignes écartées comptées (diag.suspectes), heure de la référence dans
+   le diagnostic (diag.refsTl). (2) ANTI-FLUCTUATION — date active sans
+   référence (lecture en cours ou en échec) : les champs datés sont
+   MASQUÉS (« — ») au lieu de montrer le brut puis de sauter (le
+   provisoire « depuis le début » du lot 84 est retiré) ; carte et
+   bandeau disent « référence en lecture » ; UNE bascule quand elle
+   arrive ; plus de messages par tranche horaire pendant la lecture.
+   (3) FICHE ALLÉGÉE — le pied du rail (front d'ECS, dans l'étape
+   depuis, file) est replié dans l'infobulle de l'étape ; les deux cases
+   « Débit instantané » (câblée sur l'ancien format trains.*, morte
+   depuis la migration) et « Actionnements vanne de retour » (jamais
+   publiée) sont retirées.
    Lot 89 : (1) RÉFÉRENCES DE DATE v2 — la référence « d'alors » ne se
    prend plus sur UNE ligne quelconque : lignes COMPLÈTES seulement (les
    envois rapides/allégés D205 n'ont pas tous les compteurs), référence
@@ -708,12 +726,6 @@ header{border-bottom:1px solid var(--line);background:var(--panel)}
 }
 .estime{border-bottom:1px dotted var(--ink3)}
 
-.rail-foot{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:12px;padding-top:11px;
-  border-top:1px solid var(--line-soft);font-size:13px;color:var(--ink2)}
-.rail-foot b{color:var(--ink);font-family:var(--fs-cond);font-weight:600}
-.file-list{display:flex;gap:5px;flex-wrap:wrap}
-.file-list span{font-family:var(--fs-mono);font-size:11px;padding:1px 6px;border-radius:4px;
-  background:var(--panel2);color:var(--ink2)}
 
 .spine{position:relative;margin:0;padding:14px 16px;background:var(--panel3);
   border:1px dashed var(--line);border-top:none;border-bottom:none}
@@ -1572,7 +1584,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1809a.89';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1809b.90';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -2145,16 +2157,6 @@ const APPARTEMENTS = {   /* lot 47 : SB1 (client 10/09) + étages/distances pour
   SB1: {ou: '3ᵉ étage',        etg: 1, dist: 28, liste: ['214', '215', '220']},
 };
 
-/* Cases par circuit, sous la barre de progression du rail. */
-const CIRCUIT_STATS = [
-  {k:'Débit instantané', champA:'trains.0.debit_l_min', champB:'trains.1.debit_l_min',
-   unite:'L/min', dec:1,
-   aide:"Débit du compteur du circuit, publié par l'automate pendant un pompage (D45).",
-   absent:"Publié pendant un pompage seulement (moins de 8 s après le dernier "
-        +"demi-litre) : « — » au repos, c'est normal."},
-  {k:'Actionnements vanne de retour', champA:null, champB:null, dec:0, aide:"CDC A.6."},
-];
-
 /* ══════════════════════════════════════════════════════════════════════════
    3. Outils
    ══════════════════════════════════════════════════════════════════════════ */
@@ -2528,7 +2530,9 @@ function rendreRail(node, t, lettre, bus, d) {
 
   const pr = el('div', 'progress');
   const top = el('div', 'progress-top');
-  top.appendChild(el('div', 'progress-lbl', (t.etape || '—') + (t.sat_actif ? ' · ' + t.sat_actif : '')));
+  const lblEtape = el('div', 'progress-lbl',
+    (t.etape || '—') + (t.sat_actif ? ' · ' + t.sat_actif : ''));
+  top.appendChild(lblEtape);
   const val = el('div', 'progress-val');
   if (has(t.cible) && t.cible > 0) {
     const num = el('span', null, n(t.avancement, t.unite === 's' ? 0 : 1));
@@ -2574,25 +2578,16 @@ function rendreRail(node, t, lettre, bus, d) {
     }
   }
 
-  const ft = el('div', 'rail-foot');
-  const f1 = el('div'); f1.appendChild(document.createTextNode("front d'ECS "));
-  f1.appendChild(el('b', null, n(t.front_l) + ' L')); ft.appendChild(f1);
-  const f2 = el('div'); f2.appendChild(document.createTextNode("dans l'étape depuis "));
-  f2.appendChild(el('b', null, duree(t.depuis_s))); ft.appendChild(f2);
-  const f3 = el('div'); f3.style.display = 'flex'; f3.style.gap = '6px'; f3.style.alignItems = 'center';
-  f3.appendChild(document.createTextNode('file '));
-  const fl = el('span', 'file-list');
-  if ((t.file || []).length) t.file.forEach(id => fl.appendChild(el('span', null, id)));
-  else fl.appendChild(el('span', null, 'vide'));
-  f3.appendChild(fl); ft.appendChild(f3);
-  node.appendChild(ft);
-
-  const st = el('div', 'stats'); st.style.marginTop = '10px';
-  CIRCUIT_STATS.forEach(spec => {
-    st.appendChild(statCase({k: spec.k, unite: spec.unite, dec: spec.dec, type: spec.type,
-                             aide: spec.aide, champ: lettre === 'A' ? spec.champA : spec.champB}, d));
-  });
-  node.appendChild(st);
+  /* lot 90 (client : « ces infos surchargent le doc ») : le pied du rail
+     (front d'ECS, dans l'étape depuis, file) est REPLIÉ dans l'infobulle
+     de l'étape — la mécanique reste lisible au survol, la fiche respire.
+     Les deux cases « Débit instantané » (câblée sur l'ancien format
+     trains.*, morte depuis la migration circuits) et « Actionnements
+     vanne de retour » (jamais publiée) sont retirées. */
+  lblEtape.title = "front d'ECS " + n(t.front_l) + " L · dans l'étape depuis "
+    + duree(t.depuis_s) + ' · file : '
+    + ((t.file || []).length ? t.file.join(', ') : 'vide')
+    + " — mécanique interne de l'étape, repliée ici (lot 90).";
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -2780,7 +2775,10 @@ function bilanEau(s) {
   const tiree  = has(s.tiree_l) ? s.tiree_l : null;
   const ecart  = (livree !== null && tiree !== null) ? livree - tiree : null;
   box.appendChild(caseBilan('', 'Tirée', tiree,
-    tiree === null
+    s._refAttente
+      ? "Référence de la date choisie en cours de lecture — le total daté "
+        + "s'affichera d'une seule bascule dès qu'elle est prête (lot 90)."
+      : tiree === null
       ? "ECS prélevée à la cuve, comptée sur la voie " + di + " du ZLAN. La case reste vide "
         + "tant que cette voie n'a pas répondu une première fois depuis le démarrage de "
         + "l'automate — si elle reste vide alors que le compteur est câblé, le point est à "
@@ -2794,7 +2792,16 @@ function bilanEau(s) {
     lg.appendChild(sp);
   };
   const dDeb = (state.datesDeb || {}).tiree;
-  if (s._refManque) {              /* lot 89 : jamais muet, jamais déguisé */
+  if (s._refAttente) {             /* lot 90 : l'attente se dit, sobrement */
+    const spA = el('span', null, 'référence du '
+      + (dateCourante() || 'jour') + ' en lecture…');
+    spA.title = "La référence « d'alors » de la date choisie est en cours de "
+      + "lecture dans l'archive — les totaux datés s'affichent d'une seule "
+      + "bascule dès qu'elle est prête (lot 90 : plus de valeurs qui "
+      + "sautent pendant la recherche).";
+    lg.appendChild(spA);
+    lg.appendChild(document.createTextNode(' · '));
+  } else if (s._refManque) {       /* lot 89 : jamais muet, jamais déguisé */
     const spR = el('span', null, 'réf. ' + (dateCourante() || 'date')
       + ' manquante — totaux depuis le début');
     spR.style.color = '#b23b2e';
@@ -5990,11 +5997,21 @@ function dateSource() {
      manqueCh) : bandeau + note rouge sur la carte, jamais muet. */
 const DATE_REF_CH = ['sdm_kwh', 'aux_kwh', 'cum_kwh', 'ma_mwh'];
 function dateRefsAccuInit() {
-  return {tl: null, sats: {}, ch: {}, rapides: 0, completes: 0, ancien: false};
+  return {tl: null, sats: {}, ch: {}, rapides: 0, completes: 0,
+          suspectes: 0, ancien: false};
 }
 function dateRefsLigne(accu, d2) {
   if (d2.tx_rapide || d2.tx_allege) { accu.rapides++; return; }
   if (!Array.isArray(d2.circuits)) { accu.ancien = true; return; }
+  /* lot 90 : une ligne d'état NON FIABLE ne fait pas référence — même
+     juge que la remise automatique (etatSuspect, lot 79/81) : état
+     illisible au boot, état neuf, ou compteurs à zéros. Le 16/09 (jour
+     des plantages en boucle), les premières lignes complètes portaient
+     les ZÉROS d'avant la remise cloud : prises comme référence, elles
+     rendaient l'affichage daté ≈ le brut — les litres délirants. On
+     attend la première ligne SAINE du jour ; les écartées sont
+     comptées, jamais tues. */
+  if (etatSuspect(d2)) { accu.suspectes++; return; }
   accu.completes++;
   if (accu.tl === null) accu.tl = d2.tl || '';
   d2.circuits.forEach(c2 => (c2.satellites || []).forEach(s2 => {
@@ -6064,7 +6081,8 @@ async function dateChargerRefs(jma) {
     const a2 = h2 === 23 ? '24:00' : String(h2 + 1).padStart(2, '0') + ':00';
     const url = API.histo + '?jour=' + iso + '&de=' + de + '&a=' + a2;
     diag.url = url;
-    dateDire('référence du ' + jma + ' : lecture ' + de + '–' + a2 + '…');
+    /* lot 90 : plus de message par tranche — le bandeau porte UN texte
+       stable posé par l'appelant ; la progression vit dans le diag. */
     let r2 = null, jete = null;
     for (let ess = 1; ess <= 2; ess++) {
       try { jete = null; r2 = await fetch(url); if (r2.ok || r2.status === 404) break; }
@@ -6132,10 +6150,14 @@ async function dateChargerRefs(jma) {
     diag.etape = 'tranche lue (' + diag.lignes + ' lignes, réf. incomplète)';
   }
   diag.rapides = accu.rapides; diag.completes = accu.completes;
+  diag.suspectes = accu.suspectes;            /* lot 90 : écartées, dites */
+  diag.refsTl = accu.tl || null;              /* l'heure de la référence */
   if (!Object.keys(accu.sats).length) {
-    diag.etape = 'aucune ligne complète sur 24 h';
-    return {err: 'aucune ligne complète exploitable le ' + jma
-              + ' (' + accu.rapides + ' envois rapides ignorés).', diag};
+    diag.etape = 'aucune ligne fiable sur 24 h';
+    return {err: 'aucune ligne complète FIABLE le ' + jma + ' ('
+              + accu.rapides + ' envois rapides ignorés, '
+              + accu.suspectes + ' lignes de remise/état neuf écartées) — '
+              + 'choisissez un autre jour.', diag};
   }
   const refs = dateRefsFinal(accu);
   diag.etape = 'ok' + (refs.manque.length + refs.manqueCh.length
@@ -6164,13 +6186,16 @@ async function dateChoisir(jmaDonne) {
   let refs;
   if (route === 'debut') refs = dateRefsZero();
   else {
+    /* lot 90 : UN message stable pendant toute l'application — les
+       cartes restent sur la date précédente (gel naturel : dateDep ne
+       bouge qu'à la fin), le bandeau ne défile plus. */
+    dateDire('application du ' + jma + ' : lecture de la référence…');
     const r9 = await dateChargerRefs(jma);
     if (r9.err) { dateDire(r9.err, true); return; }
     refs = r9.refs;
   }
   state.dateDep = {date: jma, refs};
   dateEcrireLocal({date: jma, refs});
-  dateDire('dépôt de la date au serveur…');
   const k9 = cleConfig(true);
   const okDep = await deposer({date_depart: jma, cfg_version: versionSuivante()}, k9);
   if (okDep) {
@@ -6231,20 +6256,38 @@ function dateAppliquer(d) {
   }
   const refs = state.dateDep && state.dateDep.refs;
   if (!refs) {
-    /* Lot 84 : date active SANS sa référence (lecture en cours ou en
-       échec) — on n'affiche PLUS le brut sous l'étiquette « depuis le
-       JJ/MM » (c'était le mensonge visible). On affiche « depuis le
-       début » (référence zéro, honnête) en attendant la vraie référence ;
-       la date choisie reste la date active, la lecture continue. */
-    const z9 = dateRefsZero();
-    state.dateRefProvisoire = jma;
+    /* Lot 90 (client : « les valeurs et la date fluctuent pendant la
+       recherche ») : date active SANS sa référence (lecture en cours ou
+       en échec) — plus AUCUN chiffre daté : ni le brut, ni le zéro
+       provisoire du lot 84 (c'était la fluctuation : « depuis le
+       début » d'abord, valeurs datées ensuite). Les champs datés sont
+       MASQUÉS (« — »), la carte et le bandeau disent la lecture, et
+       tout s'affiche d'UNE bascule quand la référence arrive
+       (rendre(true) du chargement). */
+    state.dateRefProvisoire = jma;   /* le bandeau porte l'attente */
     let o0; try { o0 = JSON.parse(JSON.stringify(d)); } catch (_) { return d; }
-    return dateAppliquerAvec(o0, z9, DATE_DEBUT);
+    return dateMasquerAttente(o0);
   }
   state.dateRefProvisoire = null;
   let out;
   try { out = JSON.parse(JSON.stringify(d)); } catch (_) { return d; }
   return dateAppliquerAvec(out, refs, jma);
+}
+function dateMasquerAttente(out) {   /* lot 90 : rien de daté à l'écran
+   tant que la référence n'est pas lue — les champs auxquels la date
+   s'applique disparaissent (l'aval affiche « — » partout, tableaux
+   compris), la carte porte son étiquette d'attente. */
+  (out.circuits || []).forEach(c2 => (c2.satellites || []).forEach(s2 => {
+    ['tiree_l', 'conso_totale_l', 'rempl_nb', 'rempl_therm_nb',
+     'rech_nb', 'rech_nb_vid'].forEach(k9 => { delete s2[k9]; });
+    s2._refAttente = 1;
+  }));
+  const ch2 = out.chaufferie || {};
+  if (ch2.sdm120)       delete ch2.sdm120.energie_kwh;
+  if (ch2.elec_aux)     delete ch2.elec_aux.energie_kwh;
+  if (ch2.elec_cumulus) delete ch2.elec_cumulus.energie_kwh;
+  if (ch2.maddalena)    delete ch2.maddalena.energie_mwh;
+  return out;
 }
 function dateAppliquerAvec(out, refs, jma) {
   /* lot 79 (client) : l'alerte « sous la référence » est SUPPRIMÉE — la
@@ -6396,9 +6439,9 @@ function dateBandeauMaj() {
   const et9 = $('#dateEtatLigne');
   if (et9) {
     let t9 = state.dateEtat || '';
-    if (state.dateRefProvisoire)          /* lot 84 : honnête pendant l'attente */
-      t9 = 'référence du ' + state.dateRefProvisoire + ' pas encore lue — '
-         + 'affichage « depuis le début » en attendant. ' + t9;
+    if (state.dateRefProvisoire)          /* lot 90 : honnête pendant l'attente */
+      t9 = 'référence du ' + state.dateRefProvisoire + ' en cours de lecture — '
+         + 'les totaux datés s\u2019affichent dès qu\u2019elle est prête. ' + t9;
     et9.textContent = t9;
     et9.classList.toggle('err', !!state.dateEtatErr);
     et9.style.display = t9 ? '' : 'none';
@@ -6753,9 +6796,14 @@ function remZeros(d) {   /* lot 81 (client : « le html voit bien que les
   }));
   return n9 >= 3 && somme === 0;
 }
+function etatSuspect(d) {   /* lot 90 : LE juge des lignes d'état non
+   fiables — celui de la remise automatique (lot 79/81), réutilisé par
+   les références de date. Un contre-pouvoir, une seule définition. */
+  return d.etat_lu === 0 || d.etat_source === 2 || remZeros(d);
+}
 function remDue(d, faite) {
   if (!d || !d.device_id || DEMO) return false;
-  if (!(d.etat_lu === 0 || d.etat_source === 2 || remZeros(d))) return false;
+  if (!etatSuspect(d)) return false;
   const cle = d.device_id + '#' + (d.boot_n || 0);
   return faite !== cle ? cle : false;
 }
@@ -7141,7 +7189,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1809a — pupitre ' + LOT + ' · lot 89 — 18/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1809b — pupitre ' + LOT + ' · lot 90 — 18/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
