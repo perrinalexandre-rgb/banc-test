@@ -9,7 +9,20 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609u.87 (lot 87, 17/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1609u.88 (lot 88, 17/09/2026)
+   Lot 88 (Claude Fable 5, go client — « cases nb remplissages vides,
+   SB1 affiche 0 L ») : les clés détaillées ne voyagent que dans l'envoi
+   COMPLET (1 sur 10, D205) et deux mécanismes pouvaient l'assécher.
+   (1) BUG corrigé : un envoi ALLÉGÉ (tx_allege, D174) était stocké
+   comme s'il était le COMPLET — il en devenait la référence SANS porter
+   ces clés, verrouillant les cases en tirets. Un allégé fusionne
+   désormais comme un rapide ; seul un vrai COMPLET fait référence.
+   (2) L'ATTENTE SE DIT : tant qu'aucun COMPLET n'est arrivé (ou s'il
+   date de plus de 2 min), bandeau ambre avec le compteur « COMPLETS
+   repoussés (mémoire) » du pilote — plus de cases muettes sans raison.
+   Pilote attendu : 1609f (D209 — les clés stables voyagent dans chaque
+   envoi ; un COMPLET n'est jamais repoussé plus de 10 fois d'affilée).
+   La page reste entièrement compatible 1609b/1609e en attendant le flash.
    Lot 87 (Claude Fable 5, diagnostic client 18:58) : la remise reposait
    la dernière ligne « au-dessus de l'actuel » — or le 1609b a replanté
    l'après-midi et la ligne d'avant le flash portait 7/29/8,5 L : reposés
@@ -1550,7 +1563,10 @@ const DEVICE     = 'chaufferie-01';
 /* Lot 64 : le pupitre CONNAIT le pilote qu'il attend — s'il voit un autre
    programme tourner dans l'automate, il le dit en ROUGE. Fini la
    confusion page/puce. A mettre a jour a chaque livraison pilote. */
-const PILOTE_ATTENDU = '1609e';   /* lot 86 : le 1609d ne compilait pas */
+const PILOTE_ATTENDU = '1609f';   /* lot 88 : D209 — tant que la puce
+   porte encore 1609e/1609b, la ligne rouge « pilote plus vieux » est
+   NORMALE : elle rappelle simplement que le flash du 1609f est en
+   attente ; la page reste pleinement compatible avec les deux. */
 /* Lot 68 : on ne crie plus a l'egalite stricte — un pilote PLUS RECENT
    que l'attendu est une bonne nouvelle, pas une alerte. Et le ton
    redevient SOBRE (client : « etre clair, pas en faire des tonnes »). */
@@ -1561,7 +1577,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1609u.87';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1609u.88';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -2325,6 +2341,29 @@ function rendreAlertes(d) {
       + "réchauffages et les mesures de pertes sont retirés de l'envoi. Rien "
       + "d'urgent, mais prévenir le développement : le tampon est à agrandir "
       + "à la prochaine livraison.");
+
+  /* Lot 88 : le pilote peut REPOUSSER son envoi COMPLET quand sa mémoire
+     est maigre (garde D208) — or nb remplissages, contenance et étalonnage
+     ne voyagent que là (pilotes ≤ 1609e). Tant qu'aucun vrai COMPLET n'est
+     arrivé, ou s'il date de plus de 2 min, on le DIT — avec le compteur du
+     pilote — au lieu de laisser des cases muettes. */
+  {
+    const repMem = has(d.tx_report_mem)
+      ? " COMPLETS repoussés par la mémoire du pilote : " + i0(d.tx_report_mem) + "."
+      : "";
+    if (!state.dernierComplet && (d.tx_rapide || d.tx_allege))
+      ajouterAlerte(box, 'warn', 'télémesure',
+        "Aucun envoi COMPLET reçu depuis l'ouverture de la page.",
+        "Nb remplissages, contenance et étalonnage voyagent dans le COMPLET : "
+        + "leurs cases attendent, ce n'est pas une panne d'affichage."
+        + repMem);
+    else if (state.dernierCompletAt
+             && Date.now() - state.dernierCompletAt > 120000)
+      ajouterAlerte(box, 'warn', 'télémesure',
+        "Dernier envoi COMPLET reçu il y a "
+        + Math.round((Date.now() - state.dernierCompletAt) / 1000) + " s.",
+        "Les cases détaillées peuvent retarder d'autant." + repMem);
+  }
 
   /* Tous les flotteurs mouillés en permanence depuis le démarrage de la page :
      cas d'Épinal, capteur non câblé, donc fausse alerte. On la modère — et
@@ -6307,11 +6346,20 @@ async function relever() {
        RAPIDES (tx_rapide=1) entre : on FUSIONNE le rapide sur le dernier
        complet — sinon les stats clignoteraient en tirets. La fusion se
        fait par sat_id et par sous-objet chaufferie. */
-    if (d.tx_rapide && state.dernierComplet
+    /* Lot 88 : un ALLÉGÉ (tx_allege, filet D174) n'est JAMAIS un
+       COMPLET — il ne porte pas les clés détaillées (nb remplissages,
+       X, étalonnage…). Il était pourtant stocké comme référence et
+       verrouillait les cases en tirets. Désormais : rapide ET allégé
+       FUSIONNENT sur le dernier vrai COMPLET ; seul un vrai COMPLET
+       devient référence, et sa date est retenue (bandeau d'attente). */
+    if ((d.tx_rapide || d.tx_allege) && state.dernierComplet
         && state.dernierComplet.device_id === d.device_id) {
       state.data = fusionRapide(state.dernierComplet, d);
     } else {
-      if (!d.tx_rapide) state.dernierComplet = d;
+      if (!d.tx_rapide && !d.tx_allege) {
+        state.dernierComplet = d;
+        state.dernierCompletAt = Date.now();     /* lot 88 */
+      }
       state.data = d;
     }
     state.dataBrut = state.data;          /* vérité pilote, AVANT date de départ */
