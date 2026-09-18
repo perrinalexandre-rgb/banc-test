@@ -9,20 +9,18 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1609u.88 (lot 88, 17/09/2026)
-   Lot 88 (Claude Fable 5, go client — « cases nb remplissages vides,
-   SB1 affiche 0 L ») : les clés détaillées ne voyagent que dans l'envoi
-   COMPLET (1 sur 10, D205) et deux mécanismes pouvaient l'assécher.
-   (1) BUG corrigé : un envoi ALLÉGÉ (tx_allege, D174) était stocké
-   comme s'il était le COMPLET — il en devenait la référence SANS porter
-   ces clés, verrouillant les cases en tirets. Un allégé fusionne
-   désormais comme un rapide ; seul un vrai COMPLET fait référence.
-   (2) L'ATTENTE SE DIT : tant qu'aucun COMPLET n'est arrivé (ou s'il
-   date de plus de 2 min), bandeau ambre avec le compteur « COMPLETS
-   repoussés (mémoire) » du pilote — plus de cases muettes sans raison.
-   Pilote attendu : 1609f (D209 — les clés stables voyagent dans chaque
-   envoi ; un COMPLET n'est jamais repoussé plus de 10 fois d'affilée).
-   La page reste entièrement compatible 1609b/1609e en attendant le flash.
+   enovaQ — pupitre de supervision · pupitre 1809a.89 (lot 89, 18/09/2026)
+   Lot 89 : (1) RÉFÉRENCES DE DATE v2 — la référence « d'alors » ne se
+   prend plus sur UNE ligne quelconque : lignes COMPLÈTES seulement (les
+   envois rapides/allégés D205 n'ont pas tous les compteurs), référence
+   PAR SATELLITE complétée au fil du jour, clé absente sur une ligne
+   complète = 0 (le pilote omet les compteurs nuls), et JAMAIS MUET : un
+   satellite sans référence en fin de journée est dit — bandeau + note
+   rouge sur sa carte — au lieu d'afficher le brut sous l'étiquette de la
+   date (le bug SB1 du 17-18/09). (2) Trois cases Santé D209/D210 :
+   dernier plantage (étape, à quel âge, tas), flash pilote (libre/total,
+   reconstructions fs_rebati). Bâti sur le .87 ; le .88 (jamais reçu par
+   cette session) n'y est pas.
    Lot 87 (Claude Fable 5, diagnostic client 18:58) : la remise reposait
    la dernière ligne « au-dessus de l'actuel » — or le 1609b a replanté
    l'après-midi et la ligne d'avant le flash portait 7/29/8,5 L : reposés
@@ -1563,10 +1561,7 @@ const DEVICE     = 'chaufferie-01';
 /* Lot 64 : le pupitre CONNAIT le pilote qu'il attend — s'il voit un autre
    programme tourner dans l'automate, il le dit en ROUGE. Fini la
    confusion page/puce. A mettre a jour a chaque livraison pilote. */
-const PILOTE_ATTENDU = '1609f';   /* lot 88 : D209 — tant que la puce
-   porte encore 1609e/1609b, la ligne rouge « pilote plus vieux » est
-   NORMALE : elle rappelle simplement que le flash du 1609f est en
-   attente ; la page reste pleinement compatible avec les deux. */
+const PILOTE_ATTENDU = '1809a';   /* lot 89 : D209-D211 (boîte noire, flash, chunked) */
 /* Lot 68 : on ne crie plus a l'egalite stricte — un pilote PLUS RECENT
    que l'attendu est une bonne nouvelle, pas une alerte. Et le ton
    redevient SOBRE (client : « etre clair, pas en faire des tonnes »). */
@@ -1577,7 +1572,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1609u.88';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '1809a.89';   // marqueur « pupitre » — bandeau et pied
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -1733,6 +1728,49 @@ const DIAG = [
    aide:"D208 : mémoire maigre au moment d'un envoi complet — envoyé "
       + "RAPIDE à la place, rien de perdu, juste compté."},
   {k:'Sauvegardes différées (mémoire)', champ:'etat_sauve_report', dec:0},
+  {k:'Dernier plantage — étape', champ:'boot_passage',
+   aide:"D209 : boîte noire RTC — l'étape exacte où le programme est mort. "
+      + "« sauvegarde: mesure » accuse la MÉMOIRE (parcours du document) ; "
+      + "« sauvegarde: ecriture / relecture / bascule » accusent la FLASH "
+      + "(deux d'affilée déclenchent la reconstruction D210). "
+      + "« boucle » = hors sauvegarde.",
+   absent:"Publié après un redémarrage ANORMAL (pilote 1809a) — vide tant "
+      + "que l'automate n'a pas replanté : bonne nouvelle."},
+  {k:'Dernier plantage — à', champ:'boot_mort_uptime_s', type:'duree',
+   aide:"D209 : l'âge de service atteint quand le programme est mort "
+      + "(le mouchard grave l'uptime à chaque jalon)."},
+  {k:'Dernier plantage — mémoire', champ:'boot_mort_tas', unite:'o', dec:0,
+   aide:"D209 : le tas libre au dernier jalon franchi avant la mort. Bas "
+      + "(< 40 000 o) : la mémoire est suspecte ; confortable : la flash."},
+  {k:'Flash pilote — libre', champ:'fs_libre_ko', unite:'ko', dec:0,
+   aide:"D210 : jauge du support de fichiers de l'automate (état, config). "
+      + "Sous 32 ko, l'automate crie au port série : me le signaler.",
+   absent:"Publié dans les envois COMPLETS du pilote 1809a."},
+  {k:'Flash pilote — totale', champ:'fs_total_ko', unite:'ko', dec:0,
+   absent:"Publié dans les envois COMPLETS du pilote 1809a."},
+  {k:'Reconstructions flash', champ:'fs_rebati', dec:0,
+   aide:"D210 : deux plantages consécutifs prouvés dans les étapes flash "
+      + "de la sauvegarde -> le support est rebâti au démarrage suivant "
+      + "(état, secours et config passent par la RAM, rien de perdu).",
+   absent:"Vide = aucune reconstruction : bonne nouvelle (pilote 1809a)."},
+  {k:'Dernier plantage — état', champ:'boot_mort_etat_o', unite:'o', dec:0,
+   aide:"D209 : la taille du fichier d'état au dernier jalon franchi — un "
+      + "état qui enfle démesurément se verrait ici."},
+  {k:'Morts récentes (3 max)', champ:'morts',
+   absent:"Vide = aucun plantage à l'historique (pilote 1809a) : "
+      + "bonne nouvelle.",
+   calc: d9 => Array.isArray(d9 && d9.morts) && d9.morts.length
+     ? d9.morts.map(e9 => 'n°' + e9[0] + ' · ' + e9[1] + ' · à '
+         + duree(e9[2] || 0)).join('  |  ')
+     : undefined,
+   aide:"D209 : l'historique des trois derniers plantages (démarrage mort, "
+      + "étape, âge de service) — la répétition d'une même étape se lit "
+      + "d'un coup d'œil. Publié dans les envois COMPLETS du pilote 1809a."},
+  {k:'Trames chunked rejetées', champ:'rx_chunk_ko', dec:0,
+   aide:"D211 : réponses cloud sans taille annoncée, dé-emballées à la "
+      + "main (plus de String). Une trame malformée est comptée, jetée, "
+      + "et l'envoi suivant repart proprement.",
+   absent:"Vide = aucune trame rejetée : bonne nouvelle (pilote 1809a)."},
   {k:'Mémoire, plus bas',   champ:'diag.tas_mini',         unite:'o', dec:0},
   {k:'Pile de la tâche cloud', champ:'diag.pile_cloud_libre', unite:'o', dec:0,
    aide:"Marge restante sur la pile de la tâche qui envoie vers le cloud."},
@@ -2342,29 +2380,6 @@ function rendreAlertes(d) {
       + "d'urgent, mais prévenir le développement : le tampon est à agrandir "
       + "à la prochaine livraison.");
 
-  /* Lot 88 : le pilote peut REPOUSSER son envoi COMPLET quand sa mémoire
-     est maigre (garde D208) — or nb remplissages, contenance et étalonnage
-     ne voyagent que là (pilotes ≤ 1609e). Tant qu'aucun vrai COMPLET n'est
-     arrivé, ou s'il date de plus de 2 min, on le DIT — avec le compteur du
-     pilote — au lieu de laisser des cases muettes. */
-  {
-    const repMem = has(d.tx_report_mem)
-      ? " COMPLETS repoussés par la mémoire du pilote : " + i0(d.tx_report_mem) + "."
-      : "";
-    if (!state.dernierComplet && (d.tx_rapide || d.tx_allege))
-      ajouterAlerte(box, 'warn', 'télémesure',
-        "Aucun envoi COMPLET reçu depuis l'ouverture de la page.",
-        "Nb remplissages, contenance et étalonnage voyagent dans le COMPLET : "
-        + "leurs cases attendent, ce n'est pas une panne d'affichage."
-        + repMem);
-    else if (state.dernierCompletAt
-             && Date.now() - state.dernierCompletAt > 120000)
-      ajouterAlerte(box, 'warn', 'télémesure',
-        "Dernier envoi COMPLET reçu il y a "
-        + Math.round((Date.now() - state.dernierCompletAt) / 1000) + " s.",
-        "Les cases détaillées peuvent retarder d'autant." + repMem);
-  }
-
   /* Tous les flotteurs mouillés en permanence depuis le démarrage de la page :
      cas d'Épinal, capteur non câblé, donc fausse alerte. On la modère — et
      elle repasse en rouge dès qu'un flotteur a été vu sec une seule fois.
@@ -2779,7 +2794,18 @@ function bilanEau(s) {
     lg.appendChild(sp);
   };
   const dDeb = (state.datesDeb || {}).tiree;
-  if (dDeb && dDeb !== '?') {
+  if (s._refManque) {              /* lot 89 : jamais muet, jamais déguisé */
+    const spR = el('span', null, 'réf. ' + (dateCourante() || 'date')
+      + ' manquante — totaux depuis le début');
+    spR.style.color = '#b23b2e';
+    spR.title = "Aucune ligne COMPLÈTE de la journée choisie ne portait ce "
+      + "satellite (module muet à chaque envoi complet du jour) : impossible "
+      + "d'établir sa référence « d'alors ». Les nombres de cette carte "
+      + "repartent donc de la mise en service, pas de la date choisie "
+      + "(lot 89). Rechoisir la date relancera la lecture.";
+    lg.appendChild(spR);
+    lg.appendChild(document.createTextNode(' · '));
+  } else if (dDeb && dDeb !== '?') {
     morceau('depuis le ' + dDeb,
       "Date de début du comptage livrée/tirée — 20/08/2026 pour l'existant, "
       + "puis la date de chaque RAZ sélective (D138).");
@@ -5892,8 +5918,9 @@ function fusionRapide(complet, rapide) {
      1. l'écho du pilote (payload date_depart — pilote 1609b, persistée) ;
      2. la config stockée au serveur (cfgServeur.date_depart) ;
      3. la mémoire de CE navigateur (cache).
-   Les RÉFÉRENCES = la PREMIÈRE ligne du jour choisi, lue dans
-   l'historique (moteur v3) ; l'affichage devient partout
+   Les RÉFÉRENCES (v2, lot 89) = bâties sur les lignes COMPLÈTES du
+   jour choisi, satellite par satellite (voir dateRefsLigne) ;
+   l'affichage devient partout
    « aujourd'hui − alors » (delta), les totaux bruts restent dans un
    panneau replié. Changer la date écrase la précédente.
    EXCLUS des deltas : écart corrigé, juge quotidien, moyennes — vérités
@@ -5945,33 +5972,75 @@ function dateSource() {
   if (dateLireLocal() && dateValide((dateLireLocal() || {}).date)) return 'navigateur';
   return null;
 }
-/* première ligne PARSABLE d'un texte JSONL (l'index « d'alors ») */
-function dateRefsDeLigne(texte) {
-  const lignes = (texte || '').split('\n');
-  for (const l of lignes) {
-    if (!l.trim()) continue;
-    let d2;
-    try { d2 = JSON.parse(l); } catch (_) { continue; }
-    if (!Array.isArray(d2.circuits)) return {ancien: true};   /* format « trains » */
-    const sats = {};
-    d2.circuits.forEach(c2 => (c2.satellites || []).forEach(s2 => {
-      sats[s2.sat_id] = {
-        tiree_l: s2.tiree_l, conso_totale_l: s2.conso_totale_l,
-        rempl_nb: s2.rempl_nb,
-        rech_nb: has(s2.rech_nb) ? s2.rech_nb : s2.rempl_therm_nb,
-        rech_nb_vid: s2.rech_nb_vid
-      };
-    }));
-    const ch2 = d2.chaufferie || {};
-    return {tl: d2.tl || '', sats, ch: {
-      sdm_kwh: ch2.sdm120 && ch2.sdm120.energie_kwh,
-      aux_kwh: ch2.elec_aux && ch2.elec_aux.energie_kwh,
-      cum_kwh: ch2.elec_cumulus && ch2.elec_cumulus.energie_kwh,
-      ma_mwh:  ch2.maddalena && ch2.maddalena.energie_mwh
-    }};
-  }
-  return null;
+/* ===== lot 89 : RÉFÉRENCES v2 (bloc extrait tel quel pour les tests) =====
+   La référence « d'alors » se BÂTIT au fil des lignes du jour :
+   — seules les lignes COMPLÈTES comptent : les envois rapides/allégés
+     (D205/D174) sont des instantanés PARTIELS — rempl_nb, rech_nb… n'y
+     voyagent jamais, et un satellite muet à CET instant n'y a AUCUN
+     compteur. C'était le bug du 17-18/09 : la référence prise sur une
+     ligne rapide laissait delta() retomber sur le BRUT en silence —
+     SB1, seul sur le bus B, en première victime ;
+   — chaque satellite prend sa référence à sa PREMIÈRE apparition (ok)
+     dans une ligne complète : SB1 muet à 00:00:03 la prendra à 00:00:33 ;
+   — sur une ligne complète, une clé absente vaut ZÉRO — le pilote omet
+     les compteurs nuls (rempl_nb quand 0, tiree_l avant la première
+     réponse de la voie) ;
+   — la chaufferie (kWh) suit la même règle, champ par champ ;
+   — ce qui manque encore en fin de journée est NOMMÉ (manque /
+     manqueCh) : bandeau + note rouge sur la carte, jamais muet. */
+const DATE_REF_CH = ['sdm_kwh', 'aux_kwh', 'cum_kwh', 'ma_mwh'];
+function dateRefsAccuInit() {
+  return {tl: null, sats: {}, ch: {}, rapides: 0, completes: 0, ancien: false};
 }
+function dateRefsLigne(accu, d2) {
+  if (d2.tx_rapide || d2.tx_allege) { accu.rapides++; return; }
+  if (!Array.isArray(d2.circuits)) { accu.ancien = true; return; }
+  accu.completes++;
+  if (accu.tl === null) accu.tl = d2.tl || '';
+  d2.circuits.forEach(c2 => (c2.satellites || []).forEach(s2 => {
+    if (!s2 || !s2.sat_id || s2.ok === false) return;
+    if (accu.sats[s2.sat_id]) return;          /* première vue = la bonne */
+    accu.sats[s2.sat_id] = {
+      tiree_l:        has(s2.tiree_l)        ? s2.tiree_l        : 0,
+      conso_totale_l: has(s2.conso_totale_l) ? s2.conso_totale_l : 0,
+      rempl_nb:       has(s2.rempl_nb)       ? s2.rempl_nb       : 0,
+      rech_nb:        has(s2.rech_nb)        ? s2.rech_nb
+                    : has(s2.rempl_therm_nb) ? s2.rempl_therm_nb : 0,
+      rech_nb_vid:    has(s2.rech_nb_vid)    ? s2.rech_nb_vid    : 0
+    };
+  }));
+  const ch2 = d2.chaufferie || {};
+  const vCh = {
+    sdm_kwh: ch2.sdm120       && ch2.sdm120.energie_kwh,
+    aux_kwh: ch2.elec_aux     && ch2.elec_aux.energie_kwh,
+    cum_kwh: ch2.elec_cumulus && ch2.elec_cumulus.energie_kwh,
+    ma_mwh:  ch2.maddalena    && ch2.maddalena.energie_mwh
+  };
+  DATE_REF_CH.forEach(k => {
+    if (!(k in accu.ch) && has(vCh[k])) accu.ch[k] = vCh[k];
+  });
+}
+function dateRefsComplet(accu) {
+  return RET_SATS.every(id9 => !!accu.sats[id9])
+      && DATE_REF_CH.every(k => (k in accu.ch));
+}
+function dateRefsFinal(accu) {
+  return {tl: accu.tl || '', sats: accu.sats, ch: accu.ch,
+          manque:   RET_SATS.filter(id9 => !accu.sats[id9]),
+          manqueCh: DATE_REF_CH.filter(k => !(k in accu.ch))};
+}
+function dateManqueTexte(refs, jma) {
+  if (!refs || ((refs.manque || []).length + (refs.manqueCh || []).length) === 0)
+    return null;
+  const NOMS_CH = {sdm_kwh: 'pompe (kWh)', aux_kwh: 'auxiliaires (kWh)',
+                   cum_kwh: 'cumulus (kWh)', ma_mwh: 'Maddalena (MWh)'};
+  const el9 = (refs.manque || []).concat(
+              (refs.manqueCh || []).map(k => NOMS_CH[k] || k));
+  return 'référence du ' + jma + ' incomplète — aucune ligne complète du jour '
+       + 'ne portait : ' + el9.join(', ') + '. Totaux depuis le début pour '
+       + 'ces éléments (note rouge sur les cartes concernées).';
+}
+/* ===== fin lot 89 (bloc extrait tel quel pour les tests) ===== */
 async function dateChargerRefs(jma) {
   /* Lot 85 : la vraie cause, tracée sur le format RÉEL du serveur (une
      ligne JSON toutes les ~3 s, « tl » en TÊTE de ligne). Le fichier
@@ -5983,6 +6052,13 @@ async function dateChargerRefs(jma) {
   const diag = {jma, url: null, statut: null, octets: 0, lignes: 0,
                 extrait: null, etape: 'début', ts: new Date().toLocaleTimeString('fr-FR')};
   state.dateDiag = diag;
+  /* lot 89 : l'accumulateur v2 traverse les 24 tranches — on ne s'arrête
+     plus à la première ligne, on s'arrête quand la référence est
+     COMPLÈTE (chaque satellite + chaque compteur chaufferie vus une
+     fois sur ligne complète). Garde-fou : 30 000 lignes examinées au
+     plus, puis on livre le partiel — nommé, jamais muet. */
+  const accu = dateRefsAccuInit();
+  const LIGNES_MAX = 30000;
   for (let h2 = 0; h2 < 24; h2++) {
     const de = String(h2).padStart(2, '0') + ':00';
     const a2 = h2 === 23 ? '24:00' : String(h2 + 1).padStart(2, '0') + ':00';
@@ -6002,11 +6078,23 @@ async function dateChargerRefs(jma) {
     if (!r2.ok) { diag.etape = 'HTTP ' + r2.status;
       diag.extrait = (await r2.text().catch(() => '')).slice(0, 120);
       return {err: 'lecteur : HTTP ' + r2.status + '.', diag}; }
-    /* lecture en FLUX : on s'arrête à la 1re ligne exploitable */
-    let refs = null, tampon = '', fini = false;
+    /* lecture en FLUX, ligne à ligne, nourrissant l'accumulateur v2 */
+    let fini = false;
+    const mangerLigne = (ligne) => {           /* -> 'nonjson'|'stop'|null */
+      if (!ligne.trim()) return null;
+      diag.lignes++;
+      if (!diag.extrait) diag.extrait = ligne.slice(0, 120).replace(/\s+/g, ' ');
+      const t0 = ligne.trim()[0];
+      if (t0 !== '{' && t0 !== '[') return 'nonjson';
+      let d2; try { d2 = JSON.parse(ligne); } catch (_) { return null; }
+      dateRefsLigne(accu, d2);
+      if (dateRefsComplet(accu) || diag.lignes >= LIGNES_MAX) return 'stop';
+      return null;
+    };
     if (r2.body && r2.body.getReader) {
       const lecteur = r2.body.getReader();
       const dec = new TextDecoder();
+      let tampon = '';
       while (!fini) {
         const {done, value} = await lecteur.read();
         if (done) break;
@@ -6015,38 +6103,49 @@ async function dateChargerRefs(jma) {
         let nl;
         while ((nl = tampon.indexOf('\n')) >= 0) {
           const ligne = tampon.slice(0, nl); tampon = tampon.slice(nl + 1);
-          if (!ligne.trim()) continue;
-          diag.lignes++;
-          if (!diag.extrait) diag.extrait = ligne.slice(0, 120).replace(/\s+/g, ' ');
-          const t0 = ligne.trim()[0];
-          if (t0 !== '{' && t0 !== '[') {
+          const v9 = mangerLigne(ligne);
+          if (v9 === 'nonjson') {
             diag.etape = 'non-JSON';
             try { lecteur.cancel(); } catch (_) {}
             return {err: 'réponse non-JSON (« ' + diag.extrait + ' »).', diag};
           }
-          const rr = dateRefsDeLigne(ligne);
-          if (rr && rr.ancien) { diag.etape = 'ancien format';
-            try { lecteur.cancel(); } catch (_) {}
-            return {err: 'lignes du ' + jma + ' à l\u2019ancien format.', diag}; }
-          if (rr) { refs = rr; fini = true; break; }
+          if (v9 === 'stop') { fini = true; break; }
         }
       }
       try { lecteur.cancel(); } catch (_) {}
     } else {                                   /* pas de flux : repli texte */
       const txt = await r2.text();
-      diag.octets = txt.length;
-      refs = dateRefsDeLigne(txt);
-      diag.lignes = (txt.match(/\n/g) || []).length;
-      if (!diag.extrait) diag.extrait = txt.slice(0, 120).replace(/\s+/g, ' ');
+      diag.octets += txt.length;
+      for (const ligne of txt.split('\n')) {
+        const v9 = mangerLigne(ligne);
+        if (v9 === 'nonjson') { diag.etape = 'non-JSON';
+          return {err: 'réponse non-JSON (« ' + diag.extrait + ' »).', diag}; }
+        if (v9 === 'stop') { fini = true; break; }
+      }
     }
-    if (refs) { diag.etape = 'ok';
-      diag.refsSA1 = refs.sats && refs.sats.SA1 ? JSON.stringify(refs.sats.SA1) : '?';
-      return {refs, diag}; }
-    /* tranche lue mais aucune ligne exploitable : heure suivante */
-    diag.etape = 'tranche sans ligne exploitable';
+    if (accu.ancien && accu.completes === 0 && !Object.keys(accu.sats).length) {
+      diag.etape = 'ancien format';
+      return {err: 'lignes du ' + jma + ' à l\u2019ancien format.', diag};
+    }
+    if (fini && dateRefsComplet(accu)) break;  /* référence complète : assez lu */
+    if (fini) break;                           /* garde-fou lignes : on livre */
+    diag.etape = 'tranche lue (' + diag.lignes + ' lignes, réf. incomplète)';
   }
-  diag.etape = 'aucune ligne sur 24 h';
-  return {err: 'aucune ligne exploitable le ' + jma + '.', diag};
+  diag.rapides = accu.rapides; diag.completes = accu.completes;
+  if (!Object.keys(accu.sats).length) {
+    diag.etape = 'aucune ligne complète sur 24 h';
+    return {err: 'aucune ligne complète exploitable le ' + jma
+              + ' (' + accu.rapides + ' envois rapides ignorés).', diag};
+  }
+  const refs = dateRefsFinal(accu);
+  diag.etape = 'ok' + (refs.manque.length + refs.manqueCh.length
+                       ? ' (incomplète)' : '');
+  diag.refsParSat = {};
+  RET_SATS.forEach(id9 => {
+    diag.refsParSat[id9] = refs.sats[id9] ? JSON.stringify(refs.sats[id9])
+                                          : 'MANQUANTE';
+  });
+  return {refs, diag};
 }
 async function dateChoisir(jmaDonne) {
   /* Lot 83 : réécrit à la racine. Trois chemins (dateRoute) ; le succès
@@ -6076,7 +6175,9 @@ async function dateChoisir(jmaDonne) {
   const okDep = await deposer({date_depart: jma, cfg_version: versionSuivante()}, k9);
   if (okDep) {
     dateEcrireLocal({date: jma, refs, vDepose: deposer.derniereVersion});
-    dateDire('');                        /* la grande date EST la preuve */
+    const mq9 = dateManqueTexte(refs, jma);       /* lot 89 : jamais muet */
+    if (mq9) dateDire(mq9, true);
+    else dateDire('');                   /* la grande date EST la preuve */
   } else {
     dateDire('date mémorisée sur CE navigateur ; dépôt serveur en échec ('
       + (deposer.derniereErreur || '?') + ') — re-cliquez Appliquer pour '
@@ -6123,7 +6224,9 @@ function dateAppliquer(d) {
       }
       state.dateDep = {date: jma, refs: r9.refs};
       dateEcrireLocal(state.dateDep);
-      dateDire('');
+      const mq9 = dateManqueTexte(r9.refs, jma);    /* lot 89 : jamais muet */
+      if (mq9) dateDire(mq9, true); else dateDire('');
+      rendre(true);                /* les notes rouges des cartes, tout de suite */
     });
   }
   const refs = state.dateDep && state.dateDep.refs;
@@ -6153,7 +6256,11 @@ function dateAppliquerAvec(out, refs, jma) {
   };
   (out.circuits || []).forEach(c2 => (c2.satellites || []).forEach(s2 => {
     const r2 = refs.sats && refs.sats[s2.sat_id];
-    if (!r2) return;
+    if (!r2) {                      /* lot 89 : sans référence -> drapeau,
+       la carte et le bandeau le disent — le brut ne se déguise plus */
+      if (refs.manque && refs.manque.indexOf(s2.sat_id) >= 0) s2._refManque = 1;
+      return;
+    }
     if (has(s2.tiree_l))        s2.tiree_l        = delta(s2.tiree_l, r2.tiree_l, 1);
     if (has(s2.conso_totale_l)) s2.conso_totale_l = delta(s2.conso_totale_l, r2.conso_totale_l, 1);
     if (has(s2.rempl_nb))       s2.rempl_nb       = delta(s2.rempl_nb, r2.rempl_nb);
@@ -6346,20 +6453,11 @@ async function relever() {
        RAPIDES (tx_rapide=1) entre : on FUSIONNE le rapide sur le dernier
        complet — sinon les stats clignoteraient en tirets. La fusion se
        fait par sat_id et par sous-objet chaufferie. */
-    /* Lot 88 : un ALLÉGÉ (tx_allege, filet D174) n'est JAMAIS un
-       COMPLET — il ne porte pas les clés détaillées (nb remplissages,
-       X, étalonnage…). Il était pourtant stocké comme référence et
-       verrouillait les cases en tirets. Désormais : rapide ET allégé
-       FUSIONNENT sur le dernier vrai COMPLET ; seul un vrai COMPLET
-       devient référence, et sa date est retenue (bandeau d'attente). */
-    if ((d.tx_rapide || d.tx_allege) && state.dernierComplet
+    if (d.tx_rapide && state.dernierComplet
         && state.dernierComplet.device_id === d.device_id) {
       state.data = fusionRapide(state.dernierComplet, d);
     } else {
-      if (!d.tx_rapide && !d.tx_allege) {
-        state.dernierComplet = d;
-        state.dernierCompletAt = Date.now();     /* lot 88 */
-      }
+      if (!d.tx_rapide) state.dernierComplet = d;
       state.data = d;
     }
     state.dataBrut = state.data;          /* vérité pilote, AVANT date de départ */
@@ -7043,7 +7141,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1609u — pupitre ' + LOT + ' · lot 87 — 17/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 1809a — pupitre ' + LOT + ' · lot 89 — 18/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
@@ -7585,6 +7683,10 @@ function rendreSalon(d) {
   if (d && d.etat_source === 1)                 /* D207 : secours = rassurer */
     bande.appendChild(chip('Mémoire', 'copie de secours',
       'compteurs repris automatiquement (D207)', ''));
+  if (d && d.fs_rebati)                         /* D210 : rebâti = dit, sobre */
+    bande.appendChild(chip('Flash', 'rebâtie ×' + i0(d.fs_rebati),
+      'support de fichiers reconstruit après plantages répétés (D210) — '
+      + 'compteurs préservés', ''));
   const pOn = (ch.pompe_pct || 0) > 0;
   { /* lot 54 : la pompe SE VOIT tourner pendant les usages */
     const cp2 = el('div', 'sch-chip sch-pompe' + (pOn ? ' pompeOn' : ''));
