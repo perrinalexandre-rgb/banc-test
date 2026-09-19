@@ -9,7 +9,23 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1809c.91 (lot 91, 18/09/2026)
+   enovaQ — pupitre de supervision · pupitre 1909.92 (lot 92, 19/09/2026)
+   Lot 92 (go client 19/09, scan annoté CCF_000177) : (1) CHEMIN RÉEL DU
+   CIRCUIT A — le tracé montait tout droit (lu de bas en haut : chaufferie
+   -> SA1 -> SA3 -> SA2, faux) ; il suit désormais l'installation :
+   montante à GAUCHE des cartes depuis la chaufferie, piquage SA1 au
+   rez-de-chaussée (29 m), jusqu'à SA2 au grenier (42 m), coude, puis
+   DESCENTE à droite des cartes vers SA3 au 3ᵉ (50 m) — chaque distance
+   posée sur SON tronçon, le flux animé suit le vrai chemin (monte au
+   grenier puis redescend) ; circuit B inchangé (une montante, SB1 28 m).
+   (2) RÉCUP ≠ REMPLISSAGE — quand l'étape du train est la récup (7), les
+   tuyaux de CE circuit s'animent nettement plus lentement (2,5 s au lieu
+   de 0,9 s ; l'entrée chaufferie suit si tout ce qui pompe est en récup)
+   et la cuve servie dit « Récup en cours » au lieu de « Remplissage en
+   cours » — même règle que la vue avancée. L'AMORÇAGE n'est pas touché
+   (question ouverte au client). Le commentaire menteur au-dessus de
+   salonFluxActifs est corrigé (les vraies étapes : 1 amorçage,
+   3 remplissage, 5 bouchon, 7 récup).
    Lot 91 (go client 18/09, schéma annoté) : REFONTE DU PUPITRE SIMPLE —
    (1) Maddalena retiré de la chaufferie collective (« chaleur fournie »
    du pied) ; (2) pompe = symbole de schéma (cercle + triangle), état
@@ -1230,6 +1246,13 @@ article.sat button{cursor:pointer}
 .sch-grille.fluxB #schTuyaux path.ent{stroke-dasharray:11 13;opacity:.8;
   animation:schFlux .9s linear infinite}
 @keyframes schFlux{to{stroke-dashoffset:24}}
+/* Lot 92 : la récup N'EST PAS un remplissage — quand l'étape du train
+   est la récup (7), le flux de CE circuit circule nettement plus
+   lentement (2,5 s au lieu de 0,9 s) ; l'entrée chaufferie ralentit
+   quand tout ce qui pompe est en récup. */
+.sch-grille.recupA #schTuyaux path.circA,
+.sch-grille.recupB #schTuyaux path.circB,
+.sch-grille.recupEnt #schTuyaux path.ent{animation-duration:2.5s}
 .sch-chip.pompeOn span{color:var(--ecs)}
 /* Lot 91 : étiquettes posées sur les tuyaux (distances + Circuit A/B) */
 #schTuyaux text{font-family:var(--fs-cond);fill:#8a5a20;font-size:12px}
@@ -7254,7 +7277,16 @@ function salonEtatPublic(s, d) {
   const e = etatSatellite(s, d);
   if (e.cls === 'vidm')    return {t: 'Entretien en cours', c: 'actif'};
   if (e.cls === 'urgence') return {t: 'Remplissage prioritaire', c: 'actif'};
-  if (e.cls === 'service') return {t: 'Remplissage en cours', c: 'actif'};
+  if (e.cls === 'service') {         /* lot 92 : une récup N'EST PAS un
+       remplissage — si le train qui sert la cuve est à l'étape 7, la
+       carte le dit. L'amorçage, lui, reste « Remplissage en cours » :
+       non demandé, non touché (question ouverte au client). */
+    let rec9 = false;
+    ((d && d.trains) || []).forEach(t9 => {
+      if (t9 && t9.sat_actif === s.sat_id && codeEtape(t9.etape) === 7)
+        rec9 = true; });
+    return {t: rec9 ? 'Récup en cours' : 'Remplissage en cours', c: 'actif'};
+  }
   if (e.cls === 'somm')    return {t: s.sommeil ? 'Veille économique' : 'Passage en veille', c: 'veille'};
   if (e.cls === 'defaut')  return {t: 'Vérification en cours', c: 'gris'};
   if (e.cls === 'file')    return {t: 'Remplissage programmé', c: 'actif'};
@@ -7334,36 +7366,78 @@ function salonTuyaux() {
      .forEach(cv => cuves.push({r: cv.getBoundingClientRect(),
                                 sat: cv.parentElement.dataset.sat || ''}));
     if (!cuves.length) return;
+    const trace9 = d9 => {                         /* un tronçon de tuyau */
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', d9);
+      path.setAttribute('class', 'circ' + circ);   /* lot 91 : flux ciblé */
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', coul);
+      path.setAttribute('stroke-width', '6');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
+      path.setAttribute('opacity', '0.5');
+      sv.appendChild(path);
+    };
+    const dist9 = (sat9, x9, y9, anc) => {         /* lot 91 : distances */
+      const ap9 = (typeof APPARTEMENTS !== 'undefined' && APPARTEMENTS[sat9])
+                  ? APPARTEMENTS[sat9] : null;
+      if (ap9 && ap9.dist) texte9(x9, y9, sat9 + ' · ' + ap9.dist + ' m', anc);
+    };
+    const par9 = {};
+    cuves.forEach(c2 => { par9[c2.sat] = c2.r; });
+    /* Lot 92 (scan client 19/09) : le circuit A suit le CHEMIN RÉEL de
+       l'installation — le tuyau monte au grenier puis REDESCEND au 3ᵉ :
+       montante à GAUCHE des cartes depuis la chaufferie, piquage SA1 au
+       rez-de-chaussée (29 m), jusqu'à SA2 au grenier (42 m), coude, puis
+       descente à DROITE des cartes vers SA3 (50 m). Le tracé PART de SA3
+       (bout du circuit) : les tirets du flux remontent donc depuis la
+       chaufferie puis redescendent — comme l'eau. */
+    if (circ === 'A' && par9.SA1 && par9.SA2 && par9.SA3) {
+      const xG = Math.min(...cuves.map(c2 => c2.r.left)) - rg.left - 14;
+      const xD = Math.max(...cuves.map(c2 => c2.r.right)) - rg.left + 14;
+      const yTop = par9.SA2.top - rg.top + 16;     /* palier du grenier   */
+      const y1 = par9.SA1.top - rg.top + par9.SA1.height / 2;
+      const y3 = par9.SA3.top - rg.top + par9.SA3.height / 2;
+      trace9('M ' + (par9.SA3.right - rg.left - 8).toFixed(1) + ' ' + y3.toFixed(1)
+        + ' L ' + (xD - R).toFixed(1) + ' ' + y3.toFixed(1)
+        + ' Q ' + xD.toFixed(1) + ' ' + y3.toFixed(1) + ' '
+                + xD.toFixed(1) + ' ' + (y3 - R).toFixed(1)
+        + ' L ' + xD.toFixed(1) + ' ' + (yTop + R).toFixed(1)
+        + ' Q ' + xD.toFixed(1) + ' ' + yTop.toFixed(1) + ' '
+                + (xD - R).toFixed(1) + ' ' + yTop.toFixed(1)
+        + ' L ' + (xG + R).toFixed(1) + ' ' + yTop.toFixed(1)
+        + ' Q ' + xG.toFixed(1) + ' ' + yTop.toFixed(1) + ' '
+                + xG.toFixed(1) + ' ' + (yTop + R).toFixed(1)
+        + ' L ' + xG.toFixed(1) + ' ' + (yColl - R).toFixed(1)
+        + ' Q ' + xG.toFixed(1) + ' ' + yColl.toFixed(1) + ' '
+                + (xG + R).toFixed(1) + ' ' + yColl.toFixed(1)
+        + ' L ' + xCentre.toFixed(1) + ' ' + yColl.toFixed(1));
+      /* piquage du rez-de-chaussée : la montante alimente SA1 au passage
+         (le tracé part du bord de la carte : tirets ENTRANTS). */
+      trace9('M ' + (par9.SA1.left - rg.left + 8).toFixed(1) + ' ' + y1.toFixed(1)
+        + ' L ' + xG.toFixed(1) + ' ' + y1.toFixed(1));
+      dist9('SA1', xG + 9, par9.SA1.bottom - rg.top + 15, 'start');
+      dist9('SA2', xG + 9, par9.SA2.bottom - rg.top + 15, 'start');
+      dist9('SA3', xD - 9, par9.SA3.bottom - rg.top + 15, 'end');
+      texte9(xG + 9, yColl - R - 8, 'Circuit A', 'start', 'circLbl');
+      return;
+    }
+    /* circuit B (et repli si une cuve du A manquait) : une montante
+       droite sur l'axe de la colonne — inchangé depuis les lots 76/91. */
     const x = cuves.reduce((a2, c2) => a2 + c2.r.left + c2.r.width / 2, 0)
             / cuves.length - rg.left;              /* axe de la colonne */
     const yHaut = Math.min(...cuves.map(c2 => c2.r.top)) - rg.top + 16;
     const vers = xCentre > x ? 1 : -1;             /* sens du coude */
-    const d9 = 'M ' + x.toFixed(1) + ' ' + yHaut.toFixed(1)
+    trace9('M ' + x.toFixed(1) + ' ' + yHaut.toFixed(1)
       + ' L ' + x.toFixed(1) + ' ' + (yColl - R).toFixed(1)
       + ' Q ' + x.toFixed(1) + ' ' + yColl.toFixed(1) + ' '
               + (x + vers * R).toFixed(1) + ' ' + yColl.toFixed(1)
-      + ' L ' + xCentre.toFixed(1) + ' ' + yColl.toFixed(1);
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', d9);
-    path.setAttribute('class', 'circ' + circ);     /* lot 91 : flux ciblé */
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', coul);
-    path.setAttribute('stroke-width', '6');
-    path.setAttribute('stroke-linecap', 'round');
-    path.setAttribute('stroke-linejoin', 'round');
-    path.setAttribute('opacity', '0.5');
-    sv.appendChild(path);
+      + ' L ' + xCentre.toFixed(1) + ' ' + yColl.toFixed(1));
     /* lot 91 : la DISTANCE de chaque satellite, posée sur le tuyau dans
        l'interstice SOUS sa cuve (le tuyau passe derrière les cuves),
        du côté du collecteur pour ne pas sortir du cadre. */
     const ax9 = x + vers * 9, anc9 = vers > 0 ? 'start' : 'end';
-    cuves.forEach(c2 => {
-      const ap9 = (typeof APPARTEMENTS !== 'undefined' && APPARTEMENTS[c2.sat])
-                  ? APPARTEMENTS[c2.sat] : null;
-      if (ap9 && ap9.dist)
-        texte9(ax9, c2.r.bottom - rg.top + 15,
-               c2.sat + ' · ' + ap9.dist + ' m', anc9);
-    });
+    cuves.forEach(c2 => dist9(c2.sat, ax9, c2.r.bottom - rg.top + 15, anc9));
     /* lot 91 : l'étiquette du circuit sur la montante, juste au-dessus
        du coude — annotation du client sur le scan. */
     texte9(ax9, yColl - R - 8, 'Circuit ' + circ, anc9, 'circLbl');
@@ -7696,17 +7770,26 @@ function schCuve(s, d) {
   schPhotoAttacher(cv, s.sat_id);
   return cv;
 }
-/* Lot 91 : quels tuyaux bougent ? Le circuit dont le TRAIN est dans une
-   étape de pompage (POMPE_ETAPES : E1 remplissage, E3 réchauffage,
-   E5 récup tuyau, E7 vidange-remplissage) PENDANT que la pompe tourne.
-   trains[0] = circuit A, trains[1] = circuit B (convention du journal
-   d'étapes). Pompe arrêtée -> rien ne bouge. Fonction pure, testée. */
+/* Lot 91 -> 92 : quels tuyaux bougent, et à quelle allure ? Le circuit
+   dont le TRAIN est dans une étape de pompage (POMPE_ETAPES — les VRAIES
+   étapes, l'ancien commentaire mentait : 1 amorçage, 3 remplissage,
+   5 bouchon, 7 récup, cf. LIBEL) PENDANT que la pompe tourne ; et si
+   cette étape est la récup (7), le flux de CE circuit est LENT (client
+   19/09 : « la récup n'est pas un remplissage, il faut une circulation
+   plus lente »). trains[0] = circuit A, trains[1] = circuit B. Pompe
+   arrêtée -> rien ne bouge. Fonction pure, testée au banc (lot 92). */
 function salonFluxActifs(d) {
-  const r9 = {A: false, B: false};
+  const r9 = {A: {on: false, recup: false}, B: {on: false, recup: false}};
   if ((((d && d.chaufferie) || {}).pompe_pct || 0) <= 0) return r9;
   ((d && d.trains) || []).forEach((t9, i9) => {
-    if (i9 < 2 && t9 && POMPE_ETAPES.includes(codeEtape(t9.etape)))
-      r9[i9 === 0 ? 'A' : 'B'] = true;
+    if (i9 < 2 && t9) {
+      const e9 = codeEtape(t9.etape);
+      if (POMPE_ETAPES.includes(e9)) {
+        const c9 = r9[i9 === 0 ? 'A' : 'B'];
+        c9.on = true;
+        if (e9 === 7) c9.recup = true;
+      }
+    }
   });
   return r9;
 }
@@ -7852,9 +7935,16 @@ function rendreSalon(d) {
     } }
   schPhotoAttacher(bande, 'CHAUF');            /* lot 54 : album chaufferie */
   { const fl9 = salonFluxActifs(d);       /* lot 91 : SEULS les tuyaux du
-       circuit en pompage bougent — plus de fluxOn global */
-    g.classList.toggle('fluxA', fl9.A);
-    g.classList.toggle('fluxB', fl9.B); }
+       circuit en pompage bougent ; lot 92 : en récup (étape 7) le flux
+       de ce circuit RALENTIT, et l'entrée chaufferie suit si tout ce
+       qui pompe est en récup. */
+    g.classList.toggle('fluxA', fl9.A.on);
+    g.classList.toggle('fluxB', fl9.B.on);
+    g.classList.toggle('recupA', fl9.A.recup);
+    g.classList.toggle('recupB', fl9.B.recup);
+    g.classList.toggle('recupEnt',
+      (fl9.A.on || fl9.B.on)
+      && (!fl9.A.on || fl9.A.recup) && (!fl9.B.on || fl9.B.recup)); }
   const ch = (d && d.chaufferie) || {};
   const chip = (titre, val, sous, cls) => {
     const c2 = el('div', 'sch-chip' + (cls ? ' ' + cls : ''));
