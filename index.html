@@ -9,7 +9,19 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 1909.92 (lot 92, 19/09/2026)
+   enovaQ — pupitre de supervision · pupitre 2009.93 (lot 93, 20/09/2026)
+   Lot 93 (client 20/09, scan CCF_000177 re-reçu avec les mêmes consignes
+   que les lots 91-92) : audit point par point — TOUT était déjà en place
+   (Maddalena hors salon, pompe en symbole repos/en marche, « niveau
+   d'air OK » supprimé, EFS en tête, réserve DANS la fiche module maître
+   avec CNH 300 L / CNM 250 L cliquables -> journal des appoints, flux
+   limité au circuit qui pompe, distances et Circuit A/B sur les tuyaux,
+   sous-titres simplifiés). Le doute venait du FICHIER OUVERT : rien dans
+   le Pupitre simple ne disait sa version, impossible de distinguer un
+   vieux téléchargement du bon. Désormais la version est ÉCRITE, discrète,
+   sous l'horloge (« pupitre 2009.93 ») — un coup d'œil tranche. Marqueur
+   LOT et pied de la vue avancée remis d'aplomb (ils dataient du lot 91).
+   Aucun autre changement d'affichage ni de comportement.
    Lot 92 (go client 19/09, scan annoté CCF_000177) : (1) CHEMIN RÉEL DU
    CIRCUIT A — le tracé montait tout droit (lu de bas en haut : chaufferie
    -> SA1 -> SA3 -> SA2, faux) ; il suit désormais l'installation :
@@ -1081,6 +1093,7 @@ body.salon #salonVue{display:flex;flex-direction:column;min-height:100vh;
 .salon-tete .fin .liveS{display:inline-block;width:10px;height:10px;border-radius:50%;
   background:#2a7a4b;margin-right:7px;animation:salonpulse 2.4s ease-in-out infinite}
 .salon-tete .fin .liveS.off{background:var(--alert);animation:none}
+.salon-ver{font-size:11px;color:var(--ink3);margin-top:2px;letter-spacing:.05em}  /* lot 93 */
 @keyframes salonpulse{0%,100%{opacity:1}50%{opacity:.35}}
 .salon-cuves{display:flex;gap:4vw;justify-content:center;align-items:stretch;flex:1}
 .salon-cuve{flex:1;max-width:360px;background:var(--card,#fff);border:1px solid rgba(0,0,0,.08);
@@ -1656,7 +1669,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '1809c.91';   // marqueur « pupitre » — bandeau et pied
+const LOT        = '2009.93';   // marqueur « pupitre » — bandeau, pied, salon
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -7257,7 +7270,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 1809c — pupitre ' + LOT + ' · lot 91 — 18/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 2009 — pupitre ' + LOT + ' · lot 93 — 20/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
@@ -7312,6 +7325,10 @@ function salonConstruire() {
   const fin = el('div', 'fin');
   const lv = el('span', 'liveS'); lv.id = 'salonLive'; fin.appendChild(lv);
   const hr = el('span'); hr.id = 'salonHeure'; fin.appendChild(hr);
+  /* lot 93 : la version LISIBLE dans le Pupitre simple — pour savoir d'un
+     coup d'œil quel fichier est ouvert (les téléchargements s'accumulent
+     et se ressemblent). Petite, grise, sous l'horloge : rien de plus. */
+  fin.appendChild(el('div', 'salon-ver', 'pupitre ' + LOT));
   tete.appendChild(fin);
   v.appendChild(tete);
   const g = el('div', 'sch-grille'); g.id = 'schGrille';
