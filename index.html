@@ -10,7 +10,37 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 2009.97 (lot 97, 20/09/2026)
+   enovaQ — pupitre de supervision · pupitre 2009.98 (lot 98, 20/09/2026)
+   Lot 98 (client 20/09) : LE PUPITRE SIMPLE, PASSE APRÈS PASSE.
+   (1) SA1 à la MÊME LARGEUR que SA2 et SA3 : les cartes .sch-cuve ont
+   une largeur commune (288 px) ; seules les jauges gardent leur hauteur
+   à l'échelle (59 L plus haute que 39 L). (2) La fiche « module maître »
+   est REFAITE : carte blanche à bandeau de charte, en-tête sur une seule
+   ligne (titre + total des logements à droite), chips allégées — l'ancien
+   gros encadré était « horrible ». (3) Les MESSAGES TECHNIQUES quittent
+   le Pupitre simple (redémarrages anormaux, mémoire non relue, remise
+   auto, MÉMOIRE BASSE, copie de secours, flash rebâtie, Simul SA1) : ils
+   vivent en vue avancée. Restent le compresseur et la RÉSERVE — CAS
+   GRAVE, qui sont physiques. (4) Bouton « +1 L — Simulation puisage »
+   SUPPRIMÉ de la vitrine (il reste en vue avancée). (5) Les DISTANCES
+   quittent les tuyaux et rentrent dans les fiches (« 29 m de la
+   chaufferie ») ; seules les étiquettes Circuit A / Circuit B restent
+   sur le tracé. (6) Le NOMBRE DE LOGEMENTS devient lisible : pastille à
+   bordure de charte sur chaque satellite (icône maison + nombre), et
+   pastille pleine en dégradé dans l'en-tête chaufferie pour le total.
+   (7) FLUX PAR TRONÇON (la grosse demande) : le tracé du circuit A est
+   découpé (chaufferie→SA1, piquage SA1, SA1→SA2, SA2→SA3) et SEUL le
+   tronçon réellement sollicité clignote — réserve SA2 demandée, ça
+   s'anime jusqu'à SA2 et pas au-delà. Les couleurs disent la phase :
+   bleu froid en récup, rouge chaud en remplissage, transition bleu→rouge
+   à l'amorçage, rouge→bleu au bouchon. La VITESSE suit le débit du
+   train (fort = rapide, récup = lente). (8) Ligne des kWh retirée du bas
+   de la bande. (9) Les deux chips d'ECS tirée (aujourd'hui / depuis le
+   début) fusionnent en UNE sous-fiche « ECS TIRÉE » à deux lignes.
+   (10) Charte : petit bandeau dégradé en haut de chaque carte satellite,
+   filet dégradé sous les titres de colonne, filets et liserés de charte
+   côté avancé. (11) De l'AIR entre la bande chaufferie et le rez-de-
+   chaussée (28 px).
    Lot 97 (client 20/09, logos joints) : LA CHARTE enovaQ + corrections.
    (1) CHARTE GRAPHIQUE (couleurs relevées sur le logo : bleu #1e77b9 ->
    violet #913485 -> fuchsia #cd2d75 -> rose #e7325b -> orange #f69d1b) :
@@ -795,6 +825,10 @@ header{border-bottom:1px solid var(--line);background:var(--panel);
   border-left:3px solid var(--c);padding:14px 16px 16px;position:relative}
 .rail.a{--c:var(--cuivre)} .rail.b{--c:var(--verdigris)}
 .rail-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 14px;margin-bottom:12px}
+/* lot 98 (10) : filet de charte sous l'en-tête du rail (cohérent avec
+   .eyebrow::after du lot 97) */
+.rail-head::after{content:"";flex-basis:100%;height:1px;margin-top:2px;
+  background:var(--q-grad);opacity:.22}
 .rail-id{font-family:var(--fs-cond);font-weight:700;font-size:17px;letter-spacing:.04em;color:var(--c)}
 .rail-bus{font-family:var(--fs-mono);font-size:11px;color:var(--ink3)}
 .rail-sat{font-family:var(--fs-cond);font-weight:600;font-size:17px;margin-left:2px}
@@ -1143,8 +1177,12 @@ table.sattab tr.elec-muet td{opacity:.45}
 #cfgOut.err{border-color:var(--alert);color:var(--alert)}
 #cfgOut.ok{border-color:var(--ok);color:var(--ok)}
 
-footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
+footer{margin-top:34px;padding-top:16px;position:relative;
+  border-top:1px solid var(--line);
   font-size:12px;color:var(--ink3);display:flex;flex-wrap:wrap;gap:6px 18px}
+/* lot 98 (10) : le pied porte lui aussi le liseré de charte */
+footer::before{content:"";position:absolute;top:-1px;left:0;width:160px;
+  height:2px;background:var(--q-grad);opacity:.75}
 
 /* mode présentation (?show=1) */
 body.presentation .eyebrow.reglages,
@@ -1241,6 +1279,9 @@ body.salon #salonVue{padding:3vh 4vw 2vh}
   max-width:1240px;width:100%;margin:0 auto}
 .sch-teteC{align-self:center;text-align:center;font-family:var(--fs-cond);
   font-weight:700;font-size:15px;letter-spacing:.14em;color:var(--ink2)}
+/* lot 98 (10) : petit filet de charte sous le titre de colonne */
+.sch-teteC::after{content:'';display:block;width:46px;height:2px;
+  margin:5px auto 0;border-radius:2px;background:var(--q-grad);opacity:.7}
 .sch-etg{align-self:end;padding:0 10px 8px 0;text-align:right;
   font-family:var(--fs-cond);font-weight:600;font-size:13px;color:var(--ink2);
   border-bottom:2px solid rgba(0,0,0,.14)}
@@ -1256,13 +1297,41 @@ body.salon #salonVue{padding:3vh 4vw 2vh}
 #schGrille{position:relative}
 #schGrille>.sch-cell,#schGrille>.sch-etg,#schGrille>.sch-teteC,
 #schGrille>.date-bande,#schGrille>.sch-chauf{position:relative;z-index:1}
+/* Lot 98 (1) : SA1 avait une carte plus large que SA2/SA3 (sa jauge de
+   59 L et son bloc simulation la poussaient) — toutes les cartes ont
+   désormais LA MÊME LARGEUR ; seules les jauges gardent leur hauteur à
+   l'échelle. (10) Petit bandeau de charte en haut de chaque carte. */
 .sch-cuve{position:relative;z-index:1;background:var(--card,#fff);
-  border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:10px 14px 12px;
+  border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:13px 14px 12px;
   display:flex;gap:14px;align-items:flex-end;
+  width:300px;max-width:100%;box-sizing:border-box;
   box-shadow:0 8px 22px rgba(60,40,10,.07);cursor:default}
+.sch-cuve::before{content:'';position:absolute;top:0;left:14px;right:14px;
+  height:3px;border-radius:0 0 3px 3px;background:var(--q-grad);opacity:.85}
 .sch-cuve.ko{opacity:.45}
+.sch-cuve.ko::before{opacity:.25}
 .sch-nom{font-family:var(--fs-cond);font-weight:700;font-size:22px;line-height:1}
-.sch-lieu{font-size:12px;color:var(--ink2);margin-top:3px;max-width:170px}
+.sch-lieu{font-size:12px;color:var(--ink2);margin-top:3px}
+/* Lot 98 (6) : le nombre de logements desservis, LISIBLE — pastille à
+   bordure de charte, icône maison, gros chiffre (client 20/09). La
+   mention secondaire (« + circuit test ») vit SOUS la pastille : dans
+   la pastille elle la faisait déborder de la colonne (SA1). */
+.sch-logbox{margin-top:6px}
+.sch-logts{display:inline-flex;align-items:center;gap:6px;
+  padding:3px 10px 3px 8px;border-radius:999px;border:1.5px solid transparent;
+  background:linear-gradient(#fff,#fff) padding-box,
+             var(--q-grad) border-box;white-space:nowrap}
+.sch-logts svg{display:block;flex:none;color:var(--q-fuchsia,#cd2d75)}
+.sch-logts b{font-family:var(--fs-cond);font-weight:800;font-size:15px;
+  line-height:1;color:var(--ink)}
+.sch-logts span{font-family:var(--fs-cond);font-weight:600;font-size:11.5px;
+  letter-spacing:.03em;color:var(--ink2)}
+.sch-logbox .note{font-family:var(--fs-cond);font-size:11px;
+  color:var(--ink3,#999);margin-top:3px}
+/* Lot 98 (5) : la distance revient DANS la fiche (elle encombrait les
+   tuyaux) — discrète, sous la pastille. */
+.sch-dist{font-family:var(--fs-mono);font-size:10.5px;color:var(--ink2);
+  margin-top:5px}
 .sch-jg{width:56px;border:2px solid rgba(0,0,0,.2);border-radius:8px 8px 11px 11px;
   position:relative;overflow:hidden;background:#fbf8f3;flex:none}
 .sch-jg.grande{width:70px}
@@ -1280,10 +1349,9 @@ body.salon #salonVue{padding:3vh 4vw 2vh}
 .sch-flot{position:absolute;right:-3px;width:9px;height:2px;border-radius:1px;
   background:rgba(0,0,0,.22)}
 .sch-flot.mouille{background:#b3261e;height:3px;right:-4px;width:11px}
-/* Lot 76 : énergies « depuis le » dans la bande chaufferie */
-.sch-ener{flex-basis:100%;text-align:center;font-family:var(--fs-cond);
-  font-size:14px;padding:2px 4px;color:var(--ink)}
-.sch-ener b{font-weight:800}
+/* Lot 98 (8) : la ligne d'énergies « depuis le … kWh » est RETIRÉE du
+   Pupitre simple (client 20/09) — ces chiffres vivent en vue avancée.
+   Styles .sch-ener supprimés avec elle. */
 .sch-temp{font-family:var(--fs-cond);font-weight:700;font-size:34px;line-height:1}
 .sch-temp small{font-size:16px;font-weight:600;color:var(--ink2)}
 .sch-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
@@ -1295,17 +1363,37 @@ body.salon #salonVue{padding:3vh 4vw 2vh}
 .sch-etat{font-family:var(--fs-cond);font-weight:600;font-size:12px;
   letter-spacing:.05em;text-transform:uppercase;color:var(--ok,#2a7a4b);margin-top:6px}
 .sch-tiree{font-family:var(--fs-mono);font-size:11px;color:var(--ink2);margin-top:4px}
-.sch-simul{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
-.sch-simul button{font-family:var(--fs-cond);font-weight:700;font-size:12.5px;
-  padding:5px 9px;border-radius:8px;border:1px solid var(--ecs,#c06712);
-  color:var(--ecs,#c06712);background:#fff;cursor:pointer}
-.sch-simul b{font-size:11.5px;color:var(--ink2)}
-.sch-simul b.ouv{color:var(--ecs,#c06712)}
-.sch-chauf{grid-column:2/4;display:flex;gap:10px;flex-wrap:wrap;
-  align-items:stretch;justify-content:center;padding:14px 6px 4px;
-  background:var(--card,#fff);border-radius:12px}   /* lot 77 : fond plein,
-  aucun tracé ne traverse plus l'écriture */
-.sch-chip{background:var(--card,#fff);border:1px solid rgba(0,0,0,.12);
+/* Lot 98 (4) : le bouton « +1 L — Simulation puisage » est RETIRÉ de la
+   vitrine (client 20/09) — il reste en vue avancée (.simul-row).
+   Styles .sch-simul supprimés avec lui. */
+/* ── Lot 98 (2) : LA FICHE MODULE MAÎTRE, REFAITE ────────────────────
+   L'ancienne (gros encadré gris, titre noyé dans les chips) était
+   « horrible ». Désormais : une carte blanche posée, bandeau de charte
+   en haut, en-tête sur une ligne (titre à gauche, total des logements à
+   droite), puis les chips allégées. (11) et de l'air au-dessus. */
+.sch-chauf{grid-column:2/4;position:relative;display:flex;gap:10px;
+  flex-wrap:wrap;align-items:stretch;justify-content:center;
+  padding:18px 16px 14px;margin-top:28px;overflow:hidden;
+  background:var(--card,#fff);border:1px solid rgba(0,0,0,.12);
+  border-radius:16px;box-shadow:0 8px 22px rgba(60,40,10,.07)}
+.sch-chauf::before{content:'';position:absolute;top:0;left:0;right:0;
+  height:4px;background:var(--q-grad)}
+.sch-chauf-tete{flex-basis:100%;display:flex;align-items:center;
+  justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:2px}
+.sch-chauf-tete .t{font-family:var(--fs-cond);font-weight:700;font-size:17px;
+  letter-spacing:.1em;color:var(--ink);line-height:1.2}
+.sch-chauf-tete .t small{display:block;font-weight:600;font-size:11.5px;
+  letter-spacing:.04em;color:var(--ink2);margin-top:2px}
+/* total des logements : pastille pleine en dégradé de charte */
+.sch-logtot{display:inline-flex;align-items:center;gap:8px;flex:none;
+  padding:6px 14px 6px 11px;border-radius:999px;background:var(--q-grad);
+  color:#fff;box-shadow:0 2px 8px rgba(145,52,133,.22)}
+.sch-logtot svg{display:block;flex:none;color:#fff;opacity:.92}
+.sch-logtot b{font-family:var(--fs-cond);font-weight:800;font-size:19px;
+  line-height:1}
+.sch-logtot span{font-family:var(--fs-cond);font-weight:600;font-size:12px;
+  letter-spacing:.05em;opacity:.95}
+.sch-chip{background:var(--panel3,#faf7f2);border:1px solid rgba(0,0,0,.09);
   border-radius:12px;padding:8px 14px;text-align:center;min-width:96px}
 .sch-chip b{display:block;font-family:var(--fs-cond);font-weight:600;font-size:11px;
   letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}
@@ -1313,7 +1401,8 @@ body.salon #salonVue{padding:3vh 4vw 2vh}
 .sch-chip small{display:block;font-family:var(--fs-mono);font-size:10px;color:var(--ink2)}
 .sch-chip.alerte{border-color:var(--warn,#b5892c);background:#fdf6e5}
 .sch-chip.chaud{border-color:var(--eau,#c3271e);background:#fdeae8}
-.sch-encadre{border:1.5px solid rgba(0,0,0,.25);border-radius:12px;padding:12px 14px}
+/* Lot 98 (2) : .sch-encadre supprimé — la bande chaufferie porte sa
+   propre carte (.sch-chauf), plus de double encadrement. */
 article.sat .sat-avance{display:none}
 article.sat.ouverte .sat-avance{display:block}
 article.sat .sat-plus{font-family:var(--fs-cond);font-size:11.5px;color:var(--ink3,#999);
@@ -1321,32 +1410,57 @@ article.sat .sat-plus{font-family:var(--fs-cond);font-size:11.5px;color:var(--in
 article.sat.ouverte .sat-plus{display:none}
 article.sat{cursor:pointer}
 article.sat button{cursor:pointer}
-.sch-chauf-titre{flex-basis:100%;font-family:var(--fs-cond);font-weight:700;
-  font-size:14px;letter-spacing:.05em;color:var(--ink2);margin-bottom:6px}
+/* Lot 98 (2) : .sch-chauf-titre remplacé par .sch-chauf-tete (en-tête
+   à deux blocs : titre + pastille du total des logements). */
+.sch-chauf .sch-note{flex-basis:100%;text-align:center;
+  font-family:var(--fs-cond);font-size:12px;color:var(--ink2);
+  padding:0 2px;margin:-2px 0 4px}
 .sch-pompe{display:flex;flex-direction:column;align-items:center}
 .sch-symb{color:var(--ink2);display:block;line-height:0;margin:2px 0}
 .sch-pompe.pompeOn .sch-symb{color:var(--ecs,#c06712)}
-/* Lot 91 : SEULS les tuyaux du circuit en pompage s'animent (client :
-   « pas tous comme actuellement ») — fluxA / fluxB posés par rendreSalon
-   d'après les trains ; l'entrée chaufferie (ent) bouge si l'un des deux
-   pompe. Tirets montants (les tracés partent des cuves). */
-.sch-grille.fluxA #schTuyaux path.circA,
-.sch-grille.fluxB #schTuyaux path.circB,
-.sch-grille.fluxA #schTuyaux path.ent,
-.sch-grille.fluxB #schTuyaux path.ent{stroke-dasharray:11 13;opacity:.8;
-  animation:schFlux .9s linear infinite}
+/* ── Lot 98 (7) : LE FLUX, TRONÇON PAR TRONÇON ──────────────────────
+   Lots 91/92 : tout le circuit s'animait d'un bloc. Le client (20/09) :
+   « si c'est la réserve de SA2 qui est sollicitée, ça doit clignoter
+   jusqu'à SA2, pas plus loin ». Le tracé est donc découpé en tronçons
+   (segA1 chaufferie→SA1, piqA piquage SA1, segA2 SA1→SA2, segA3
+   SA2→SA3 ; segB1 pour le circuit B) et salonTuyaux ne pose la classe
+   .tuy-anim QUE sur les tronçons réellement parcourus.
+   La TEINTE dit la phase, la VITESSE dit le débit (--tuyd, posée en
+   ligne par le JS d'après debit_l_min du train) :
+     amorçage   -> bleu qui vire au rouge (l'ECS chasse l'EFS)
+     remplissage-> rouge chaud, rapide
+     bouchon    -> rouge qui vire au bleu (l'EFS repousse l'ECS)
+     récup      -> bleu froid, lent                                     */
+#schTuyaux path.tuy-anim{stroke-dasharray:11 13;opacity:.85;
+  animation:schFlux var(--tuyd,.9s) linear infinite}
 @keyframes schFlux{to{stroke-dashoffset:24}}
-/* Lot 92 : la récup N'EST PAS un remplissage — quand l'étape du train
-   est la récup (7), le flux de CE circuit circule nettement plus
-   lentement (2,5 s au lieu de 0,9 s) ; l'entrée chaufferie ralentit
-   quand tout ce qui pompe est en récup. */
-.sch-grille.recupA #schTuyaux path.circA,
-.sch-grille.recupB #schTuyaux path.circB,
-.sch-grille.recupEnt #schTuyaux path.ent{animation-duration:2.5s}
+#schTuyaux path.tuy-chaud{stroke:var(--eau,#c3271e)}
+#schTuyaux path.tuy-froid{stroke:var(--efs,#1B6CA6)}
+#schTuyaux path.tuy-monte{--t0:var(--efs,#1B6CA6);--t1:var(--eau,#c3271e);
+  animation:schFlux var(--tuyd,.9s) linear infinite,
+            tuyTeinte 2.6s linear infinite}
+#schTuyaux path.tuy-redescend{--t0:var(--eau,#c3271e);--t1:var(--efs,#1B6CA6);
+  animation:schFlux var(--tuyd,.9s) linear infinite,
+            tuyTeinte 2.6s linear infinite}
+@keyframes tuyTeinte{0%{stroke:var(--t0)}80%,100%{stroke:var(--t1)}}
 .sch-chip.pompeOn span{color:var(--ecs)}
-/* Lot 91 : étiquettes posées sur les tuyaux (distances + Circuit A/B) */
+/* Lot 91 -> 98 (5) : il ne reste QUE les étiquettes Circuit A / B sur
+   le tracé — les distances sont rentrées dans les fiches (.sch-dist). */
 #schTuyaux text{font-family:var(--fs-cond);fill:#8a5a20;font-size:12px}
 #schTuyaux text.circLbl{font-weight:700;font-size:12.5px;letter-spacing:.04em}
+/* Lot 98 (9) : « Eau tirée (toutes cuves) » et « Eau aujourd'hui »
+   faisaient deux chips côte à côte disant la même chose — une SEULE
+   sous-fiche, deux lignes (client 20/09). */
+.sch-ecs{background:var(--panel3,#faf7f2);border:1px solid rgba(0,0,0,.09);
+  border-radius:12px;padding:8px 14px;min-width:190px;text-align:left}
+.sch-ecs>b{display:block;font-family:var(--fs-cond);font-weight:600;
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink2);text-align:center;margin-bottom:5px}
+.sch-ecs .l{display:flex;justify-content:space-between;align-items:baseline;
+  gap:14px;font-family:var(--fs-cond);font-size:12.5px;color:var(--ink2);
+  padding:1px 0}
+.sch-ecs .l i{font-style:normal;font-weight:700;font-size:15px;
+  color:var(--ink)}
 /* Lot 91 : la réserve 300 L DANS la fiche module maître — petite cuve,
    deux capteurs étiquetés, cliquable (journal des appoints d'air). */
 .sch-res{background:var(--card,#fff);border:1px solid rgba(0,0,0,.12);
@@ -1441,7 +1555,10 @@ details.date-brut td,details.date-brut th{border:1px solid rgba(0,0,0,.15);
   font-family:var(--fs-mono);font-size:10.5px;text-align:right}
 .sat-journal th{font-family:var(--fs-cond);text-align:center}
 .sat-journal .sj-note{font-size:11px;color:var(--ink2);margin-top:3px}
-.sch-etgC{grid-column:1;border-bottom:0!important}
+/* Lot 98 (11) : la bande chaufferie collait au rez-de-chaussée — même
+   respiration (28 px) des deux côtés de la grille. */
+.sch-etgC{grid-column:1;border-bottom:0!important;margin-top:28px;
+  align-self:center;padding-bottom:0}
 #schVoile{position:absolute;inset:0;display:flex;align-items:center;
   justify-content:center;background:var(--fond,#f4efe7);z-index:5}
 .sch-voile-txt{font-family:var(--fs-cond);font-weight:600;font-size:20px;
@@ -1729,7 +1846,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '2009.97';   // marqueur « pupitre » — bandeau, pied, salon
+const LOT        = '2009.98';   // marqueur « pupitre » — bandeau, pied, salon
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -6388,8 +6505,10 @@ function dateInstallation() {   /* lot 74 : « installation en service
   const v = dd.livree || dd.tiree || dd.rempl;
   return (v && v !== '?') ? v : null;
 }
-function energiesDepuis(d) {   /* lot 76, réduit lot 91 : pied du Pupitre
-   simple (son SEUL appelant) — pompe, auxiliaires, cumulus. Le Maddalena
+function energiesDepuis(d) {   /* lot 76, réduit lot 91, ORPHELINE au lot
+   98 : son seul appelant était la ligne kWh du Pupitre simple, retirée
+   à la demande du client (20/09). Conservée telle quelle — les chiffres
+   restent lisibles en vue avancée. Pompe, auxiliaires, cumulus ; le Maddalena
    (« chaleur fournie ») est retiré du salon (client 18/09) ; il reste
    visible dans la vue avancée (carte Énergie thermique). d est DÉJÀ en
    delta quand une date est posée. */
@@ -6587,24 +6706,41 @@ function demo() {
     9:'E9 DEPART (vanne retour)',10:'E10 ATTENTE EFS'})[c];
   const cA = seqEtapes[Math.floor(t / 8) % seqEtapes.length];
   const av = (t % 8) / 8;
+  /* Lot 98 : la démo fait TOURNER le satellite servi (SA1 -> SA2 -> SA3,
+     un par cycle complet de 96 s). C'est le seul moyen de VOIR le flux
+     par tronçon : servir SA2 doit animer la montante jusqu'au grenier
+     et PAS la descente vers SA3. La cuve servie se remplit, s'éveille
+     et ouvre sa vanne ; les deux autres restent au repos. */
+  const SATS_A = [['SA1', 59, 3.3], ['SA2', 39, 4.7], ['SA3', 39, 5.7]];
+  const tourA = SATS_A[Math.floor(t / (8 * seqEtapes.length)) % SATS_A.length];
+  const servi = cA === 0 ? null : tourA[0];
+  const sert = id9 => servi === id9;
+  const vanne9 = id9 => (sert(id9) && [2, 3, 5].includes(cA)) ? 1 : 0;
+  const volMonte = Math.round((8 + 22 * av) * 10) / 10;  /* la cuve se remplit */
   const train = (lettre, code, sat, X, Y) => ({
     circuit: lettre, etape: nom(code), cycle_actif: lettre === 'A', depuis_s: Math.floor(t % 8),
     sat_actif: code === 0 ? null : sat, front_l: code === 0 ? 0 : Y + 4,
     dernier: [4,5,7].includes(code), attente_efs: code === 10,
     vanne_retour: (code === 0 || code === 8) ? 'FERMEE' : 'OUVERTE', vr_alerte: false,
     debit_l_min: (code === 3 || code === 5) ? 9.6 : undefined,
-    file: [], avancement: (code === 3 || code === 5) ? (59 - 1 - 3.3) + av * 3.3
+    /* lot 98 : la contenance passée en paramètre était ignorée (59 L
+       codé en dur) — une cuve de 39 L affichait une cible de 58 L. */
+    file: [], avancement: (code === 3 || code === 5) ? (X - 1 - Y) + av * Y
                         : av * (code === 7 ? 20 : 10),
-    cible: (code === 3 || code === 5) ? 59 - 1 : (code === 7 ? 20 : 10), unite: 'L',
+    cible: (code === 3 || code === 5) ? X - 1 : (code === 7 ? 20 : 10), unite: 'L',
   });
-  const vol1 = 40 + 18 * av;
   const cyc = Math.floor(t) % 45;
   const puise1 = cA === 0 && cyc < 12;               /* puisage visible au repos */
+  /* lot 98 : SA1 ne monte plus QUE quand elle est servie ; au repos elle
+     descend pendant le puisage (avant, elle se remplissait toute seule). */
+  const vol1 = sert('SA1') ? 40 + 18 * av
+             : (puise1 ? Math.max(20, 46.2 - 1.4 * cyc) : 46.2);
   return {
     device_id: 'chaufferie-01', seq: Math.floor(t / 5), uptime_s: 10049, rssi_dbm: -72,
     cfg_version: 0, fw_epoch: 11, simulation: false, prog: '1109', nb_sats: 3, nb_sats_b: 0,
     tx_octets: 10480, tx_pct: 42,                                /* lot 46 : jauge D174 */
-    trains: [train('A', cA, 'SA1', 59, 3.3), train('B', 0, null, 38, 5)],
+    trains: [train('A', cA, tourA[0], tourA[1], tourA[2]),
+             train('B', 0, null, 38, 5)],
     chaufferie: {
       vfd: {ok: true, etat: 3, freq_hz: cA === 0 ? 0 : 65, vbus_v: 319, courant_a: cA === 0 ? 0 : 1.4},
       sdm120: {ok: true, tension_v: 233, courant_a: 1.31,
@@ -6637,7 +6773,7 @@ function demo() {
       {circuit_id: 'C1', actif: true, satellites: [
         { sat_id: 'SA1', ok: true, cnb: 1, cnm: 1, cnh: vol1 > 26.5 ? 1 : 0,
           cpt_manque_l: 28,                          /* demo lot 37 (D157) */
-          niveau: vol1 > 26.5 ? 'HAUT' : 'MILIEU', vanne: [2,3,5].includes(cA) ? 1 : 0, en_file: 0,
+          niveau: vol1 > 26.5 ? 'HAUT' : 'MILIEU', vanne: vanne9('SA1'), en_file: 0,
           volume_l: Math.round(vol1 * 10) / 10, volume_qualite: 'MESURE',
           conso_totale_l: 1271, tiree_l: 58.5,
           tiree_depuis_s: puise1 ? cyc : 60 + cyc, puise: puise1,
@@ -6656,8 +6792,8 @@ function demo() {
           defauts: {cnb_muet: false, cnm_muet: false, cnh_muet: false, capteurs_fous: false,
                     vanne_alerte: false, quarantaine_s: 0, abandons: 0, servable: true}},
         { sat_id: 'SA2', ok: true, cnb: 1, cnm: 0, cnh: 0,
-          niveau: 'BAS', vanne: 0, en_file: 0,
-          volume_l: 8.4, volume_qualite: 'ETALONNE',
+          niveau: 'BAS', vanne: vanne9('SA2'), en_file: 0,
+          volume_l: sert('SA2') ? volMonte : 8.4, volume_qualite: 'ETALONNE',
           conso_totale_l: 812, tiree_l: 640.2,
           tiree_depuis_s: 191000, puise: false,
           rempl_nb: 9, rempl_moy_l_min: 7.9, rempl_therm_nb: 5,
@@ -6669,19 +6805,20 @@ function demo() {
           rech_nb: 5, rech_avant_c: 49.5, rech_dernier_age_s: 98000,
           rech_nb_vid: 4, rech_vid_dern_l: 21.3, rech_vid_cumul_l: 96.4,
           rech_sans_rempl: 4, rech_sans_puis: 3, mes_precise: 0,
-          sommeil: 1, somm_etat: 12, somm_depuis_s: 90000, somm_renouv_dans_s: 0,
+          sommeil: sert('SA2') ? 0 : 1, somm_etat: 12, somm_depuis_s: 90000, somm_renouv_dans_s: 0,
           perte_w: 34, perte_moy_w: 36, perte_moy_nb: 2, perte_degh: 1.32,
           perte_vol_l: 37.1, perte_tmoy_c: 51.2, perte_duree_s: 19800,
           perte_t0_c: 52.4, perte_t1_c: 49.9,
           perte_age_s: 96000, perte_fiable: false,
           X_l: 39, Y_l: 4.7, marge_l: 2, cible_l: 37,
-          temp_c: 16.8, etalonnage: {bas: 8.2, milieu: 17.3, haut: 26.5},
+          temp_c: sert('SA2') ? 53.8 : 16.8,
+          etalonnage: {bas: 8.2, milieu: 17.3, haut: 26.5},
           defauts: {cnb_muet: false, cnm_muet: false, cnh_muet: false, capteurs_fous: false,
                     vanne_alerte: false, quarantaine_s: 0, abandons: 0, servable: true}},
         { sat_id: 'SA3', ok: true, cnb: 1, cnm: 0, cnh: 0,
-          niveau: 'BAS', vanne: 1, en_file: 0,
+          niveau: 'BAS', vanne: vanne9('SA3'), en_file: 0,
           cpt_diag: 0,                                 /* demo lot 38 */
-          volume_l: 12.1, volume_qualite: 'MESURE',
+          volume_l: sert('SA3') ? volMonte : 12.1, volume_qualite: 'MESURE',
           conso_totale_l: 401, rech_sans_rempl: 0, mes_precise: 0,
           somm_etat: 2,   /* lot 25 : mise en sommeil, phase VIDANGE (démo) */
           /* volontairement SANS tiree_l, tiree_depuis_s, rempl_* : l'état
@@ -7311,10 +7448,12 @@ function salonTuyaux() {
      .forEach(cv => cuves.push({r: cv.getBoundingClientRect(),
                                 sat: cv.parentElement.dataset.sat || ''}));
     if (!cuves.length) return;
-    const trace9 = d9 => {                         /* un tronçon de tuyau */
+    /* lot 98 (7) : chaque tracé porte le NOM DE SON TRONÇON — c'est lui
+       qui décide, plus tard, s'il s'anime ou non. */
+    const trace9 = (d9, cls9) => {                 /* un tronçon de tuyau */
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', d9);
-      path.setAttribute('class', 'circ' + circ);   /* lot 91 : flux ciblé */
+      path.setAttribute('class', 'circ' + circ + (cls9 ? ' ' + cls9 : ''));
       path.setAttribute('fill', 'none');
       path.setAttribute('stroke', coul);
       path.setAttribute('stroke-width', '6');
@@ -7323,11 +7462,8 @@ function salonTuyaux() {
       path.setAttribute('opacity', '0.5');
       sv.appendChild(path);
     };
-    const dist9 = (sat9, x9, y9, anc) => {         /* lot 91 : distances */
-      const ap9 = (typeof APPARTEMENTS !== 'undefined' && APPARTEMENTS[sat9])
-                  ? APPARTEMENTS[sat9] : null;
-      if (ap9 && ap9.dist) texte9(x9, y9, sat9 + ' · ' + ap9.dist + ' m', anc);
-    };
+    /* lot 91 -> 98 (5) : dist9 SUPPRIMÉE — les distances sont rentrées
+       dans les fiches satellites (.sch-dist). */
     const par9 = {};
     cuves.forEach(c2 => { par9[c2.sat] = c2.r; });
     /* Lot 92 (scan client 19/09) : le circuit A suit le CHEMIN RÉEL de
@@ -7343,27 +7479,38 @@ function salonTuyaux() {
       const yTop = par9.SA2.top - rg.top + 16;     /* palier du grenier   */
       const y1 = par9.SA1.top - rg.top + par9.SA1.height / 2;
       const y3 = par9.SA3.top - rg.top + par9.SA3.height / 2;
-      trace9('M ' + (par9.SA3.right - rg.left - 8).toFixed(1) + ' ' + y3.toFixed(1)
-        + ' L ' + (xD - R).toFixed(1) + ' ' + y3.toFixed(1)
-        + ' Q ' + xD.toFixed(1) + ' ' + y3.toFixed(1) + ' '
-                + xD.toFixed(1) + ' ' + (y3 - R).toFixed(1)
-        + ' L ' + xD.toFixed(1) + ' ' + (yTop + R).toFixed(1)
-        + ' Q ' + xD.toFixed(1) + ' ' + yTop.toFixed(1) + ' '
-                + (xD - R).toFixed(1) + ' ' + yTop.toFixed(1)
-        + ' L ' + (xG + R).toFixed(1) + ' ' + yTop.toFixed(1)
-        + ' Q ' + xG.toFixed(1) + ' ' + yTop.toFixed(1) + ' '
-                + xG.toFixed(1) + ' ' + (yTop + R).toFixed(1)
-        + ' L ' + xG.toFixed(1) + ' ' + (yColl - R).toFixed(1)
-        + ' Q ' + xG.toFixed(1) + ' ' + yColl.toFixed(1) + ' '
-                + (xG + R).toFixed(1) + ' ' + yColl.toFixed(1)
-        + ' L ' + xCentre.toFixed(1) + ' ' + yColl.toFixed(1));
+      const xS2 = par9.SA2.left - rg.left + par9.SA2.width / 2;
+      const f1 = v9 => v9.toFixed(1);
+      /* Lot 98 (7) : le MÊME chemin qu'au lot 92, mais en QUATRE
+         tronçons nommés — chacun part du côté satellite et arrive du
+         côté chaufferie (le dashoffset fait donc remonter les tirets
+         depuis la chaufferie, comme l'eau).
+         segA1 : chaufferie -> coude bas -> rez-de-chaussée
+         piqA  : montante -> carte SA1
+         segA2 : rez-de-chaussée -> montante -> palier grenier -> SA2
+         segA3 : SA2 -> palier -> descente droite -> SA3                */
+      trace9('M ' + f1(xG) + ' ' + f1(y1)
+        + ' L ' + f1(xG) + ' ' + f1(yColl - R)
+        + ' Q ' + f1(xG) + ' ' + f1(yColl) + ' '
+                + f1(xG + R) + ' ' + f1(yColl)
+        + ' L ' + f1(xCentre) + ' ' + f1(yColl), 'segA1');
       /* piquage du rez-de-chaussée : la montante alimente SA1 au passage
          (le tracé part du bord de la carte : tirets ENTRANTS). */
-      trace9('M ' + (par9.SA1.left - rg.left + 8).toFixed(1) + ' ' + y1.toFixed(1)
-        + ' L ' + xG.toFixed(1) + ' ' + y1.toFixed(1));
-      dist9('SA1', xG + 9, par9.SA1.bottom - rg.top + 15, 'start');
-      dist9('SA2', xG + 9, par9.SA2.bottom - rg.top + 15, 'start');
-      dist9('SA3', xD - 9, par9.SA3.bottom - rg.top + 15, 'end');
+      trace9('M ' + f1(par9.SA1.left - rg.left + 8) + ' ' + f1(y1)
+        + ' L ' + f1(xG) + ' ' + f1(y1), 'piqA');
+      trace9('M ' + f1(xS2) + ' ' + f1(yTop)
+        + ' L ' + f1(xG + R) + ' ' + f1(yTop)
+        + ' Q ' + f1(xG) + ' ' + f1(yTop) + ' '
+                + f1(xG) + ' ' + f1(yTop + R)
+        + ' L ' + f1(xG) + ' ' + f1(y1), 'segA2');
+      trace9('M ' + f1(par9.SA3.right - rg.left - 8) + ' ' + f1(y3)
+        + ' L ' + f1(xD - R) + ' ' + f1(y3)
+        + ' Q ' + f1(xD) + ' ' + f1(y3) + ' '
+                + f1(xD) + ' ' + f1(y3 - R)
+        + ' L ' + f1(xD) + ' ' + f1(yTop + R)
+        + ' Q ' + f1(xD) + ' ' + f1(yTop) + ' '
+                + f1(xD - R) + ' ' + f1(yTop)
+        + ' L ' + f1(xS2) + ' ' + f1(yTop), 'segA3');
       texte9(xG + 9, yColl - R - 8, 'Circuit A', 'start', 'circLbl');
       return;
     }
@@ -7377,14 +7524,12 @@ function salonTuyaux() {
       + ' L ' + x.toFixed(1) + ' ' + (yColl - R).toFixed(1)
       + ' Q ' + x.toFixed(1) + ' ' + yColl.toFixed(1) + ' '
               + (x + vers * R).toFixed(1) + ' ' + yColl.toFixed(1)
-      + ' L ' + xCentre.toFixed(1) + ' ' + yColl.toFixed(1));
-    /* lot 91 : la DISTANCE de chaque satellite, posée sur le tuyau dans
-       l'interstice SOUS sa cuve (le tuyau passe derrière les cuves),
-       du côté du collecteur pour ne pas sortir du cadre. */
+      + ' L ' + xCentre.toFixed(1) + ' ' + yColl.toFixed(1),
+      circ === 'B' ? 'segB1' : 'segA1 piqA segA2 segA3');
+    /* lot 91 -> 98 (5) : les distances ne sont plus posées ici. Reste
+       l'étiquette du circuit sur la montante, juste au-dessus du coude
+       — annotation du client sur le scan. */
     const ax9 = x + vers * 9, anc9 = vers > 0 ? 'start' : 'end';
-    cuves.forEach(c2 => dist9(c2.sat, ax9, c2.r.bottom - rg.top + 15, anc9));
-    /* lot 91 : l'étiquette du circuit sur la montante, juste au-dessus
-       du coude — annotation du client sur le scan. */
     texte9(ax9, yColl - R - 8, 'Circuit ' + circ, anc9, 'circLbl');
   });
   /* l'entrée dans la chaufferie : petite descente au bord, sans toucher
@@ -7402,6 +7547,7 @@ function salonTuyaux() {
   pt.setAttribute('r', '7'); pt.setAttribute('fill', '#8a5a20');
   pt.setAttribute('opacity', '0.55');
   sv.appendChild(pt);
+  salonFluxAppliquer(sv);   /* lot 98 (7) : seuls les tronçons servis bougent */
 }
 window.addEventListener('resize', () => {
   if (document.body.classList.contains('salon')) salonTuyaux();
@@ -7634,9 +7780,11 @@ function schPhotoAttacher(cv, id) {
     albumOuvrir(id, true);
   });
 }
-/* Lot 91 : sous-titre d'une carte satellite du Pupitre simple — le RÉEL,
-   simple (client 18/09) : « 5 logements + circuit test », « 2 logements »,
-   « logement individuel », « 3 logements ». */
+/* Lot 91, ORPHELINE au lot 98 : sous-titre d'une carte satellite du
+   Pupitre simple — le RÉEL, simple (client 18/09) : « 5 logements +
+   circuit test », « 2 logements », « logement individuel ». Remplacée
+   par la pastille salonLogPill (bien plus visible) ; conservée telle
+   quelle au cas où le client préfèrerait revenir au texte. */
 function salonSousTitre(id9) {
   const ap9 = APPARTEMENTS[id9] || {};
   const nb9 = nbLogements(id9);
@@ -7645,6 +7793,47 @@ function salonSousTitre(id9) {
   const test9 = (ap9.liste || []).some(x9 => /test/i.test(x9));
   return nb9 + ' logement' + (nb9 > 1 ? 's' : '')
        + (test9 ? ' + circuit test' : '');
+}
+/* Lot 98 (6) : « le nombre de logements par satellite doit se voir, et
+   le total aussi — un truc sympa » (client 20/09). Le sous-titre texte
+   du lot 91 passait inaperçu : il devient une PASTILLE (icône maison +
+   nombre en gras), bordée de charte sur les satellites, pleine en
+   dégradé pour le total de la chaufferie. salonSousTitre reste pour
+   mémoire (plus appelée). */
+function salonMaison(px9) {
+  const b9 = el('div');
+  b9.innerHTML = '<svg viewBox="0 0 24 24" width="' + px9 + '" height="' + px9
+    + '" fill="none" stroke="currentColor" stroke-width="2"'
+    + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="M3 11.3 12 4l9 7.3"/><path d="M5.6 10.1V20h12.8v-9.9"/>'
+    + '<path d="M9.9 20v-5.4h4.2V20"/></svg>';
+  return b9.firstChild;
+}
+function salonLogPill(id9) {
+  const ap9 = APPARTEMENTS[id9] || {};
+  const nb9 = nbLogements(id9);
+  const box9 = el('div', 'sch-logbox');
+  const p9 = el('div', 'sch-logts');
+  p9.appendChild(salonMaison(15));
+  box9.appendChild(p9);
+  if (!nb9) { p9.appendChild(el('span', null, 'non desservi')); return box9; }
+  p9.appendChild(el('b', null, String(nb9)));
+  p9.appendChild(el('span', null, 'logement' + (nb9 > 1 ? 's' : '')));
+  if ((ap9.liste || []).some(x9 => /test/i.test(x9)))
+    box9.appendChild(el('div', 'note', '+ circuit test'));
+  else if (nb9 === 1 && /individuel/.test(ap9.ou || ''))
+    box9.appendChild(el('div', 'note', 'raccordement individuel'));
+  if ((ap9.liste || []).length)
+    p9.title = 'Appartements desservis : ' + ap9.liste.join(', ');
+  return box9;
+}
+function salonLogTotal() {
+  const p9 = el('div', 'sch-logtot');
+  p9.appendChild(salonMaison(20));
+  p9.appendChild(el('b', null, String(totalLogements())));
+  p9.appendChild(el('span', null, 'logements desservis'));
+  p9.title = 'Total des logements raccordés aux quatre satellites.';
+  return p9;
 }
 function schCuve(s, d) {
   const cv = el('div', 'sch-cuve' + (s.ok ? '' : ' ko'));
@@ -7678,9 +7867,14 @@ function schCuve(s, d) {
   cv.appendChild(gauche);
   const dr = el('div');
   dr.appendChild(el('div', 'sch-nom', s.sat_id || '—'));
-  dr.appendChild(el('div', 'sch-lieu', salonSousTitre(s.sat_id)));
-  /* lot 91 : adresses, étage et distance retirés de la carte — la
-     distance vit sur le tuyau (salonTuyaux), le reste en vue avancée. */
+  dr.appendChild(salonLogPill(s.sat_id));        /* lot 98 (6) : pastille */
+  { /* lot 98 (5) : la DISTANCE revient dans la fiche — elle encombrait
+       les tuyaux (client 20/09). */
+    const ap9 = (typeof APPARTEMENTS !== 'undefined' && APPARTEMENTS[s.sat_id])
+              ? APPARTEMENTS[s.sat_id] : null;
+    if (ap9 && ap9.dist)
+      dr.appendChild(el('div', 'sch-dist',
+        ap9.dist + ' m de la chaufferie')); }
   const tp = el('div', 'sch-temp',
     (has(s.temp_c) && !s.sommeil) ? n(s.temp_c) : '—');
   if (has(s.temp_c) && !s.sommeil) tp.appendChild(el('small', null, ' °C'));
@@ -7695,23 +7889,9 @@ function schCuve(s, d) {
   if (has(s.tiree_jour_l))
     dr.appendChild(el('div', 'sch-tiree',
       'aujourd\u2019hui : ' + n(s.tiree_jour_l) + ' L tirés'));
-  if (s.sat_id === 'SA1') {          /* lot 54 : simulation aussi en vitrine */
-    const rg = el('div', 'sch-simul');
-    const b9 = el('button', null, '+1 L — Simulation puisage');
-    b9.title = 'Un clic = un litre, cumulable — la vanne DO7 se referme '
-      + 'toute seule sur le compteur (D188). Envoi 4 s après le dernier clic.';
-    simulBrancher(b9);
-    rg.appendChild(b9);
-    const ch9 = (d && d.chaufferie) || {};
-    rg.appendChild(el('b', 'simul-etat' + (ch9.simul_sa1 ? ' ouv' : ''),
-      ch9.simul_sa1
-        ? 'OUVERTE — ' + n(ch9.simul_faits_l || 0) + ' L faits'
-          + (has(ch9.simul_dose_l)
-             ? ' / ' + n((ch9.simul_faits_l || 0) + ch9.simul_dose_l) + ' L' : '')
-        : (state.simul && state.simul.clics
-           ? state.simul.clics + ' L · envoi 4 s' : 'fermée')));
-    dr.appendChild(rg);
-  }
+  /* Lot 54 -> 98 (4) : le bouton « +1 L — Simulation puisage » est RETIRÉ
+     de la vitrine (client 20/09 : elle est grand public). La vanne se
+     pilote toujours depuis la vue avancée (.simul-row). */
   cv.appendChild(dr);
   schPhotoAttacher(cv, s.sat_id);
   return cv;
@@ -7724,8 +7904,13 @@ function schCuve(s, d) {
    19/09 : « la récup n'est pas un remplissage, il faut une circulation
    plus lente »). trains[0] = circuit A, trains[1] = circuit B. Pompe
    arrêtée -> rien ne bouge. Fonction pure, testée au banc (lot 92). */
+/* Lot 98 (7) : la réponse s'enrichit — il ne suffit plus de savoir QUE
+   ça coule, il faut savoir JUSQU'OÙ (sat_actif), DANS QUELLE PHASE
+   (famille d'étape : 1 amorçage, 3 remplissage, 5 bouchon, 7 récup) et
+   À QUEL DÉBIT (debit_l_min). Fonction pure, sans effet de bord. */
 function salonFluxActifs(d) {
-  const r9 = {A: {on: false, recup: false}, B: {on: false, recup: false}};
+  const vide9 = () => ({on: false, etape: 0, sat: '', debit: 0});
+  const r9 = {A: vide9(), B: vide9()};
   if ((((d && d.chaufferie) || {}).pompe_pct || 0) <= 0) return r9;
   ((d && d.trains) || []).forEach((t9, i9) => {
     if (i9 < 2 && t9) {
@@ -7733,11 +7918,58 @@ function salonFluxActifs(d) {
       if (POMPE_ETAPES.includes(e9)) {
         const c9 = r9[i9 === 0 ? 'A' : 'B'];
         c9.on = true;
-        if (e9 === 7) c9.recup = true;
+        c9.etape = codeFamille(e9);
+        c9.sat = t9.sat_actif || '';
+        c9.debit = (has(t9.debit_l_min) && isFinite(t9.debit_l_min))
+                 ? +t9.debit_l_min : 0;
       }
     }
   });
   return r9;
+}
+/* Lot 98 (7) : de la cuve servie au TRONÇON parcouru. Le circuit A suit
+   le chemin réel : chaufferie -> montante gauche -> rez (SA1, piquage)
+   -> grenier (SA2) -> descente droite (SA3). Servir SA2 n'allume donc
+   NI le piquage SA1 NI la descente vers SA3. */
+function fluxPortee(circ9, sat9) {
+  if (circ9 === 'B') return ['segB1'];
+  if (sat9 === 'SA1') return ['segA1', 'piqA'];
+  if (sat9 === 'SA2') return ['segA1', 'segA2'];
+  if (sat9 === 'SA3') return ['segA1', 'segA2', 'segA3'];
+  return ['segA1', 'piqA', 'segA2', 'segA3'];   /* cuve inconnue : tout */
+}
+/* Vitesse du défilement : la récup est lente par nature (client 19/09) ;
+   sinon elle suit le débit du train — 9,6 L/min ≈ 0,83 s le cycle. */
+function fluxDuree(c9) {
+  if (c9.etape === 7) return 2.6;
+  const db9 = +c9.debit || 0;
+  if (db9 > 0) return Math.max(0.5, Math.min(1.8, 8 / db9));
+  return 0.9;
+}
+/* Teinte par phase : bleu -> rouge à l'amorçage (l'ECS chasse l'EFS),
+   rouge plein au remplissage, rouge -> bleu au bouchon, bleu à la récup. */
+const FLUX_TEINTE = {1: 'tuy-monte', 3: 'tuy-chaud',
+                     5: 'tuy-redescend', 7: 'tuy-froid'};
+function fluxPoser(p9, c9) {
+  p9.classList.add('tuy-anim', FLUX_TEINTE[c9.etape] || 'tuy-chaud');
+  p9.style.setProperty('--tuyd', fluxDuree(c9).toFixed(2) + 's');
+}
+/* Pose les classes d'animation sur les tracés déjà dessinés. L'entrée
+   chaufferie prend l'état du circuit le plus « chaud » : un remplissage
+   prime sur une récup (sinon elle ralentirait à tort). */
+function salonFluxAppliquer(sv9) {
+  const f9 = (state && state.fluxSalon) || {};
+  let ent9 = null;
+  ['A', 'B'].forEach(k9 => {
+    const c9 = f9[k9];
+    if (!c9 || !c9.on) return;
+    fluxPortee(k9, c9.sat).forEach(seg9 => {
+      sv9.querySelectorAll('path.circ' + k9 + '.' + seg9)
+         .forEach(p9 => fluxPoser(p9, c9));
+    });
+    if (!ent9 || (ent9.etape === 7 && c9.etape !== 7)) ent9 = c9;
+  });
+  if (ent9) sv9.querySelectorAll('path.ent').forEach(p9 => fluxPoser(p9, ent9));
 }
 /* Lot 95 : LA CUVE PARTAGÉE — un seul dessin de la réserve 300 L pour les
    deux pupitres. EFS (bleu foncé) en bas, air en haut ; le niveau est
@@ -7909,13 +8141,17 @@ function rendreSalon(d) {
       const id = rg[col];
       if (id) {
         cell.dataset.circ = col === 'a' ? 'A' : 'B';   /* lot 76 : tracé */
-        cell.dataset.sat = id;             /* lot 91 : distance sur tuyau */
+        cell.dataset.sat = id;    /* lot 91 -> 98 : sert au découpage des
+                                     tronçons (quel tuyau va où) */
         const s = parId[id];
         if (s) cell.appendChild(schCuve(s, d));
         else {
           const gh = el('div', 'sch-cuve ko');
-          gh.appendChild(el('div', 'sch-nom', id));
-          gh.appendChild(el('div', 'sch-lieu', 'hors ligne'));
+          const gd = el('div');            /* lot 98 : mêmes largeur et
+                                              mise en colonne que les autres */
+          gd.appendChild(el('div', 'sch-nom', id));
+          gd.appendChild(el('div', 'sch-lieu', 'hors ligne'));
+          gh.appendChild(gd);
           cell.appendChild(gh);
         }
       }
@@ -7923,38 +8159,32 @@ function rendreSalon(d) {
     });
   });
   g.appendChild(el('div', 'sch-etg sch-etgC', 'chaufferie'));
-  const bande = el('div', 'sch-chauf sch-encadre');
+  /* ── Lot 98 (2) : LA FICHE MODULE MAÎTRE, REFAITE (client 20/09 :
+     « elle est horrible ») — carte blanche à bandeau de charte, en-tête
+     sur une ligne : le titre à gauche, la pastille du total des
+     logements à droite. Plus de gros encadré, plus de titre noyé. ──── */
+  const bande = el('div', 'sch-chauf');
   bande.id = 'schBande';                             /* lot 76 : cible du tracé */
-  bande.appendChild(el('div', 'sch-chauf-titre',
-    'CHAUFFERIE COLLECTIVE — ' + totalLogements() + ' logements desservis'));
-  { /* lot 77 : la date vit DANS la bande, discrète et hors du chemin des
-       tuyaux (l'ancien bandeau flottant était « brouillon »). */
+  { const te9 = el('div', 'sch-chauf-tete');
+    const t9 = el('div', 't', 'CHAUFFERIE COLLECTIVE');
     const dj9 = dateCourante();   /* lot 91 : « installation en service
        depuis » retiré (client 18/09) — le pied « Depuis le … » suffit. */
-    const t9 = dj9 ? 'Données depuis le ' + dj9 : 'Données depuis l\u2019origine';
-    const ld9 = el('div', 'sch-note', t9);
-    ld9.style.cssText = 'flex-basis:100%;text-align:center;font-family:'
-      + 'var(--fs-cond);font-size:12.5px;color:var(--ink2);padding:0 2px';
-    bande.appendChild(ld9);
-    if (state.remEtat && state.remEtat.texte) {   /* lot 79 : remise AUTO */
-      const lr9 = el('div', 'sch-note', state.remEtat.texte);
-      lr9.style.cssText = 'flex-basis:100%;text-align:center;font-family:'
-        + 'var(--fs-cond);font-size:12.5px;padding:0 2px;color:'
-        + (state.remEtat.err ? '#b3261e' : '#2a7a4b');
-      bande.appendChild(lr9);
-    } }
+    t9.appendChild(el('small', null, dj9
+      ? 'données depuis le ' + dj9 : 'données depuis l\u2019origine'));
+    te9.appendChild(t9);
+    te9.appendChild(salonLogTotal());              /* lot 98 (6) : le total */
+    bande.appendChild(te9); }
+  /* Lot 79 -> 98 (3) : la ligne de remise automatique des compteurs est
+     retirée du Pupitre simple — message d'exploitation, il vit en vue
+     avancée (client 20/09 : « retirer le message d'erreur affiché là »). */
   schPhotoAttacher(bande, 'CHAUF');            /* lot 54 : album chaufferie */
-  { const fl9 = salonFluxActifs(d);       /* lot 91 : SEULS les tuyaux du
-       circuit en pompage bougent ; lot 92 : en récup (étape 7) le flux
-       de ce circuit RALENTIT, et l'entrée chaufferie suit si tout ce
-       qui pompe est en récup. */
-    g.classList.toggle('fluxA', fl9.A.on);
-    g.classList.toggle('fluxB', fl9.B.on);
-    g.classList.toggle('recupA', fl9.A.recup);
-    g.classList.toggle('recupB', fl9.B.recup);
-    g.classList.toggle('recupEnt',
-      (fl9.A.on || fl9.B.on)
-      && (!fl9.A.on || fl9.A.recup) && (!fl9.B.on || fl9.B.recup)); }
+  /* Lot 91/92 -> 98 (7) : les classes fluxA/fluxB/recup* (qui animaient
+     TOUT le circuit) sont remplacées par un état lu juste après, quand
+     les tracés existent — salonTuyaux n'allume alors que les TRONÇONS
+     réellement parcourus jusqu'à la cuve servie. */
+  state.fluxSalon = salonFluxActifs(d);
+  ['fluxA', 'fluxB', 'recupA', 'recupB', 'recupEnt']
+    .forEach(k9 => g.classList.remove(k9));
   const ch = (d && d.chaufferie) || {};
   const chip = (titre, val, sous, cls) => {
     const c2 = el('div', 'sch-chip' + (cls ? ' ' + cls : ''));
@@ -7965,28 +8195,10 @@ function rendreSalon(d) {
   };
   /* lot 91 : le chip Pilote (mise à jour disponible) est retiré du
      Pupitre simple — cette info technique reste en vue avancée. */
-  if (d && d.boot_anormal) {                   /* lot 57 -> 73 : SOBRE
-       (client : l'encadré criard était « abusif et laid ») */
-    const rb = el('div', 'sch-note',
-      'redémarrages : ' + (d.boot_n || '?') + ' · dernier : '
-      + String(d.boot_raison || 'raison inconnue').toLowerCase()
-      + (d.boot_passage ? ' (pendant : ' + d.boot_passage + ')' : ''));
-    rb.style.cssText = 'grid-column:1/-1;font-family:var(--fs-cond);'
-      + 'font-size:11.5px;color:#8a5a00;padding:0 2px';
-    bande.appendChild(rb);
-  }
-  if (d && has(d.etat_lu) && !d.etat_lu)       /* lot 55 : visible en vitrine */
-    { const bn = el('div', 'sch-note');
-      bn.style.cssText = 'flex-basis:100%;background:#fdf3df;border:1px solid '
-        + '#e0b25a;border-radius:10px;padding:8px 12px;font-family:var(--fs-cond);'
-        + 'font-size:13px;text-align:center';
-      bn.appendChild(el('b', null, "L'automate n'a pas pu relire sa mémoire "
-        + 'au dernier démarrage'));
-      bn.appendChild(document.createTextNode(
-        (d.etat_err ? ' (fichier incomplet : ' + d.etat_err + ')' : '') + ' — '
-        + 'remise automatique des compteurs en cours, voir la ligne '
-        + 'ci-dessous.'));
-      bande.appendChild(bn); }
+  /* Lot 57/55 -> 98 (3) : le compte des redémarrages anormaux et
+     l'encadré « l'automate n'a pas pu relire sa mémoire » quittent le
+     Pupitre simple (client 20/09). Ce sont des messages d'exploitation :
+     ils restent entiers en vue avancée. */
   /* ── lot 91 : l'ordre des chips suit le schéma annoté du client —
      ARRIVÉE EFS tout à gauche, puis Pression, la pompe en symbole de
      schéma, Production, les eaux, la réserve dessinée ; les alertes
@@ -8024,23 +8236,33 @@ function rendreSalon(d) {
       meilleur ? n(meilleur.rempl_dernier_tmax_c) + ' °C' : '—',
       '', pOn ? 'chaud' : ''));
   }
-  { /* lot 65 : eau tirée TOTALE depuis la date de comptage */
+  { /* Lot 65/91 -> 98 (9) : « Eau tirée (toutes cuves) » et « Eau
+       aujourd'hui » faisaient deux chips voisines disant la même chose.
+       Une SEULE sous-fiche « ECS TIRÉE », deux lignes (client 20/09). */
     let tot = 0, ok9 = false;
     ((d && d.circuits) || []).forEach(c2 => (c2.satellites || []).forEach(s2 => {
       if (has(s2.tiree_l)) { tot += s2.tiree_l; ok9 = true; }
     }));
-    const dd = (d && d.dates_deb && d.dates_deb.tiree) || '';
-    if (ok9)
-      bande.appendChild(chip('Eau tirée (toutes cuves)', n(tot) + ' L',
-        dd ? 'depuis le ' + dd : 'depuis le départ du comptage'));
-  }
-  { let tj = 0, tjOk = false;                  /* lot 91 : remonté ici */
+    let tj = 0, tjOk = false;
     Object.keys(parId).forEach(k => {
       const s = parId[k];
       if (has(s.tiree_jour_l)) { tj += s.tiree_jour_l; tjOk = true; }
     });
-    if (tjOk) bande.appendChild(chip('Eau aujourd\u2019hui', n(tj) + ' L',
-      'tirée par les logements'));
+    if (ok9 || tjOk) {
+      const dd = (d && d.dates_deb && d.dates_deb.tiree) || '';
+      const b9 = el('div', 'sch-ecs');
+      b9.appendChild(el('b', null, 'ECS tirée'));
+      const ligne9 = (lib9, val9) => {
+        const l9 = el('div', 'l');
+        l9.appendChild(el('span', null, lib9));
+        l9.appendChild(el('i', null, val9));
+        b9.appendChild(l9);
+      };
+      if (tjOk) ligne9('aujourd\u2019hui', n(tj) + ' L');
+      if (ok9)  ligne9(dd ? 'depuis le ' + dd : 'depuis le départ',
+                       n(tot) + ' L');
+      bande.appendChild(b9);
+    }
   }
   { /* lot 91 -> 95 : la réserve 300 L DANS la fiche module maître — la
        cuve partagée resCuveElement seule (EFS bleu foncé en bas, air en
@@ -8058,19 +8280,10 @@ function rendreSalon(d) {
       bande.appendChild(b9);
     }
   }
-  /* ── alertes conditionnelles, après l'essentiel (lot 91) ──────────── */
-  if (d && has(d.tas_min) && d.tas_min < 20000)   /* D208 : avant le mur */
-    bande.appendChild(chip('MÉMOIRE BASSE',
-      i0(d.tas_min) + ' o au plus bas',
-      'l\u2019automate approche de la panne mémoire — me le signaler',
-      'alerte'));
-  if (d && d.etat_source === 1)                 /* D207 : secours = rassurer */
-    bande.appendChild(chip('Mémoire', 'copie de secours',
-      'compteurs repris automatiquement (D207)', ''));
-  if (d && d.fs_rebati)                         /* D210 : rebâti = dit, sobre */
-    bande.appendChild(chip('Flash', 'rebâtie ×' + i0(d.fs_rebati),
-      'support de fichiers reconstruit après plantages répétés (D210) — '
-      + 'compteurs préservés', ''));
+  /* ── Lot 91 -> 98 (3) : les alertes d'INFORMATIQUE (MÉMOIRE BASSE,
+     copie de secours, flash rebâtie) quittent le Pupitre simple — elles
+     ne parlent qu'au mainteneur et restent en vue avancée. Ce qui suit
+     est PHYSIQUE (compresseur, manque d'air) : ça reste. ───────────── */
   const cp = ch.compresseur;
   if (cp && cp.grave)                          /* D206 : cas grave TRES visible */
     bande.appendChild(chip('RÉSERVE — CAS GRAVE',
@@ -8086,19 +8299,11 @@ function rendreSalon(d) {
           + (cp.decl ? ' · déclenché CNH' : '')
         : 'arrêt forcé (vieux pilote)',
       (cp.alarme || cp.etat === 2 || cp.decl) ? 'alerte' : ''));
-  if (has(ch.simul_sa1) && ch.simul_sa1)
-    bande.appendChild(chip('Simul SA1', 'OUVERTE',
-      n(ch.simul_faits_l || 0) + ' L faits', 'alerte'));
-  /* lot 76 : énergies « depuis le » — la chaufferie dit ce qui COMPTE */
-  if (d && d._depuis) {
-    const en9 = energiesDepuis(d);
-    if (en9) {
-      const le9 = el('div', 'sch-ener');
-      le9.appendChild(el('b', null, 'Depuis le ' + d._depuis + ' : '));
-      le9.appendChild(document.createTextNode(en9));
-      bande.appendChild(le9);
-    }
-  }
+  /* Lot 98 (3) : la chip « Simul SA1 » suit le bouton qu'on vient de
+     retirer — la simulation se pilote et s'affiche en vue avancée.
+     Lot 76 -> 98 (8) : la ligne des énergies « Depuis le … kWh » est
+     retirée du bas de la bande (client 20/09) ; energiesDepuis reste
+     utilisée par le pupitre avancé. */
   g.appendChild(bande);
   requestAnimationFrame(salonTuyaux);
 }
