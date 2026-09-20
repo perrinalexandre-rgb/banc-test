@@ -9,7 +9,28 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 2009.95 (lot 95, 20/09/2026)
+   enovaQ — pupitre de supervision · pupitre 2009.96 (lot 96, 20/09/2026)
+   Lot 96 (client 20/09, « go si ok ») : LA VUE AVANCÉE RESPIRE.
+   (1) Pompe en marche : le complément dit CE qu'elle fait — étape et
+   cuve servie, par circuit pompant (amorçage / remplissage / bouchon /
+   récup + SA1…) ; au repos, « repos » seul. (2) Sous-fiche Réserve :
+   plus de gros bouton — la fiche ENTIÈRE ouvre l'historique, petit
+   encadré « historique au clic » en bas à gauche (dessin du client).
+   (3) Sous-lignes des organes SUPPRIMÉES (« sonde V7 · min 5 h »,
+   « brut 423 », « sonde P4 », « sonde V8… », « fenêtre ouverte »…) —
+   tout passe en infobulle ; les DÉFAUTS restent dits (sonde muette,
+   capteur saturé, boucle ouverte, état non communiqué). (4) Circuits
+   A et B côte à côte (deux colonnes ; une seule sous 960 px) — moitié
+   moins longs. (5) Le module maître dans le MÊME encadré que les
+   circuits, titre à la même police (rail-id) : « MODULE MAÎTRE —
+   chaufferie collective… ». (6) Bloc « RÉPARER LES COMPTEURS
+   EFFACÉS » SUPPRIMÉ, écouteurs compris (la remise automatique des
+   lots 79-87 suffit — compris du client) ; retChercher / retMontrer
+   restent orphelines. (7) Sections « Niveau » et « Compteurs de
+   remplissage » SUPPRIMÉES — la cuve et ses infos pertinentes
+   (fourchette déduite, remplissage ~%) vivent en TÊTE du voile de
+   l'historique des appoints ; rendreReserve réduit au suivi
+   resJamaisSec (l'alerte « flotteurs suspects » en dépend).
    Lot 95 (client 20/09, « c'est clair ? si oui, go ») : LA RÉSERVE
    DESSINÉE DES DEUX CÔTÉS. La cuve 300 L fait partie du module maître :
    elle vit dans la fiche chaufferie collective des DEUX pupitres, via UN
@@ -741,7 +762,12 @@ header{border-bottom:1px solid var(--line);background:var(--panel)}
 .alerte em{color:var(--ink2);font-style:normal}
 
 /* ══ LE PUPITRE (deux trains + organes partagés) ═══════════════════════ */
-.pupitre{margin-top:6px;display:grid;gap:14px}
+.pupitre{margin-top:6px;display:grid;gap:14px;grid-template-columns:1fr 1fr}
+@media (max-width:960px){.pupitre{grid-template-columns:1fr}}
+/* lot 96 : le module maître dans le même encadré que les circuits,
+   accent neutre ; son titre emprunte rail-id / rail-bus (même police). */
+#partage{--c:var(--ink2);background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--r);border-left:3px solid var(--c);padding:14px 16px 16px}
 .organs-bas{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
 .rail{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
   border-left:3px solid var(--c);padding:14px 16px 16px;position:relative}
@@ -1324,12 +1350,21 @@ article.sat button{cursor:pointer}
   font-family:var(--fs-mono);font-size:9.5px;color:var(--ink2);white-space:nowrap}
 .sch-rcote.mouille{color:#b3261e;font-weight:700}
 .organ.res .sch-rescorps{margin-top:8px}
-.organ.res button{margin-top:9px;font-family:var(--fs-cond);font-size:11px;
-  padding:4px 10px;border:1px solid rgba(0,0,0,.28);border-radius:7px;
-  background:#fff;cursor:pointer}
-.organ.res button:hover{background:var(--panel3)}
+/* lot 96 : la sous-fiche ENTIÈRE ouvre l'historique ; petit encadré
+   « historique au clic » en bas à gauche — plus de gros bouton. */
+.organ.res{cursor:pointer;display:flex;flex-direction:column}
+.organ.res:hover{background:var(--panel3)}
+.res-tag{align-self:flex-start;margin-top:9px;font-family:var(--fs-cond);
+  font-size:10px;letter-spacing:.05em;color:var(--ink2);background:#fff;
+  border:1px solid rgba(0,0,0,.25);border-radius:6px;padding:2px 7px}
 .organ.res.ko{border-color:#b3261e;background:#fdf3f2}
 .organ.res.ko .s{color:#b3261e;font-family:var(--fs-cond);font-size:11.5px;font-weight:600}
+/* lot 96 : tête du voile — la cuve et ses infos pertinentes y vivent
+   (les cartes Niveau / Compteurs de remplissage sont supprimées). */
+#resJournal .rj-tete{display:flex;gap:16px;align-items:center;margin:2px 0 12px}
+#resJournal .rj-tete .kv{display:flex;justify-content:space-between;gap:12px;
+  font-size:12.5px;padding:2px 0;min-width:220px}
+#resJournal .rj-tete .kv b{font-family:var(--fs-mono)}
 .sch-reslbl{text-align:left;font-family:var(--fs-cond);font-size:12px;
   line-height:1.5;color:var(--ink)}
 .sch-reslbl .mouille{color:#b3261e;font-weight:700}
@@ -1442,8 +1477,9 @@ body:not(.salon) #schVoile{display:none}
        réserve 300 L et le Maddalena regroupés. Les consommations « depuis
        la date de départ » s'y afficheront avec ce chantier-là. -->
   <section class="carte" id="partage" style="margin-top:14px">
-    <div class="spine-lbl" style="margin-bottom:8px">CHAUFFERIE COLLECTIVE —
-      une pompe, une vanne 3 voies, la réserve 300 L</div>
+    <!-- lot 96 : même encadré et même police de titre que les circuits -->
+    <div class="rail-head"><div class="rail-id">MODULE MAÎTRE</div>
+      <div class="rail-bus">chaufferie collective — une pompe, une vanne 3 voies, la réserve 300 L</div></div>
     <div class="organs organs-bas" id="organs"></div>
   </section>
 
@@ -1451,25 +1487,11 @@ body:not(.salon) #schVoile{display:none}
   <div id="dateBandeauAv"></div>
   <section class="sats" id="sats"></section>
 
-  <h2 class="eyebrow">Réserve 300 L</h2>
-  <section class="grid2">
-    <div class="card">
-      <h3>Niveau <em>— trois flotteurs, dessinés à leur hauteur physique</em></h3>
-      <div class="res">
-        <div class="res-tube" id="resTube"><div class="air">air</div>
-          <div class="eau" id="resEau" style="height:0%"></div>
-          <div class="res-demi" title="mi-cuve"></div></div>
-        <div class="res-floats" id="resFloats"></div>
-      </div>
-      <div class="kv" style="margin-top:12px"><span title="Encadré du volume d'eau déduit des flotteurs Noir (250 L) et Jaune (300 L) — le CNB rouge est retiré (D206).">Fourchette déduite</span><b id="resBand">—</b></div>
-      <div class="kv"><span>Remplissage de la cuve</span><b id="resPct">—</b></div>
-      <p class="peu-fiable-note">Les cotes en litres sont provisoires : elles seront corrigées au câblage des flotteurs.</p>
-    </div>
-    <div class="card">
-      <h3>Compteurs de remplissage</h3>
-      <div class="stats" id="statReserve"></div>
-    </div>
-  </section>
+  <!-- lot 96 : la section « Réserve 300 L » (Niveau + Compteurs de
+       remplissage) est SUPPRIMÉE — le visuel de la cuve et les infos
+       pertinentes (fourchette, remplissage) vivent dans le voile du
+       journal des appoints d'air, ouvert depuis la sous-fiche Réserve
+       du module maître. -->
 
   <h2 class="eyebrow">Réchauffages</h2>
   <section class="card">
@@ -1636,43 +1658,9 @@ Exemple : hier 10:00 → hier 11:00 = 720 lignes.</div>
         L'automate rejette un satellite entier si l'ordre bas &lt; milieu &lt; haut &lt; X n'est pas respecté.
       </p>
       <div class="tabwrap"><table class="sattab" id="cfgSats"></table></div>
-      <details style="margin-top:18px">
-        <summary style="cursor:pointer;font-family:var(--fs-cond);font-weight:600;color:var(--ink2)">
-          RÉPARER LES COMPTEURS EFFACÉS — remettre les vrais totaux (automatique)
-        </summary>
-        <div class="fich-ctrl" id="poseRempl" style="margin-top:8px">
-          <!-- lot 80 (client, « exceptionnellement ») : le bouton du
-               lot 58 est RENDU, en ceinture-bretelles de la remise
-               automatique — utile tant que le 1609b est en place. -->
-          <button id="autoRet" style="font-weight:700">Rétablir AUTOMATIQUEMENT
-            depuis l'historique</button>
-          <span id="autoRetEtat"></span>
-          <div id="autoRetTab" style="flex-basis:100%"></div>
-          <span style="flex-basis:100%;height:0"></span>
-          <span style="font-size:12.5px;color:var(--ink3)">Ou à la main — la migration du pilote
-            1109a a remis à zéro les nombres de remplissages (erreur corrigée
-            par D190). Reportez les « sur N remplissages » de la ligne
-            <b>[D186]</b> du série du premier démarrage — ils s'<b>AJOUTENT</b>
-            une seule fois, puis cette rangée disparaîtra du pupitre.</span>
-          <input type="number" min="0" max="60000" id="poseSA1" placeholder="SA1" style="width:72px">
-          <input type="number" min="0" max="60000" id="poseSA2" placeholder="SA2" style="width:72px">
-          <input type="number" min="0" max="60000" id="poseSA3" placeholder="SA3" style="width:72px">
-          <input type="number" min="0" max="60000" id="poseSB1" placeholder="SB1" style="width:72px">
-          <button id="poseBtn" title="Additif : les remplissages comptés depuis le flash sont conservés.
-Ordre un coup, protégé par cfg_version, appliqué à l'instant sûr (D37) — trace série [D190].">Ajouter (une fois)</button>
-          <span id="poseEtat"></span>
-          <span style="flex-basis:100%;height:0"></span>
-          <span style="font-size:12.5px;color:var(--ink3)">Et les RÉCHAUFFAGES
-            (perte d'état du 14/09) — mêmes règles, valeurs dans la dernière
-            ligne d'avant-flash de l'historique (rech_nb par cuve) :</span>
-          <input type="number" min="0" max="60000" id="poseRSA1" placeholder="SA1" style="width:72px">
-          <input type="number" min="0" max="60000" id="poseRSA2" placeholder="SA2" style="width:72px">
-          <input type="number" min="0" max="60000" id="poseRSA3" placeholder="SA3" style="width:72px">
-          <input type="number" min="0" max="60000" id="poseRSB1" placeholder="SB1" style="width:72px">
-          <button id="poseRBtn" title="Additif — trace série [D201].">Ajouter réchauffages</button>
-          <span id="poseREtat"></span>
-        </div>
-      </details>
+      <!-- lot 96 : le bloc « RÉPARER LES COMPTEURS EFFACÉS » (rétablissement
+           manuel après les pertes d'état de septembre) est SUPPRIMÉ — la
+           remise AUTOMATIQUE (lots 79 à 87) fait le travail seule. -->
       <div class="f" style="margin-top:20px;max-width:360px">
         <label for="cfgKey">Clé d'accès <em>— celle définie dans CONFIG_API_KEY côté Azure ; gardée en mémoire seulement</em></label>
         <input id="cfgKey" type="password" autocomplete="off" placeholder="votre CONFIG_API_KEY">
@@ -1717,7 +1705,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '2009.95';   // marqueur « pupitre » — bandeau, pied, salon
+const LOT        = '2009.96';   // marqueur « pupitre » — bandeau, pied, salon
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -2742,27 +2730,34 @@ function rendreOrganes(d) {
   const trains = (d && d.trains) || [];
 
   const pp = ch.pompe_pct || 0;
-  /* Lot 24 (client 31/08) -> 95 : la température d'arrivée de l'eau froide
-     EN TÊTE de bande, comme au Pupitre simple (« arrivée EFS tout à
-     gauche ») — sonde V7 (D91), minimum glissant 5 h en sous-texte :
-     c'est LUI qui servira au rendement (la vraie eau froide, pas l'eau
-     tiédie dans le tube). */
+  /* Lot 24 -> 96 : Arrivée EFS en tête, VALEUR SEULE (client 20/09 : les
+     sous-lignes « incompréhensibles » disparaissent de tous les organes ;
+     sonde et minimum glissant restent en infobulle — le min 5 h sert au
+     rendement, D91). Les états en défaut, eux, restent dits. */
   const oEfs = tempValide(ch.temp_efs_c)
-    ? organe('', 'Arrivée EFS', n(ch.temp_efs_c), '°C',
-             'sonde V7' + (tempValide(ch.temp_efs_min5h_c)
-                           ? ' · min 5 h ' + n(ch.temp_efs_min5h_c) + ' °C' : ''))
+    ? organe('', 'Arrivée EFS', n(ch.temp_efs_c), '°C', '')
     : organe('ko', 'Arrivée EFS', '—', '',
              has(ch.temp_efs_c) ? 'valeur hors plage — sonde débranchée ?' : 'sonde muette');
-  oEfs.title = "Température de l'eau froide sanitaire à l'arrivée (sonde V7, D91). "
-             + "Le minimum glissant sur 5 h est la référence pour le rendement : "
+  oEfs.title = "Température de l'eau froide sanitaire à l'arrivée (sonde V7, D91)"
+             + (tempValide(ch.temp_efs_min5h_c)
+                ? ' · minimum glissant 5 h : ' + n(ch.temp_efs_min5h_c) + ' °C' : '')
+             + ". Le minimum glissant est la référence pour le rendement : "
              + "c'est la vraie eau froide, pas l'eau qui a tiédi dans le tube.";
   box.appendChild(oEfs);
 
-  { /* lot 95 (client 20/09) : « pompe état repos ça suffit » — repos /
-       en marche, rien d'autre. Les diagnostics (régime, arrêt non
-       confirmé) se replient en infobulle. */
+  { /* lot 95 -> 96 : « pompe état repos ça suffit »… sauf en marche
+       (client 20/09) : là, le COMPLÉMENT dit ce qu'elle fait — étape et
+       cuve servie, par circuit qui pompe (amorçage, remplissage,
+       bouchon, récup). */
+    let fait9 = '';
+    if (pp > 0) fait9 = trains.slice(0, 2).map((t9, i9) => {
+      if (!t9) return null;
+      const c9 = codeEtape(t9.etape);
+      if (!POMPE_ETAPES.includes(c9)) return null;
+      return LIBEL[codeFamille(c9)] + ' ' + (t9.sat_actif || ('circuit ' + (i9 ? 'B' : 'A')));
+    }).filter(Boolean).join(' · ');
     const oP1 = organe('pump' + (pp > 0 ? ' run' : ' ko'), 'Pompe P1',
-      pp > 0 ? 'en marche' : 'repos', '', '');
+      pp > 0 ? 'en marche' : 'repos', '', fait9);
     oP1.title = pp > 0
       ? (pp >= 100 ? 'plein régime · 65 Hz' : 'régime réduit · ' + pp + ' %')
       : (ch.pompe_arret_non_confirme
@@ -2771,35 +2766,43 @@ function rendreOrganes(d) {
   }
 
   /* La V3 n'a QUE deux états : ECS ou EFS. Le ressort qui la ramène hors
-     tension n'est pas un troisième état (décision client 17/08). */
+     tension n'est pas un troisième état (décision client 17/08).
+     Lot 96 : valeur seule, l'explication passe en infobulle. */
   const v3 = ch.v3 || '—';
-  box.appendChild(organe('v3 ' + String(v3).toLowerCase(), 'Vanne 3 voies', v3, '',
-    v3 === 'EFS' ? 'eau froide sanitaire — fenêtre ouverte'
-    : v3 === 'ECS' ? 'eau chaude sanitaire' : 'état non communiqué'));
+  { const oV3 = organe('v3 ' + String(v3).toLowerCase(), 'Vanne 3 voies', v3, '',
+      (v3 !== 'EFS' && v3 !== 'ECS') ? 'état non communiqué' : '');
+    oV3.title = v3 === 'EFS' ? 'eau froide sanitaire — fenêtre ouverte'
+              : v3 === 'ECS' ? 'eau chaude sanitaire' : '';
+    box.appendChild(oV3); }
 
   const pr = ch.pression || {};
   const presLue = pr.ok && !pr.defaut;
   const oPres = presLue
     ? organe(pr.sature ? 'ko' : '', 'Pression sortie', n(pr.bar), 'bar',
-             'brut ' + i0(pr.brut) + (pr.sature ? ' — capteur saturé' : ''))
+             pr.sature ? 'capteur saturé' : '')
     : organe('ko', 'Pression sortie', '—', '',
              pr.ok === false ? 'pas de réponse du ZLAN' : 'boucle 4-20 mA ouverte');
   oPres.title = "Capteur 1 MPa = 10 bar pleine échelle, DÉFINITIF (D117 — le "
               + "1,6 MPa sous-lisait ~15 %, réformé), 4-20 mA sur la voie AI6 "
               + "(D92). La carte rend une échelle déjà calée : 0 = 4 mA (D116). "
+              + (presLue ? 'Brut actuel : ' + i0(pr.brut) + '. ' : '')
               + "Brut à zéro = boucle ouverte ; brut en butée = saturation. "
               + "Réglage correspondant : pres_bar_max = 10.";
   box.appendChild(oPres);
 
-  box.appendChild(tempValide(ch.temp_pompe_c)
-    ? organe('', 'Sortie de pompe', n(ch.temp_pompe_c), '°C', 'sonde P4')
-    : organe('ko', 'Sortie de pompe', '—', '',
-             has(ch.temp_pompe_c) ? 'valeur hors plage — sonde débranchée ?' : 'sonde muette'));
+  { const oSp = tempValide(ch.temp_pompe_c)
+      ? organe('', 'Sortie de pompe', n(ch.temp_pompe_c), '°C', '')
+      : organe('ko', 'Sortie de pompe', '—', '',
+               has(ch.temp_pompe_c) ? 'valeur hors plage — sonde débranchée ?' : 'sonde muette');
+    oSp.title = 'sonde P4';
+    box.appendChild(oSp); }
 
-  box.appendChild(tempValide(ch.temp_retour_c)
-    ? organe('', 'Retour', n(ch.temp_retour_c), '°C', 'sonde V8, avant la cuve d\'air')
-    : organe('ko', 'Retour', '—', '',
-             has(ch.temp_retour_c) ? 'valeur hors plage' : 'sonde muette'));
+  { const oRt = tempValide(ch.temp_retour_c)
+      ? organe('', 'Retour', n(ch.temp_retour_c), '°C', '')
+      : organe('ko', 'Retour', '—', '',
+               has(ch.temp_retour_c) ? 'valeur hors plage' : 'sonde muette');
+    oRt.title = "sonde V8, juste avant la cuve d'air";
+    box.appendChild(oRt); }
 
   /* lot 95 : le bloc « Arrivée EFS » vit désormais EN TÊTE de bande. */
 
@@ -2822,10 +2825,14 @@ function rendreOrganes(d) {
       oR.appendChild(cor9);
       if (grave) oR.appendChild(el('div', 's',
         "manque d'air — l'eau a atteint le haut"));
-      const bh9 = el('button', null, "historique des appoints d'air");
-      bh9.addEventListener('click', ev => {
+      /* lot 96 : plus de gros bouton — la FICHE entière ouvre
+         l'historique, et un petit encadré « historique au clic » en bas
+         à gauche le dit (dessin du client). */
+      oR.appendChild(el('div', 'res-tag', 'historique au clic'));
+      oR.title = "Un clic n'importe où sur la fiche ouvre l'historique "
+        + "des appoints d'air.";
+      oR.addEventListener('click', ev => {
         ev.stopPropagation(); resJournalOuvrir(); });
-      oR.appendChild(bh9);
       box.appendChild(oR);
     }
   }
@@ -3854,67 +3861,17 @@ function ligne(box, k, v, ko, aide) {
    est mouillé, pleine si le jaune l'est. */
 const resRond = v => has(v) && isFinite(v) ? Math.round(v / 50) * 50 : v;
 function rendreReserve(d) {
+  /* Lot 96 : la section « Réserve 300 L » de la vue avancée est
+     SUPPRIMÉE (client 20/09) — le visuel vit dans la sous-fiche du
+     module maître et en tête du voile de l'historique des appoints.
+     Ne reste ICI que le suivi resJamaisSec, dont dépend l'alerte
+     « flotteurs suspects » (tous mouillés depuis le démarrage). */
   const rs = ((d && d.chaufferie) || {}).reserve || {};
-  const tube = $('#resTube');
-  const box = $('#resFloats'); box.textContent = '';
   const lu = has(rs.bas_mouille) || has(rs.haut_mouille);
-  /* Lot 46 (D172) : le flotteur NOIR (milieu) est DÉPOSÉ quand l'automate
-     publie milieu_present = 0 — sa voie DI7 compte désormais la tirée de
-     SB1. La réserve se lit alors sur DEUX flotteurs. Un pilote plus ancien
-     ne publie pas la clé : trois flotteurs, comme avant. */
   const mp = !has(rs.milieu_present) || !!rs.milieu_present;
-  /* Lot 47 (D181) : le flotteur JAUNE (haut) n'est PLUS raccordé quand
-     l'automate publie haut_present = 0 — il reste dessiné, gris, marqué
-     « non raccordé », et ne clignote jamais. Vieux pilote : comme avant. */
   const hp = !has(rs.haut_present) || !!rs.haut_present;
   if (lu && ((hp && !rs.haut_mouille) || (mp && !rs.milieu_mouille) || !rs.bas_mouille))
     state.resJamaisSec = false;
-
-  /* [classe, nom, position %, cote L, mouillé, raccordé] — lot 47/D181.
-     Lot 75 (D206) : le Rouge (CNB, 200 L) est SUPPRIMÉ du dessin. */
-  const FLOTTEURS = [['j', 'Jaune', 92, 300, hp ? rs.haut_mouille : 0, hp]];
-  if (mp) FLOTTEURS.push(['n', 'Noir', 72, 250, rs.milieu_mouille, true]);
-
-  tube.querySelectorAll('.res-rep').forEach(e => e.remove());
-  FLOTTEURS.forEach(([cl, nom, pos, vol, m, ok2]) => {
-    const r = el('div', 'res-rep ' + cl + (ok2 && m ? ' wet' : '') + (ok2 ? '' : ' off'));
-    r.style.bottom = pos + '%';
-    r.title = nom + ' — à ' + pos + ' % de la hauteur de la cuve (cote ' + i0(vol)
-            + ' L) — ' + (!ok2 ? 'NON RACCORDÉ (D181)'
-                        : lu ? (m ? 'MOUILLÉ (clignote)' : 'sec') : 'lecture indisponible');
-    r.appendChild(el('u'));
-    r.appendChild(el('i'));
-    tube.appendChild(r);
-  });
-
-  FLOTTEURS.forEach(([cl, nom, pos, vol, m, ok2]) => {
-    const f = el('div', 'flt ' + cl + (ok2 && m ? ' wet' : '') + (ok2 ? '' : ' off'));
-    f.style.bottom = pos + '%';               /* en face de son repère */
-    f.appendChild(el('i'));
-    f.appendChild(el('span', null, nom + ' · ' + i0(vol) + ' L'));
-    f.appendChild(el('b', null, !ok2 ? 'non raccordé' : lu ? (m ? 'mouillé' : 'sec') : '—'));
-    box.appendChild(f);
-  });
-
-  /* eau : AU MILIEU de la fourchette physique — deux flotteurs (D206) */
-  let eauPct = 0, litres = null;
-  if (lu) {
-    if (hp && rs.haut_mouille)        { eauPct = 97;            litres = 300; }
-    else if (mp && rs.milieu_mouille) { eauPct = (72 + 92) / 2; litres = 275; }
-    else                              { eauPct = 36;            litres = 125; }
-  }
-  const eau = $('#resEau');
-  eau.style.height = eauPct + '%';
-  eau.title = !lu ? '' :
-    "Niveau dessiné au MILIEU de la fourchette donnée par les flotteurs — "
-    + "on ne connaît pas mieux que ça (lot 23).";
-
-  $('#resBand').textContent = !lu ? 'lecture indisponible'
-    : (hp && rs.haut_mouille) ? "≥ 300 L — plus de matelas d'air"
-    : (mp && rs.milieu_mouille) ? (hp ? '250 – 300 L' : '≥ 250 L')
-    : '< 250 L';
-  $('#resPct').textContent = litres === null ? '—'
-    : '~' + Math.round(litres / 300 * 100) + ' %';
 }
 
 function rendreEau(d) {
@@ -5963,7 +5920,6 @@ function rendre(force) {
   rendreSats(d);
   remplirStats('#statRendement', RENDEMENT, d);
   remplirStats('#statEnergie',   ENERGIE,   d);
-  remplirStats('#statReserve',   RESERVE_CPT, d);
   remplirStats('#statDiag',      DIAG,      d);
   rendreReserve(d);
   rendreCompresseur(d);
@@ -7281,60 +7237,11 @@ function retMontrer2(tN, tL) {
   });
   tab.appendChild(ok2);
 }
-const _autoRetB = $('#autoRet');
-if (_autoRetB) _autoRetB.addEventListener('click', async () => {
-  const et = $('#autoRetEtat'); $('#autoRetTab').textContent = '';
-  if (DEMO) { et.textContent = 'démonstration — rien lu'; return; }
-  if (_autoRetB) _autoRetB.disabled = true;
-  const t9 = await retChercher();
-  if (_autoRetB) _autoRetB.disabled = false;
-  if (t9.duo) { $('#autoRetEtat').textContent = 'trouvé — vérifiez puis confirmez :'; retMontrer(t9); return; }
-  if (t9.err500) {
-    et.textContent = 'le lecteur v1 en ligne bloque la lecture (500 sur '
-      + t9.jour + ') — collez la v2 (2 min, instructions du 12/09) et '
-      + 'recliquez : le rétablissement sera entièrement automatique. '
-      + 'En attendant, la saisie manuelle ci-dessous fonctionne.';
-    return;
-  }
-  if (t9.err) { et.textContent = 'échec : ' + t9.err; return; }
-  if (t9.vide) { et.textContent = 'aucune ligne saine trouvée les 12-13/09.'; return; }
-  et.textContent = 'trouvé — vérifiez puis confirmez :';
-  retMontrer(t9);
-});
-$('#poseRBtn').addEventListener('click', async () => {  /* lot 53 : D201 */
-  const v = ['SA1', 'SA2', 'SA3', 'SB1'].map(id2 => {
-    const x = parseInt($('#poseR' + id2).value, 10);
-    return Number.isFinite(x) && x > 0 ? x : 0;
-  });
-  const et = $('#poseREtat');
-  if (!v.some(x => x > 0)) { et.textContent = 'saisir au moins un nombre'; return; }
-  if (DEMO) { et.textContent = 'démonstration — rien envoyé'; return; }
-  const b2 = $('#poseRBtn'); b2.disabled = true;
-  et.textContent = 'envoi…';
-  await deposer({rech_nb_ajout: v, cfg_version: versionSuivante()},
-                $('#cfgKey') ? $('#cfgKey').value.trim() : '');
-  et.textContent = "déposé — série [D201] à l'application";
-  ['SA1', 'SA2', 'SA3', 'SB1'].forEach(id2 => { $('#poseR' + id2).value = ''; });
-  b2.disabled = false;
-});
-$('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
-  const v = ['SA1', 'SA2', 'SA3', 'SB1'].map(id2 => {
-    const x = parseInt($('#pose' + id2).value, 10);
-    return Number.isFinite(x) && x > 0 ? x : 0;
-  });
-  const et = $('#poseEtat');
-  if (!v.some(x => x > 0)) { et.textContent = 'saisir au moins un nombre'; return; }
-  if (DEMO) { et.textContent = 'démonstration — rien envoyé'; return; }
-  const b2 = $('#poseBtn'); b2.disabled = true;
-  et.textContent = 'envoi…';
-  await deposer({rempl_nb_ajout: v, cfg_version: versionSuivante()},
-                $('#cfgKey') ? $('#cfgKey').value.trim() : '');
-  et.textContent = "déposé — les nombres s'AJOUTERONT à l'instant sûr (série [D190])";
-  ['SA1', 'SA2', 'SA3', 'SB1'].forEach(id2 => { $('#pose' + id2).value = ''; });
-  b2.disabled = false;
-});
+/* lot 96 : les écouteurs du bloc « RÉPARER LES COMPTEURS EFFACÉS »
+   (autoRet, poseBtn, poseRBtn) sont RETIRÉS avec le bloc — la remise
+   automatique suffit. retChercher / retMontrer restent orphelines. */
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 2009c — pupitre ' + LOT + ' · lot 95 — 20/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 2009d — pupitre ' + LOT + ' · lot 96 — 20/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
@@ -7921,6 +7828,8 @@ function resJournalOuvrir() {
     v9.appendChild(x9);
     v9.appendChild(el('h4', null,
       "Journal des appoints d'air — compresseur (30 dernières fiches)"));
+    const t9 = el('div', 'rj-tete'); t9.id = 'resJournalTete';  /* lot 96 */
+    v9.appendChild(t9);
     const c9 = el('div'); c9.id = 'resJournalCorps'; v9.appendChild(c9);
     v9.addEventListener('click', ev => ev.stopPropagation());
     document.body.appendChild(v9);
@@ -7933,6 +7842,35 @@ function resJournalOuvrir() {
 function resJournalMaj() {
   const v9 = $('#resJournal');
   if (!v9 || v9.style.display !== 'block') return;
+  { /* lot 96 : la TÊTE du voile porte le visuel de la réserve et ses
+       infos pertinentes — reprises des cartes « Niveau » et « Compteurs
+       de remplissage » supprimées : cuve partagée, fourchette déduite
+       des flotteurs (D206 : Noir 250 L, Jaune 300 L), remplissage ~%. */
+    const te9 = $('#resJournalTete');
+    if (te9) {
+      te9.textContent = '';
+      const rs9 = (((state.data || {}).chaufferie) || {}).reserve || {};
+      if (has(rs9.milieu_mouille) || has(rs9.haut_mouille)) {
+        te9.appendChild(resCuveElement(rs9));
+        const hp9 = !has(rs9.haut_present) || !!rs9.haut_present;
+        const mp9 = !has(rs9.milieu_present) || !!rs9.milieu_present;
+        const inf9 = el('div');
+        const kv9 = (k2, v2) => { const d2 = el('div', 'kv');
+          d2.appendChild(el('span', null, k2));
+          d2.appendChild(el('b', null, v2)); inf9.appendChild(d2); };
+        kv9('Fourchette déduite',
+          (hp9 && rs9.haut_mouille) ? "\u2265 300 L — plus de matelas d'air"
+          : (mp9 && rs9.milieu_mouille) ? (hp9 ? '250 – 300 L' : '\u2265 250 L')
+          : '< 250 L');
+        kv9('Remplissage de la cuve', '~' + Math.round(
+          ((hp9 && rs9.haut_mouille) ? 300
+           : (mp9 && rs9.milieu_mouille) ? 275 : 125) / 300 * 100) + ' %');
+        inf9.appendChild(el('div', 'rj-note',
+          'cotes provisoires — corrigées au câblage des flotteurs'));
+        te9.appendChild(inf9);
+      }
+    }
+  }
   const c9 = $('#resJournalCorps'); if (!c9) return;
   c9.textContent = '';
   const st9 = state.fich || {};
