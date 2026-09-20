@@ -10,7 +10,39 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 2009.101 (lot 101, 20/09/2026)
+   enovaQ — pupitre de supervision · pupitre 2009.103 (lot 103, 20/09/2026)
+   Lot 103 (client 20/09) : DEUX SUPPRESSIONS.
+   (1) Les étiquettes « Circuit A » / « Circuit B » sur le tracé des
+   tuyaux du Pupitre simple sont SUPPRIMÉES : celle du A passait
+   derrière la fiche, et les deux doublonnaient le marquage déjà porté
+   en haut. Les deux appels texte9 sont retirés (texte9 reste,
+   orpheline), les règles CSS #schTuyaux text / .circLbl aussi.
+   (2) Tableau Consommation électrique : la colonne « Énergie · depuis
+   le … » est SUPPRIMÉE. Le kWh cumulé ne sert plus qu'au CALCUL de la
+   Moyenne / jour et de l'Estimation annuelle ; le détail (compteur −
+   référence du 14/09, fenêtre) vit dans l'infobulle de la moyenne, la
+   fenêtre dans la note sous le tableau, et le cumul brut reste lisible
+   au clic sur la fiche (« compteurs bruts, depuis le démarrage » —
+   l'invite ne cite plus une colonne disparue et couvre aussi le départ
+   14/09 du lot 102).
+   Lot 102 (client 20/09 : « le comptage de la conso élec doit se faire
+   à partir du 14/09, il faut scanner la base de données ») : OUI — le
+   scanner existait déjà (dateChargerRefs, celui des dates de comptage :
+   /api/histo en flux, première ligne complète et SAINE du jour). Le
+   tableau Consommation électrique prend désormais le 14/09/2026 comme
+   départ PAR DÉFAUT : au premier affichage, la référence (kWh pompe /
+   auxiliaires / cumulus ce jour-là) est lue dans la base, puis chaque
+   ligne montre compteur − référence, en-tête « Énergie · depuis le
+   14/09/2026 », moyennes et annuelle sur cette fenêtre, note « référence
+   lue dans la base ». Une date de comptage posée par l'utilisateur
+   PRIME toujours (geste explicite — comportement inchangé) ; l'archive
+   est lisible depuis le 11/09 (DATE_MIN), le 14/09 passe. Honnêteté :
+   lecture en cours -> moyennes « — » + note ; échec -> retombée dite
+   sur « depuis le début » + note rouge + réessai sous 60 s ; compteur
+   sans référence ce jour-là -> total brut + note rouge nominative.
+   Périmètre : LE TABLEAU élec — la carte Énergie par poste et la fiche
+   production suivent toujours la date globale. Démo : référence simulée
+   (pompe 68,0 / aux 9,9 kWh, cumulus manquant).
    Lot 101 (client 20/09) : LES QUATRE ÉTATS DU TUYAU + LES COLONNES ÉLEC.
    (1) « L'animation ne fonctionne pas bien » : la transition de teinte
    BOUCLAIT (tuyTeinte infinite : bleu->rouge, saut, bleu->rouge…). Elle
@@ -1489,8 +1521,9 @@ article.sat button{cursor:pointer}
 .sch-chip.pompeOn span{color:var(--ecs)}
 /* Lot 91 -> 98 (5) : il ne reste QUE les étiquettes Circuit A / B sur
    le tracé — les distances sont rentrées dans les fiches (.sch-dist). */
-#schTuyaux text{font-family:var(--fs-cond);fill:#14537d;font-size:12px} /* lot 100 : assorti au tuyau bleu */
-#schTuyaux text.circLbl{font-weight:700;font-size:12.5px;letter-spacing:.04em}
+/* lot 103 : les règles #schTuyaux text / .circLbl sont SUPPRIMÉES — plus
+   aucun texte n'est posé sur le tracé (étiquettes Circuit A/B retirées,
+   doublon du marquage des fiches ; elles passaient derrière). */
 /* Lot 98 (9) : « Eau tirée (toutes cuves) » et « Eau aujourd'hui »
    faisaient deux chips côte à côte disant la même chose — une SEULE
    sous-fiche, deux lignes (client 20/09). */
@@ -1889,7 +1922,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '2009.101';  // marqueur « pupitre » — bandeau, pied, salon
+const LOT        = '2009.103';  // marqueur « pupitre » — bandeau, pied, salon
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -2031,6 +2064,17 @@ const ELEC_LIGNES = [
        +"qui servira au rendement de l'installation (D94). Ce compteur ne "
        +"publie qu'énergie et puissance."},
 ];
+/* Lot 102 (client 20/09) : LE COMPTAGE ÉLEC PART DU 14/09. La référence
+   (kWh des trois compteurs ce jour-là) est LUE DANS LA BASE par le même
+   scanner que les dates de comptage (dateChargerRefs : première ligne
+   complète et saine du jour) — le tableau affiche compteur − référence.
+   Une date de comptage posée par l'utilisateur PRIME (geste explicite,
+   comportement inchangé) ; le 14/09 est le départ par défaut. */
+const ELEC_DEPUIS = '14/09/2026';
+const ELEC_REF_CLES = {sdm120: 'sdm_kwh', elec_aux: 'aux_kwh',
+                       elec_cumulus: 'cum_kwh'};
+const ELEC_REF_NOMS = {sdm_kwh: 'pompe', aux_kwh: 'auxiliaires',
+                       cum_kwh: 'cumulus'};
 
 const DIAG = [
   {k:'Mémoire libre',       champ:'diag.tas_libre',        unite:'o', dec:0},
@@ -4079,6 +4123,40 @@ function rendreMesures(d) {
    compteur, l'adresse en petit sous le nom. Ligne grisée quand le compteur
    ne répond pas ; « — » sans grisé quand la grandeur n'est simplement pas
    publiée (tension/courant des adresses 5 et 6). */
+/* Lot 102 : la référence élec du 14/09 — chargée UNE fois, à la première
+   demande du tableau (et seulement si aucune date de comptage ne prime).
+   Réel : dateChargerRefs (le lecteur en flux du choix de date), dont on
+   ne garde que les trois kWh chaufferie ; le diag de la carte de date
+   est préservé. Échec : mémorisé, dit sous le tableau, réessai sous
+   60 s — jamais figé, jamais muet. Démo : référence simulée. */
+function elecRefCharger() {
+  if (state.elecRef || state.elecRefChargement || state.elecRefErr) return;
+  if (DEMO) {
+    state.elecRef = {date: ELEC_DEPUIS, ch: {sdm_kwh: 68.0, aux_kwh: 9.9},
+                     manque: ['cum_kwh']};   /* cumulus muet ce jour-là */
+    return;
+  }
+  state.elecRefChargement = true;
+  (async () => {
+    const diag0 = state.dateDiag;      /* la carte de date garde le sien */
+    let r9;
+    try { r9 = await dateChargerRefs(ELEC_DEPUIS); }
+    catch (e9) { r9 = {err: String((e9 && e9.message) || e9)}; }
+    state.dateDiag = diag0;
+    state.elecRefChargement = false;
+    if (r9.err || !r9.refs) {
+      state.elecRefErr = r9.err || 'référence vide';
+      setTimeout(() => { state.elecRefErr = null; }, 60000);  /* réessai */
+    } else {
+      const ch9 = {}, mq9 = [];
+      ['sdm_kwh', 'aux_kwh', 'cum_kwh'].forEach(k9 => {
+        if (k9 in r9.refs.ch) ch9[k9] = r9.refs.ch[k9]; else mq9.push(k9);
+      });
+      state.elecRef = {date: ELEC_DEPUIS, ch: ch9, manque: mq9};
+    }
+    rendre(true);
+  })();
+}
 function rendreElecTable(d) {
   const ch = (d && d.chaufferie) || {};
   const cf = (d && d.config_active) || null;
@@ -4087,24 +4165,28 @@ function rendreElecTable(d) {
   const hr = document.createElement('tr');
   const dep9 = (state.data && state.data._depuis) ? state.data._depuis : null;
   /* lot 101 (demandé au lot 99, spec validée) : Moyenne / jour et
-     Estimation annuelle (× 365). La fenêtre est LA MÊME que la colonne
-     Énergie : date de comptage posée (_depuis) sinon départ réel des
-     compteurs (dates_deb du pilote). Jours comptés en fractionnaire —
-     la moyenne s'affine donc d'elle-même avec le temps ; moins de 24 h
-     de recul -> « — » (un chiffre extrapolé sur quelques heures serait
-     absurde). */
-  const dep0 = dep9 || dateInstallation();
+     Estimation annuelle (× 365). Lot 102 : la fenêtre par défaut n'est
+     plus le départ des compteurs mais le 14/09 (référence lue dans la
+     base) ; une date de comptage posée (_depuis) continue de PRIMER.
+     Jours comptés en fractionnaire — la moyenne s'affine d'elle-même ;
+     moins de 24 h de recul -> « — ». */
+  if (!dep9) elecRefCharger();
+  const eref9 = (!dep9 && state.elecRef) ? state.elecRef : null;
+  const eatt9 = !dep9 && !eref9 && !state.elecRefErr;  /* lecture en cours */
+  const dep0 = dep9 || (eref9 ? ELEC_DEPUIS
+                              : (state.elecRefErr ? dateInstallation() : null));
   let jours9 = 0;
   if (dep0) {
     const m9 = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dep0);
     if (m9) jours9 = (Date.now()
       - new Date(+m9[3], +m9[2] - 1, +m9[1]).getTime()) / 86400000;
   }
-  ['Compteur', dep9 ? 'Énergie · depuis le ' + dep9 : 'Énergie',
-   'Moyenne / jour', 'Estimation annuelle',
+  ['Compteur', 'Moyenne / jour', 'Estimation annuelle',
    'Puissance', 'Tension', 'Courant'].forEach(h => {
     const th = document.createElement('th'); th.textContent = h; hr.appendChild(th);
-  });
+  });   /* lot 103 : la colonne « Énergie · depuis le … » est SUPPRIMÉE —
+           la fenêtre vit dans la note sous le tableau, le cumul au clic
+           sur la fiche (compteurs bruts). */
   thead.appendChild(hr); t.appendChild(thead);
   const tbody = document.createElement('tbody');
   const nb = $('#elecNote'); nb.textContent = '';
@@ -4120,7 +4202,7 @@ function rendreElecTable(d) {
         rendre(true);
       });
     }
-    if (state.elecBrut && dep9) {
+    if (state.elecBrut && (dep9 || eref9)) {
       const chB = (state.dataBrut && state.dataBrut.chaufferie) || {};
       const mB = [];
       if (chB.sdm120 && has(chB.sdm120.energie_kwh))
@@ -4132,9 +4214,10 @@ function rendreElecTable(d) {
       if (mB.length)
         nb.appendChild(el('p', 'note', 'Compteur, depuis le démarrage : '
           + mB.join(' · ') + '.'));
-    } else if (dep9)
+    } else if (dep9 || eref9)   /* lot 103 : la colonne a disparu, le
+         cumul reste accessible ici */
       nb.appendChild(el('p', 'note',
-        'Énergies « depuis le ' + dep9 + ' » — cliquez la fiche : le compteur brut.'));
+        'Cliquez la fiche : les compteurs bruts (kWh depuis le démarrage).'));
   }
   let unMuet = false, unAbsent = false;
   ELEC_LIGNES.forEach(lg => {
@@ -4148,9 +4231,54 @@ function rendreElecTable(d) {
     td0.appendChild(adr);
     td0.title = lg.aide;
     tr.appendChild(td0);
-    lg.cols.forEach((col, i9) => {
+    { /* lot 103 (client) : la colonne Énergie est SUPPRIMÉE — le kWh
+         cumulé ne sert plus qu'au CALCUL des deux colonnes ; le détail
+         (compteur − référence, fenêtre) vit dans l'infobulle de la
+         moyenne, le cumul brut au clic sur la fiche. */
+      const col0 = lg.cols[0];               /* ['energie_kwh','kWh',1] */
+      const v = app ? app[col0[0]] : undefined;
+      let nrj9 = null, motif9 = null, det9 = '';
+      if (!muet && has(v) && isFinite(v)) {
+        let v2 = +v;
+        if (eref9) {                     /* lot 102 : − réf du 14/09 */
+          const rk9 = ELEC_REF_CLES[lg.cle];
+          if (rk9 && (rk9 in eref9.ch)) {
+            v2 = Math.max(0, Math.round((v2 - eref9.ch[rk9]) * 10) / 10);
+            det9 = 'Énergie depuis le ' + ELEC_DEPUIS + ' : ' + n(v2, 1)
+                 + ' kWh (compteur ' + n(+v, 1) + ' − référence '
+                 + n(eref9.ch[rk9], 1) + ')';
+          } else motif9 = 'Référence du ' + ELEC_DEPUIS + ' introuvable pour '
+                        + 'ce compteur (muet ce jour-là ?) — pas de moyenne.';
+        } else det9 = 'Énergie' + (dep0 ? ' depuis le ' + dep0 : '')
+                    + ' : ' + n(v2, 1) + ' kWh';
+        if (!motif9) nrj9 = v2;
+      } else motif9 = "Compteur sans réponse ou énergie non publiée : pas de moyenne.";
+      if (!motif9 && eatt9)
+        motif9 = 'Référence du ' + ELEC_DEPUIS + ' en cours de lecture dans la base…';
+      const ok9 = nrj9 !== null && !eatt9 && jours9 >= 1;
+      const moy9 = ok9 ? nrj9 / jours9 : 0;
+      [[n(moy9, 1), ' kWh/j',
+        det9 + ' ÷ ' + n(jours9, 1) + ' jours écoulés.'],
+       [n(Math.round(moy9 * 365), 0), ' kWh',
+        'Moyenne journalière × 365 — plus il y a de jours de recul, plus elle est fiable.']]
+        .forEach(([val9, un9, aide9]) => {
+          const td9 = document.createElement('td');
+          if (ok9) {
+            td9.appendChild(document.createTextNode(val9));
+            td9.appendChild(el('small', null, un9));
+            td9.title = aide9;
+          } else {
+            td9.textContent = '—';
+            td9.title = motif9
+              || (dep0
+                  ? 'Moyenne trop jeune : moins de 24 h de recul depuis le ' + dep0 + '.'
+                  : 'Date de départ des compteurs inconnue : moyenne impossible.');
+          }
+          tr.appendChild(td9);
+        });
+    }
+    lg.cols.slice(1).forEach(col => {
       const td = document.createElement('td');
-      let nrj9 = null;                 /* lot 101 : l'énergie affichée */
       if (col === null) {
         td.textContent = '—';
         td.title = "Grandeur non publiée par ce compteur : énergie et puissance seulement (normal).";
@@ -4159,51 +4287,36 @@ function rendreElecTable(d) {
         if (!muet && has(v) && isFinite(v)) {
           td.appendChild(document.createTextNode(n(v, col[2])));
           td.appendChild(el('small', null, ' ' + col[1]));
-          if (i9 === 0) nrj9 = +v;
         } else {
           td.textContent = '—';
           td.title = "Compteur sans réponse sur le bus : la page affiche « — », jamais une ancienne valeur.";
         }
       }
       tr.appendChild(td);
-      if (i9 === 0) {   /* lot 101 : les deux colonnes calculées suivent
-           l'énergie AFFICHÉE (même fenêtre, brut ou daté indifférent) */
-        const ok9 = nrj9 !== null && jours9 >= 1;
-        const moy9 = ok9 ? nrj9 / jours9 : 0;
-        [[n(moy9, 1), ' kWh/j',
-          'Énergie affichée ÷ ' + n(jours9, 1) + ' jours écoulés.'],
-         [n(Math.round(moy9 * 365), 0), ' kWh',
-          'Moyenne journalière × 365 — plus il y a de jours de recul, plus elle est fiable.']]
-          .forEach(([val9, un9, aide9]) => {
-            const td9 = document.createElement('td');
-            if (ok9) {
-              td9.appendChild(document.createTextNode(val9));
-              td9.appendChild(el('small', null, un9));
-              td9.title = aide9;
-            } else {
-              td9.textContent = '—';
-              td9.title = nrj9 === null
-                ? "Pas d'énergie affichée pour ce compteur : pas de moyenne possible."
-                : (dep0
-                   ? 'Moyenne trop jeune : moins de 24 h de recul depuis le ' + dep0 + '.'
-                   : 'Date de départ des compteurs inconnue : moyenne impossible.');
-            }
-            tr.appendChild(td9);
-          });
-      }
     });
     tbody.appendChild(tr);
     if (muet) { if (!app) unAbsent = true; else unMuet = true; }
   });
   t.appendChild(tbody);
-  if (jours9 >= 1) {   /* lot 101 : dire sur QUOI porte la moyenne */
+  if (jours9 >= 1 && !eatt9) {   /* lot 101/102 : dire sur QUOI porte la moyenne */
     const je9 = Math.floor(jours9);
     nb.appendChild(el('p', 'note',
       'Moyenne / jour et estimation annuelle calculées sur ' + je9
       + ' jour' + (je9 > 1 ? 's' : '')
-      + (dep0 ? ' (depuis le ' + dep0 + ')' : '')
+      + (dep0 ? ' (depuis le ' + dep0
+              + (eref9 ? ', référence lue dans la base' : '') + ')' : '')
       + ' — elles s\u2019affinent avec le temps.'));
   }
+  if (eatt9) nb.appendChild(el('p', 'note',
+    'Départ élec au ' + ELEC_DEPUIS + ' : lecture de la référence dans la base…'));
+  if (!dep9 && state.elecRefErr) nb.appendChild(el('p', 'peu-fiable-note',
+    'Référence élec du ' + ELEC_DEPUIS + ' illisible (' + state.elecRefErr
+    + ') — énergies et moyennes depuis le début en attendant ; nouvel essai '
+    + 'automatique sous 60 s.'));
+  if (eref9 && eref9.manque.length) nb.appendChild(el('p', 'peu-fiable-note',
+    'Référence du ' + ELEC_DEPUIS + ' introuvable pour : '
+    + eref9.manque.map(k9 => ELEC_REF_NOMS[k9] || k9).join(', ')
+    + ' — total depuis le début et pas de moyenne pour ces compteurs.'));
   if (unAbsent) nb.appendChild(el('p', 'peu-fiable-note',
     "Ligne grisée : le compteur n'apparaît pas dans le dernier envoi de "
     + "l'automate — pas de réponse sur le bus (câblage, adresse Modbus), ou un "
@@ -7527,7 +7640,8 @@ function salonTuyaux() {
   const yColl = rb.top - rg.top - 10;
   const xCentre = rb.left - rg.left + rb.width / 2;
   const R = 14;                                    /* rayon des coudes */
-  const texte9 = (x9, y9, t9, anc9, cls9) => {   /* lot 91 : étiquettes */
+  const texte9 = (x9, y9, t9, anc9, cls9) => {   /* lot 91 : étiquettes —
+       ORPHELINE au lot 103 (étiquettes Circuit A/B supprimées) */
     const tx = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     tx.setAttribute('x', x9.toFixed(1)); tx.setAttribute('y', y9.toFixed(1));
     tx.setAttribute('text-anchor', anc9);
@@ -7622,7 +7736,9 @@ function salonTuyaux() {
         + ' Q ' + f1(xD) + ' ' + f1(yTop) + ' '
                 + f1(xD - R) + ' ' + f1(yTop)
         + ' L ' + f1(par9.SA2.right - rg.left - 8) + ' ' + f1(yTop), 'segA3');
-      texte9(xG + 9, yColl - R - 8, 'Circuit A', 'start', 'circLbl');
+      /* lot 103 (client) : l'étiquette « Circuit A » est SUPPRIMÉE —
+         elle passait derrière la fiche, et doublonnait le marquage déjà
+         porté en haut par les fiches elles-mêmes. */
       return;
     }
     /* circuit B (et repli si une cuve du A manquait) : une montante
@@ -7637,11 +7753,9 @@ function salonTuyaux() {
               + (x + vers * R).toFixed(1) + ' ' + yColl.toFixed(1)
       + ' L ' + xCentre.toFixed(1) + ' ' + yColl.toFixed(1),
       circ === 'B' ? 'segB1' : 'segA1 piqA segA2 segA3');
-    /* lot 91 -> 98 (5) : les distances ne sont plus posées ici. Reste
-       l'étiquette du circuit sur la montante, juste au-dessus du coude
-       — annotation du client sur le scan. */
-    const ax9 = x + vers * 9, anc9 = vers > 0 ? 'start' : 'end';
-    texte9(ax9, yColl - R - 8, 'Circuit ' + circ, anc9, 'circLbl');
+    /* lot 91 -> 98 (5) : les distances ne sont plus posées ici.
+       Lot 103 (client) : l'étiquette « Circuit A/B » au-dessus du coude
+       est SUPPRIMÉE elle aussi — doublon du marquage des fiches. */
   });
   /* l'entrée dans la chaufferie : petite descente au bord, sans toucher
      le titre, et la goutte du module maître au point de jonction */
