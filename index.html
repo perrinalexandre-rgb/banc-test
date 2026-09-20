@@ -10,7 +10,20 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 2009.107 (lot 107, 20/09/2026)
+   enovaQ — pupitre de supervision · pupitre 2009.108 (lot 108, 20/09/2026)
+   Lot 108 (client 20/09) : BOUTON CAMÉRA — FILMER L'ÉCRAN.
+   Un bouton à icône caméra, fixé juste SOUS la porte « Pupitre simple /
+   Pupitre avancé » : il est donc présent sur les DEUX pupitres. Premier
+   clic : le navigateur demande quoi filmer (choisir « Cet onglet » —
+   Chrome le met en avant tout seul) et l'enregistrement démarre,
+   pastille rouge clignotante sur le bouton. Second clic (ou arrêt du
+   partage depuis le bandeau du navigateur) : la vidéo part directement
+   AU TÉLÉCHARGEMENT — pupitre_AAAAMMJJ_HHMMSS.mp4 ou .webm selon ce que
+   le navigateur sait encoder (.webm se lit dans VLC et tout navigateur).
+   Tout se fait EN LOCAL sur le poste : aucune image n'est envoyée au
+   pilote ni ailleurs. Annuler le choix dans la fenêtre du navigateur =
+   rien ne se passe, pas de message. Navigateur sans enregistrement
+   d'écran (tablettes, mobiles) = une phrase sobre, rien de technique.
    Lot 107 (client 20/09) : RENOMMAGE + COULEUR DU LOCAL.
    (1) Le mot « chaufferie » disparaît de l'écran : partout où il
    désignait le local, on lit désormais « génération ECS collective »
@@ -1365,6 +1378,20 @@ body.salon #salonVue{display:flex;flex-direction:column;min-height:100vh;
   border:1px solid rgba(0,0,0,.22);background:rgba(255,255,255,.95);cursor:pointer;opacity:1;
   box-shadow:0 1px 5px rgba(0,0,0,.14)}  /* lot 94 : il était à 55 % d'opacité, introuvable */
 #salonBtn:hover{opacity:1}
+/* lot 108 : bouton CAMÉRA — filmer l'écran, présent sur les deux pupitres,
+   juste sous la porte simple/avancé. Même carte blanche que #salonBtn. */
+#camBtn{position:fixed;right:14px;top:50px;z-index:60;width:40px;height:30px;
+  display:flex;align-items:center;justify-content:center;padding:0;border-radius:8px;
+  border:1px solid rgba(0,0,0,.22);background:rgba(255,255,255,.95);cursor:pointer;
+  box-shadow:0 1px 5px rgba(0,0,0,.14)}
+#camBtn svg{width:19px;height:19px;stroke:var(--ink,#1c2430);fill:none;
+  stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+#camBtn:hover{border-color:var(--ink,#1c2430)}
+#camBtn.rec{border-color:#c62828}
+#camBtn.rec svg{stroke:#c62828}
+#camBtn.rec::after{content:'';position:absolute;top:4px;right:4px;width:7px;height:7px;
+  border-radius:50%;background:#c62828;animation:camClign 1s steps(2,start) infinite}
+@keyframes camClign{to{visibility:hidden}}
 /* ── LOT 47 (11/09/2026) ────────────────────────────────────────────────
    (1) PLUS AUCUNE HACHURE dans les cuves (client : « ça n'a pas de sens
        et il y a des bugs ») : zone aveugle retirée, flux et barre de débit
@@ -1992,7 +2019,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '2009.107';  // marqueur « pupitre » — bandeau, pied, salon
+const LOT        = '2009.108';  // marqueur « pupitre » — bandeau, pied, salon
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -7718,6 +7745,7 @@ function salonConstruire() {
   b.title = 'Basculer entre le pupitre simple (vitrine) et le pupitre avancé — toutes les infos.';
   b.addEventListener('click', () => salonBasculer(!document.body.classList.contains('salon')));
   document.body.appendChild(b);
+  document.body.appendChild(camBoutonCreer());            /* lot 108 */
 }
 /* =====================================================================
    Lot 76 : LA CONDUITE — le tuyau qui relie les satellites au module
@@ -7889,6 +7917,88 @@ function salonBasculer(on) {
        AVANCÉ désormais — on le referme en ENTRANT au Pupitre simple */
     if (on && v9) v9.style.display = 'none'; }
   if (on) rendreSalon(state.data);
+}
+/* =====================================================================
+   Lot 108 : BOUTON CAMÉRA — filmer l'écran, puis téléchargement.
+   1er clic : getDisplayMedia (le navigateur ouvre son sélecteur ; sur
+   Chrome, preferCurrentTab met « Cet onglet » en premier) puis
+   MediaRecorder démarre — pastille rouge clignotante sur le bouton.
+   2e clic (ou arrêt du partage via le bandeau du navigateur) : on
+   assemble le Blob et on déclenche le téléchargement
+   pupitre_AAAAMMJJ_HHMMSS.mp4|.webm. Tout est local, rien ne part au
+   pilote. Annulation du sélecteur = silence. Navigateur incapable
+   (tablette/mobile) = une phrase sobre, conforme à la règle « pas de
+   cuisine technique à l'écran ».
+   ===================================================================== */
+const CAM_TITRE_REPOS = "Filmer l'écran : un clic démarre, un second arrête et la vidéo part au téléchargement.";
+let camRec = null, camFlux = null, camMorceaux = [], camMime = '';
+function camBoutonCreer() {
+  const b = el('button', null, null);
+  b.id = 'camBtn';
+  b.title = CAM_TITRE_REPOS;
+  b.setAttribute('aria-label', "Filmer l'écran");
+  b.innerHTML =
+    '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+    '<rect x="2.5" y="6.5" width="13" height="11" rx="2.2"/>' +
+    '<path d="M15.5 10.7 L21.5 7.6 V16.4 L15.5 13.3"/>' +
+    '</svg>';
+  b.addEventListener('click', camBasculer);
+  return b;
+}
+async function camBasculer() {
+  if (camRec && camRec.state === 'recording') { camRec.stop(); return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia || !window.MediaRecorder) {
+    alert("L'enregistrement d'écran n'est pas disponible sur ce navigateur.");
+    return;
+  }
+  let flux;
+  try {
+    flux = await navigator.mediaDevices.getDisplayMedia({
+      video: { frameRate: { ideal: 30 } },
+      audio: false,
+      preferCurrentTab: true,          /* Chrome : « Cet onglet » proposé en tête */
+      selfBrowserSurface: 'include'
+    });
+  } catch (e) { return; }              /* sélecteur annulé : on ne dit rien */
+  camFlux = flux;
+  camMorceaux = [];
+  const prefs = ['video/mp4;codecs=avc1.42E01E', 'video/mp4',
+                 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+  camMime = prefs.find(m => { try { return MediaRecorder.isTypeSupported(m); } catch (e) { return false; } }) || '';
+  try {
+    camRec = camMime ? new MediaRecorder(flux, { mimeType: camMime }) : new MediaRecorder(flux);
+  } catch (e) {
+    flux.getTracks().forEach(t => t.stop()); camFlux = null;
+    alert("L'enregistrement d'écran n'est pas disponible sur ce navigateur.");
+    return;
+  }
+  camRec.ondataavailable = ev => { if (ev.data && ev.data.size) camMorceaux.push(ev.data); };
+  camRec.onstop = camTerminer;
+  const piste = flux.getVideoTracks()[0];   /* partage coupé côté navigateur */
+  if (piste) piste.addEventListener('ended', () => {
+    if (camRec && camRec.state === 'recording') camRec.stop();
+  });
+  camRec.start(1000);
+  const b = $('#camBtn');
+  if (b) { b.classList.add('rec');
+           b.title = "Enregistrement en cours — cliquer pour arrêter et télécharger."; }
+}
+function camTerminer() {
+  const mimeSortie = ((camRec && camRec.mimeType) || camMime || 'video/webm').split(';')[0];
+  const ext = mimeSortie.indexOf('mp4') !== -1 ? 'mp4' : 'webm';
+  if (camFlux) { camFlux.getTracks().forEach(t => t.stop()); camFlux = null; }
+  const b = $('#camBtn');
+  if (b) { b.classList.remove('rec'); b.title = CAM_TITRE_REPOS; }
+  const morceaux = camMorceaux; camMorceaux = []; camRec = null;
+  if (!morceaux.length) return;
+  const d = new Date(), p2 = n => String(n).padStart(2, '0');
+  const nom = 'pupitre_' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) +
+              '_' + p2(d.getHours()) + p2(d.getMinutes()) + p2(d.getSeconds()) + '.' + ext;
+  const url = URL.createObjectURL(new Blob(morceaux, { type: mimeSortie }));
+  const a = document.createElement('a');
+  a.href = url; a.download = nom;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 const PHOTOS_ALB = {  /* lot 56 : albums (client 14/09) — sources 1280 px */
   CHAUF: [
