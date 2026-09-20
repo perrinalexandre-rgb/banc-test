@@ -10,7 +10,38 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 2009.103 (lot 103, 20/09/2026)
+   enovaQ — pupitre de supervision · pupitre 2009.106 (lot 106, 20/09/2026)
+   Lot 106 (client 20/09 : « les distances des satellites ne sont pas
+   assez visibles » sur le Pupitre simple) : la ligne « NN m de la
+   chaufferie » des fiches passe du mono 10,5 px gris à un CHIFFRE en
+   gras 13,5 px bleu foncé (#14537d, assorti aux tuyaux), libellé en
+   condensé 12 px — lisible d'un coup d'œil, sans crier.
+   Lot 105 (client 20/09 : « corrige la conso élec ; évite la ligne rouge
+   plantage programme etc. — le client n'a pas à voir cela ») :
+   (1) CONSO ÉLEC : un échec de lecture de la référence du 14/09 se
+   comporte désormais comme l'ATTENTE — colonnes « — », plus JAMAIS de
+   moyennes retombées « depuis le début » (vraies mais sur la mauvaise
+   fenêtre : c'est ce qui affichait 1,0 kWh/j aux auxiliaires au lieu de
+   0,2) ; le réessai automatique (60 s) tourne en silence.
+   (2) SOBRIÉTÉ : la ligne rouge technique disparaît — une seule note
+   discrète « lecture de la référence du 14/09 dans la base… », le
+   détail de l'échec vit en infobulle ; « compteur muet le 14/09 » en
+   note simple ; la note grisée ne cite plus « un programme antérieur » ;
+   « mise à jour disponible » sans numéro ni câble ; compresseur
+   VERROUILLÉ sans référence aux versions internes. La cuisine
+   (programmes, plantages, flash) reste l'affaire de l'exploitant — la
+   vraie correction demeure la mise à jour du pilote.
+   Lot 104 (client 20/09 : « pourquoi cette case n'est-elle pas
+   renseignée ? ») : LA T° D'ISSUE DE REMPLISSAGE NE S'EFFACE PLUS.
+   temp_apres_rempl_c (mesure posée 5 min après la fin, programme 2708)
+   n'est publiée que par vagues espacées ; le pupitre ne la retenait
+   pas — au premier envoi sans le champ, la case retombait à « — »
+   alors que la mesure existait (vérifié sur l'extraction du client :
+   SA1 59,3 °C publiés à 12:34, case vide à 15:40). Nouveau :
+   state.tapMem retient le dernier relevé PAR CUVE, rattaché à SON
+   remplissage (rempl_dernier_ep), et majTempApres le réinjecte tant
+   que le remplissage n'a pas changé — la case ne se vide plus que
+   pendant les ~5 min entre un nouveau remplissage et sa mesure.
    Lot 103 (client 20/09) : DEUX SUPPRESSIONS.
    (1) Les étiquettes « Circuit A » / « Circuit B » sur le tracé des
    tuyaux du Pupitre simple sont SUPPRIMÉES : celle du A passait
@@ -1398,8 +1429,10 @@ body.salon #salonVue{padding:3vh 4vw 2vh}
   color:var(--ink3,#999);margin-top:3px}
 /* Lot 98 (5) : la distance revient DANS la fiche (elle encombrait les
    tuyaux) — discrète, sous la pastille. */
-.sch-dist{font-family:var(--fs-mono);font-size:10.5px;color:var(--ink2);
-  margin-top:5px}
+.sch-dist{font-family:var(--fs-cond);font-size:12px;color:var(--ink2);
+  margin-top:5px;letter-spacing:.02em}  /* lot 106 : lisible, plus discret */
+.sch-dist b{font-family:var(--fs-mono);font-size:13.5px;font-weight:700;
+  color:#14537d}                        /* le chiffre, assorti aux tuyaux */
 .sch-jg{width:56px;border:2px solid rgba(0,0,0,.2);border-radius:8px 8px 11px 11px;
   position:relative;overflow:hidden;background:#fbf8f3;flex:none}
 .sch-jg.grande{width:70px}
@@ -1922,7 +1955,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '2009.103';  // marqueur « pupitre » — bandeau, pied, salon
+const LOT        = '2009.106';  // marqueur « pupitre » — bandeau, pied, salon
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -2577,6 +2610,8 @@ const state = {
   etapeEnCours: [null, null],
   tmaxEnCours: {},      // T° sortie de pompe maxi, remplissage en cours (par sat)
   tmaxObs: {},          // idem, dernier remplissage achevé observé par la page
+  tapMem: {},           // lot 104 : dernier « T° à l'issue du remplissage »
+                        // publié, par sat, rattaché à SON remplissage (ep)
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -2696,7 +2731,8 @@ function rendreBandeau(d) {
     const vieux = pilotePlusVieux(d.prog);
   if (w9) w9.classList.remove('m-anormal');
   if (vieux) $('#mProg').textContent = d.prog
-    + ' (mise à jour ' + PILOTE_ATTENDU + ' disponible, câble USB)';
+    + ' (mise à jour disponible)';   /* lot 105 : sobre — le détail
+         (version, câble) reste l'affaire de l'exploitant */
   }
   const chh = d.chaufferie || {};                                /* lot 25 */
   $('#mHeure').textContent = chh.heure
@@ -3516,6 +3552,31 @@ function majTmax(d) {
   });
 }
 
+/* Lot 104 (client : « pourquoi cette case n'est-elle pas renseignée ? ») :
+   la « T° à l'issue du dernier remplissage » (temp_apres_rempl_c) n'est
+   publiée par le pilote que par VAGUES espacées — dès qu'un envoi arrivait
+   sans le champ, la case retombait à « — » alors que la mesure existait.
+   Le pupitre RETIENT désormais le dernier relevé par cuve, rattaché à SON
+   remplissage (rempl_dernier_ep), et le réinjecte tant que le remplissage
+   n'a pas changé : la case ne se vide plus que pendant les ~5 min entre
+   un nouveau remplissage et sa mesure posée — la sémantique du pilote.
+   La réinjection écrit dans l'objet rendu (donc aussi dans dataBrut quand
+   aucune date n'est posée) : assumé, le champ ne sert à aucun calcul. */
+function majTempApres(d) {
+  ((d && d.circuits) || []).forEach(c2 => (c2.satellites || []).forEach(s2 => {
+    if (!s2 || !s2.sat_id) return;
+    if (has(s2.temp_apres_rempl_c)) {
+      state.tapMem[s2.sat_id] = {t: s2.temp_apres_rempl_c,
+                                 ep: has(s2.rempl_dernier_ep)
+                                     ? s2.rempl_dernier_ep : null};
+      return;
+    }
+    const m9 = state.tapMem[s2.sat_id];
+    if (m9 && (m9.ep === null || !has(s2.rempl_dernier_ep)
+               || m9.ep === s2.rempl_dernier_ep))
+      s2.temp_apres_rempl_c = m9.t;
+  }));
+}
 function caseTmaxRempl(s) {
   if (has(s.rempl_dernier_tmax_c)) {
     return statCase({k: 'T° sortie pompe, max du dernier', champ: 'rempl_dernier_tmax_c',
@@ -4172,9 +4233,12 @@ function rendreElecTable(d) {
      moins de 24 h de recul -> « — ». */
   if (!dep9) elecRefCharger();
   const eref9 = (!dep9 && state.elecRef) ? state.elecRef : null;
-  const eatt9 = !dep9 && !eref9 && !state.elecRefErr;  /* lecture en cours */
-  const dep0 = dep9 || (eref9 ? ELEC_DEPUIS
-                              : (state.elecRefErr ? dateInstallation() : null));
+  /* lot 105 (client) : un échec de lecture se comporte comme l'ATTENTE —
+     plus JAMAIS de moyennes retombées « depuis le début » (elles étaient
+     vraies mais sur la mauvaise fenêtre : 1,0 kWh/j au lieu de 0,2), et
+     plus de ligne rouge technique ; le réessai tourne en silence. */
+  const eatt9 = !dep9 && !eref9;       /* lecture en cours OU à refaire */
+  const dep0 = dep9 || (eref9 ? ELEC_DEPUIS : null);
   let jours9 = 0;
   if (dep0) {
     const m9 = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dep0);
@@ -4307,20 +4371,23 @@ function rendreElecTable(d) {
               + (eref9 ? ', référence lue dans la base' : '') + ')' : '')
       + ' — elles s\u2019affinent avec le temps.'));
   }
-  if (eatt9) nb.appendChild(el('p', 'note',
-    'Départ élec au ' + ELEC_DEPUIS + ' : lecture de la référence dans la base…'));
-  if (!dep9 && state.elecRefErr) nb.appendChild(el('p', 'peu-fiable-note',
-    'Référence élec du ' + ELEC_DEPUIS + ' illisible (' + state.elecRefErr
-    + ') — énergies et moyennes depuis le début en attendant ; nouvel essai '
-    + 'automatique sous 60 s.'));
-  if (eref9 && eref9.manque.length) nb.appendChild(el('p', 'peu-fiable-note',
-    'Référence du ' + ELEC_DEPUIS + ' introuvable pour : '
+  if (eatt9) {   /* lot 105 : sobre à l'écran, le détail vit en infobulle */
+    const p9 = el('p', 'note',
+      'Moyenne / jour et estimation annuelle : lecture de la référence du '
+      + ELEC_DEPUIS + ' dans la base\u2026');
+    if (state.elecRefErr)
+      p9.title = 'Dernière tentative : ' + state.elecRefErr
+               + ' Nouvel essai automatique sous 60 s.';
+    nb.appendChild(p9);
+  }
+  if (eref9 && eref9.manque.length) nb.appendChild(el('p', 'note',
+    'Pas de moyenne pour : '
     + eref9.manque.map(k9 => ELEC_REF_NOMS[k9] || k9).join(', ')
-    + ' — total depuis le début et pas de moyenne pour ces compteurs.'));
+    + ' (compteur muet le ' + ELEC_DEPUIS + ').'));
   if (unAbsent) nb.appendChild(el('p', 'peu-fiable-note',
     "Ligne grisée : le compteur n'apparaît pas dans le dernier envoi de "
-    + "l'automate — pas de réponse sur le bus (câblage, adresse Modbus), ou un "
-    + "programme antérieur tourne encore."));
+    + "l'automate — pas de réponse sur le bus (câblage ou adresse Modbus "
+    + "à vérifier)."));
   else if (unMuet) nb.appendChild(el('p', 'peu-fiable-note',
     "Ligne grisée : ce compteur ne répond pas sur le bus — câblage, adresse "
     + "Modbus ou appareil à vérifier."));
@@ -4805,7 +4872,7 @@ function rendreCompresseur(d) {
       + n(cp.objectif_l || 25) + ' L d\u2019ECS tirée'
       + (has(cp.depuis_s) ? ' · ' + duree(cp.depuis_s) : '')
       + (cp.decl ? ' · déclenché par le CNH (grave)' : '')
-    : cp.etat === 2 ? 'VERROUILLÉ (vieux pilote — gardes retirées en 1609b)'
+    : cp.etat === 2 ? 'VERROUILLÉ (mise à jour de l\u2019automate nécessaire)'
     : 'au repos';
   ligne(box, 'État', etat, cp.etat === 2 || !!cp.decl,
     "D206 : démarre CNM mouillé 5 s dans la fenêtre ; s'arrête à l'objectif "
@@ -6177,6 +6244,7 @@ function rendre(force) {
   if (!change) return;
   majHistorique(d);
   majTmax(d);
+  majTempApres(d);   /* lot 104 : la T° d'issue de remplissage est retenue */
   rendreBandeau(d);
   rendreAlertes(d);
   rendreRail($('#railA'), d && d.trains && d.trains[0], 'A', 504, d);
@@ -8097,9 +8165,13 @@ function schCuve(s, d) {
        les tuyaux (client 20/09). */
     const ap9 = (typeof APPARTEMENTS !== 'undefined' && APPARTEMENTS[s.sat_id])
               ? APPARTEMENTS[s.sat_id] : null;
-    if (ap9 && ap9.dist)
-      dr.appendChild(el('div', 'sch-dist',
-        ap9.dist + ' m de la chaufferie')); }
+    if (ap9 && ap9.dist) {
+      const dv9 = el('div', 'sch-dist');   /* lot 106 : « pas assez
+           visible » — le chiffre passe en gras bleu foncé, 13,5 px */
+      dv9.appendChild(el('b', null, ap9.dist + ' m'));
+      dv9.appendChild(document.createTextNode(' de la chaufferie'));
+      dr.appendChild(dv9);
+    } }
   const tp = el('div', 'sch-temp',
     (has(s.temp_c) && !s.sommeil) ? n(s.temp_c) : '—');
   if (has(s.temp_c) && !s.sommeil) tp.appendChild(el('small', null, ' °C'));
