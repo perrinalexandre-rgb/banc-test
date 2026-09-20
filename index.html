@@ -9,7 +9,33 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 2009.93 (lot 93, 20/09/2026)
+   enovaQ — pupitre de supervision · pupitre 2009.95 (lot 95, 20/09/2026)
+   Lot 95 (client 20/09, « c'est clair ? si oui, go ») : LA RÉSERVE
+   DESSINÉE DES DEUX CÔTÉS. La cuve 300 L fait partie du module maître :
+   elle vit dans la fiche chaufferie collective des DEUX pupitres, via UN
+   dessin partagé (resCuveElement) — EFS en bleu foncé en bas, air en
+   haut, niveau déduit des capteurs (86 / 64 / 34 %), capteurs INCHANGÉS
+   (traits 250 / 300 L, rouges si mouillés), cotes discrètes à droite.
+   Toutes les annotations en toutes lettres disparaissent (« 300 L —
+   sec », « cliquer : journal… », « niveau d'air OK », « eau sous le
+   milieu ») : le dessin parle, les états restent en infobulle. Le
+   bouton « historique des appoints d'air » vit dans la sous-fiche de la
+   vue AVANCÉE — et nulle part au Pupitre simple (fiche plus cliquable ;
+   le voile se referme en entrant au simple et se repeint à l'arrivée
+   des fiches quelle que soit la vue). Même ménage sur la bande avancée,
+   demandé le matin : organe Maddalena RETIRÉ (la carte « Énergie
+   thermique » reste plus bas), titre de bande raccourci, Pompe P1 =
+   repos / en marche sans sous-ligne (diagnostics en infobulle),
+   Arrivée EFS en tête de bande. MANQUE D'AIR (CNH mouillé) : sous-fiche
+   rouge + ligne d'alerte — la sécurité ne se replie pas.
+   Lot 94 (client 20/09, capture « je ne vois aucune modif ») : la capture
+   montrait le pupitre AVANCÉ — le 2009.93 était bien en place (« pupitre
+   (cette page) » du bandeau le prouve), mais la vue avancée est inchangée
+   PAR CONSIGNE (18/09) ; tout le lot 91-92 vit sur le Pupitre simple. Le
+   vrai coupable : la PORTE entre les deux vues, un bouton en haut à
+   droite à 55 % d'opacité, quasi invisible sur fond clair. Il est rendu
+   FRANC (opacité pleine, ombre légère) — même place, même sobriété.
+   Aucun autre changement.
    Lot 93 (client 20/09, scan CCF_000177 re-reçu avec les mêmes consignes
    que les lots 91-92) : audit point par point — TOUT était déjà en place
    (Maddalena hors salon, pompe en symbole repos/en marche, « niveau
@@ -1118,7 +1144,8 @@ body.salon #salonVue{display:flex;flex-direction:column;min-height:100vh;
 .salon-pied b{color:var(--ink);font-weight:600}
 #salonBtn{position:fixed;right:14px;top:12px;z-index:60;font-family:var(--fs-cond);
   font-weight:600;font-size:12px;letter-spacing:.06em;padding:7px 12px;border-radius:8px;
-  border:1px solid rgba(0,0,0,.22);background:rgba(255,255,255,.85);cursor:pointer;opacity:.55}
+  border:1px solid rgba(0,0,0,.22);background:rgba(255,255,255,.95);cursor:pointer;opacity:1;
+  box-shadow:0 1px 5px rgba(0,0,0,.14)}  /* lot 94 : il était à 55 % d'opacité, introuvable */
 #salonBtn:hover{opacity:1}
 /* ── LOT 47 (11/09/2026) ────────────────────────────────────────────────
    (1) PLUS AUCUNE HACHURE dans les cuves (client : « ça n'a pas de sens
@@ -1273,22 +1300,43 @@ article.sat button{cursor:pointer}
 /* Lot 91 : la réserve 300 L DANS la fiche module maître — petite cuve,
    deux capteurs étiquetés, cliquable (journal des appoints d'air). */
 .sch-res{background:var(--card,#fff);border:1px solid rgba(0,0,0,.12);
-  border-radius:12px;padding:8px 14px;text-align:center;cursor:pointer}
+  border-radius:12px;padding:8px 14px;text-align:center}  /* lot 95 : plus cliquable */
 .sch-res b{display:block;font-family:var(--fs-cond);font-weight:600;
   font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}
 .sch-rescorps{display:flex;gap:8px;align-items:center;justify-content:center;
   margin-top:4px}
 .sch-rescuve{position:relative;width:34px;height:84px;border:2px solid #8a8378;
-  border-radius:8px 8px 10px 10px;background:linear-gradient(#f6f3ee,#eceff3)}
+  border-radius:8px 8px 10px 10px;background:linear-gradient(#f6f3ee,#eceff3);
+  margin-right:44px}  /* lot 95 : place pour les cotes à droite */
 .sch-rcap{position:absolute;left:-5px;width:44px;height:2px;
   background:rgba(0,0,0,.3);border-radius:1px}
 .sch-rcap.mouille{background:#b3261e;height:3px}
+/* Lot 95 : la cuve parle d'elle-même — EFS bleu foncé en bas, air en haut,
+   niveau déduit des capteurs ; cotes 300/250 L discrètes à droite. Plus
+   d'états en toutes lettres. */
+.sch-reseau{position:absolute;left:0;right:0;bottom:0;border-radius:0 0 8px 8px;
+  background:linear-gradient(180deg,#1b6ca6,#123f61);transition:height .8s ease}
+.sch-rair{position:absolute;top:3px;left:0;right:0;text-align:center;
+  font-family:var(--fs-cond);font-size:8.5px;letter-spacing:.08em;color:var(--ink3)}
+.sch-refs{position:absolute;bottom:3px;left:0;right:0;text-align:center;
+  font-family:var(--fs-cond);font-size:8.5px;letter-spacing:.08em;color:rgba(255,255,255,.85)}
+.sch-rcote{position:absolute;left:calc(100% + 8px);transform:translateY(50%);
+  font-family:var(--fs-mono);font-size:9.5px;color:var(--ink2);white-space:nowrap}
+.sch-rcote.mouille{color:#b3261e;font-weight:700}
+.organ.res .sch-rescorps{margin-top:8px}
+.organ.res button{margin-top:9px;font-family:var(--fs-cond);font-size:11px;
+  padding:4px 10px;border:1px solid rgba(0,0,0,.28);border-radius:7px;
+  background:#fff;cursor:pointer}
+.organ.res button:hover{background:var(--panel3)}
+.organ.res.ko{border-color:#b3261e;background:#fdf3f2}
+.organ.res.ko .s{color:#b3261e;font-family:var(--fs-cond);font-size:11.5px;font-weight:600}
 .sch-reslbl{text-align:left;font-family:var(--fs-cond);font-size:12px;
   line-height:1.5;color:var(--ink)}
 .sch-reslbl .mouille{color:#b3261e;font-weight:700}
 .sch-reslbl small{display:block;font-family:var(--fs-mono);font-size:9.5px;
   color:var(--ink2)}
-/* Lot 91 : journal des appoints d'air — voile plein écran du salon */
+/* Lot 91 -> 95 : journal des appoints d'air — voile plein écran, ouvert
+   depuis la sous-fiche Réserve de la vue avancée */
 #resJournal{position:fixed;z-index:82;display:none;inset:0;margin:auto;
   width:min(680px,94vw);max-height:82vh;overflow:auto;background:var(--card,#fff);
   border:1px solid rgba(0,0,0,.25);border-radius:14px;padding:16px 18px;
@@ -1395,7 +1443,7 @@ body:not(.salon) #schVoile{display:none}
        la date de départ » s'y afficheront avec ce chantier-là. -->
   <section class="carte" id="partage" style="margin-top:14px">
     <div class="spine-lbl" style="margin-bottom:8px">CHAUFFERIE COLLECTIVE —
-      une pompe, une vanne 3 voies, la réserve 300 L, le Maddalena</div>
+      une pompe, une vanne 3 voies, la réserve 300 L</div>
     <div class="organs organs-bas" id="organs"></div>
   </section>
 
@@ -1669,7 +1717,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '2009.93';   // marqueur « pupitre » — bandeau, pied, salon
+const LOT        = '2009.95';   // marqueur « pupitre » — bandeau, pied, salon
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -2694,10 +2742,33 @@ function rendreOrganes(d) {
   const trains = (d && d.trains) || [];
 
   const pp = ch.pompe_pct || 0;
-  box.appendChild(organe('pump' + (pp > 0 ? ' run' : ' ko'), 'Pompe P1', pp > 0 ? pp : 'arrêt',
-    pp > 0 ? '%' : '',
-    pp > 0 ? (pp >= 100 ? 'plein régime · 65 Hz' : 'régime réduit')
-           : (ch.pompe_arret_non_confirme ? 'arrêt demandé — non confirmé' : 'aucun circuit ne la demande')));
+  /* Lot 24 (client 31/08) -> 95 : la température d'arrivée de l'eau froide
+     EN TÊTE de bande, comme au Pupitre simple (« arrivée EFS tout à
+     gauche ») — sonde V7 (D91), minimum glissant 5 h en sous-texte :
+     c'est LUI qui servira au rendement (la vraie eau froide, pas l'eau
+     tiédie dans le tube). */
+  const oEfs = tempValide(ch.temp_efs_c)
+    ? organe('', 'Arrivée EFS', n(ch.temp_efs_c), '°C',
+             'sonde V7' + (tempValide(ch.temp_efs_min5h_c)
+                           ? ' · min 5 h ' + n(ch.temp_efs_min5h_c) + ' °C' : ''))
+    : organe('ko', 'Arrivée EFS', '—', '',
+             has(ch.temp_efs_c) ? 'valeur hors plage — sonde débranchée ?' : 'sonde muette');
+  oEfs.title = "Température de l'eau froide sanitaire à l'arrivée (sonde V7, D91). "
+             + "Le minimum glissant sur 5 h est la référence pour le rendement : "
+             + "c'est la vraie eau froide, pas l'eau qui a tiédi dans le tube.";
+  box.appendChild(oEfs);
+
+  { /* lot 95 (client 20/09) : « pompe état repos ça suffit » — repos /
+       en marche, rien d'autre. Les diagnostics (régime, arrêt non
+       confirmé) se replient en infobulle. */
+    const oP1 = organe('pump' + (pp > 0 ? ' run' : ' ko'), 'Pompe P1',
+      pp > 0 ? 'en marche' : 'repos', '', '');
+    oP1.title = pp > 0
+      ? (pp >= 100 ? 'plein régime · 65 Hz' : 'régime réduit · ' + pp + ' %')
+      : (ch.pompe_arret_non_confirme
+         ? 'arrêt demandé — non confirmé par le variateur' : 'aucun circuit ne la demande');
+    box.appendChild(oP1);
+  }
 
   /* La V3 n'a QUE deux états : ECS ou EFS. Le ressort qui la ramène hors
      tension n'est pas un troisième état (décision client 17/08). */
@@ -2730,42 +2801,33 @@ function rendreOrganes(d) {
     : organe('ko', 'Retour', '—', '',
              has(ch.temp_retour_c) ? 'valeur hors plage' : 'sonde muette'));
 
-  /* Lot 24 (client 31/08) : la température d'arrivée de l'eau froide dans
-     les organes partagés — sonde V7 (D91), minimum glissant 5 h en
-     sous-texte : c'est LUI qui servira au rendement (la vraie eau froide,
-     pas l'eau tiédie dans le tube). */
-  const oEfs = tempValide(ch.temp_efs_c)
-    ? organe('', 'Arrivée EFS', n(ch.temp_efs_c), '°C',
-             'sonde V7' + (tempValide(ch.temp_efs_min5h_c)
-                           ? ' · min 5 h ' + n(ch.temp_efs_min5h_c) + ' °C' : ''))
-    : organe('ko', 'Arrivée EFS', '—', '',
-             has(ch.temp_efs_c) ? 'valeur hors plage — sonde débranchée ?' : 'sonde muette');
-  oEfs.title = "Température de l'eau froide sanitaire à l'arrivée (sonde V7, D91). "
-             + "Le minimum glissant sur 5 h est la référence pour le rendement : "
-             + "c'est la vraie eau froide, pas l'eau qui a tiédi dans le tube.";
-  box.appendChild(oEfs);
+  /* lot 95 : le bloc « Arrivée EFS » vit désormais EN TÊTE de bande. */
 
-  { /* Lot 59 : la réserve 300 L et le Maddalena rejoignent le matériel
-       partagé — les consommations « depuis la date de départ » viendront
-       s'afficher ici avec ce chantier-là. */
+  { /* Lot 59 -> 95 : la réserve 300 L DESSINÉE dans la fiche chaufferie
+       collective (client 20/09 : « la cuve fait partie du module
+       maître ») — cuve partagée resCuveElement, plus d'états en toutes
+       lettres (« niveau d'air OK », « eau sous le milieu »… retirés, le
+       dessin parle). Le bouton HISTORIQUE DES APPOINTS D'AIR vit ICI, et
+       seulement ici — pas au Pupitre simple. MANQUE D'AIR (CNH mouillé)
+       reste dit, en rouge : la sécurité ne se replie pas. L'organe
+       Maddalena est RETIRÉ de la bande (client 20/09 matin) — l'énergie
+       garde sa carte « Énergie thermique — compteur Maddalena » plus bas. */
     const rs = ch.reserve || {};
     if (has(rs.milieu_mouille)) {   /* lot 65 : CNB mort ignoré — l'AIR */
       const grave = !!rs.haut_mouille;
-      box.appendChild(organe(grave ? 'ko' : '', 'Réserve 300 L',
-        grave ? "MANQUE D'AIR" : rs.milieu_mouille ? 'appoint requis'
-              : "niveau d'air OK", '',
-        (ch.compresseur && ch.compresseur.etat === 1)
-          ? "compresseur d'air EN MARCHE"
-          : grave ? "l'eau a atteint le haut"
-          : rs.milieu_mouille ? 'eau au milieu' : 'eau sous le milieu'));
+      const oR = el('div', 'organ res' + (grave ? ' ko' : ''));
+      oR.appendChild(el('div', 'k', 'Réserve 300 L'));
+      const cor9 = el('div', 'sch-rescorps');
+      cor9.appendChild(resCuveElement(rs));
+      oR.appendChild(cor9);
+      if (grave) oR.appendChild(el('div', 's',
+        "manque d'air — l'eau a atteint le haut"));
+      const bh9 = el('button', null, "historique des appoints d'air");
+      bh9.addEventListener('click', ev => {
+        ev.stopPropagation(); resJournalOuvrir(); });
+      oR.appendChild(bh9);
+      box.appendChild(oR);
     }
-    const ma2 = ch.maddalena || {};
-    if (has(ma2.t_depart_c) || has(ma2.energie_mwh))
-      box.appendChild(organe('', 'Maddalena',
-        has(ma2.t_depart_c) ? n(ma2.t_depart_c) : '—', '°C',
-        has(ma2.energie_mwh)
-          ? 'énergie ' + n(ma2.energie_mwh, 3) + ' ' + (ma2.energie_unite || 'MWh')
-          : 'départ production'));
   }
 
   /* Lot 59 : les « liens » visuels tieA/tieB ont disparu avec la colonne
@@ -4343,6 +4405,8 @@ function majFiches(d) {
   else if (t === 2) rendreRemplJournal(parCuve(st.data[2]) || []);
   else if (t === 5) rendreVsJournal(parCuve(st.data[5]) || []);  /* D187 */
   else              rendreCompJournal(st.data[3] || []);
+  resJournalMaj();   /* lot 95 : le voile des appoints suit les fiches,
+                        quelle que soit la vue ouverte */
 }
 function rendreRemplJournal(fiches) {
   const t = $('#rechJournal'); t.textContent = '';
@@ -7270,7 +7334,7 @@ $('#poseBtn').addEventListener('click', async () => {   /* lot 48 : D190 */
   b2.disabled = false;
 });
 $('#mUi').textContent = LOT;
-$('#footVer').textContent = 'enovaQ pupitre 2009 — pupitre ' + LOT + ' · lot 93 — 20/09/2026';
+$('#footVer').textContent = 'enovaQ pupitre 2009c — pupitre ' + LOT + ' · lot 95 — 20/09/2026';
 setInterval(() => { try { if (!document.body.classList.contains('salon')) satPlierTout(); } catch (e9) {} }, 800);
 $('#footMode').textContent = DEMO ? 'mode démonstration — données factices' : 'source : ' + API.telemetry;
 relever();
@@ -7481,8 +7545,9 @@ window.addEventListener('resize', () => {
 function salonBasculer(on) {
   document.body.classList.toggle('salon', on);
   const b = $('#salonBtn'); if (b) b.textContent = on ? 'Pupitre avancé' : 'Pupitre simple';
-  if (!on) { const v9 = $('#resJournal');       /* lot 91 : voile refermé */
-             if (v9) v9.style.display = 'none'; }
+  { const v9 = $('#resJournal');   /* lot 91 -> 95 : le journal vit côté
+       AVANCÉ désormais — on le referme en ENTRANT au Pupitre simple */
+    if (on && v9) v9.style.display = 'none'; }
   if (on) rendreSalon(state.data);
 }
 const PHOTOS_ALB = {  /* lot 56 : albums (client 14/09) — sources 1280 px */
@@ -7810,8 +7875,41 @@ function salonFluxActifs(d) {
   });
   return r9;
 }
-/* Lot 91 : JOURNAL DES APPOINTS D'AIR — voile du Pupitre simple, ouvert
-   d'un clic sur la réserve. Réutilise la mécanique de fiches partagée
+/* Lot 95 : LA CUVE PARTAGÉE — un seul dessin de la réserve 300 L pour les
+   deux pupitres. EFS (bleu foncé) en bas, air en haut ; le niveau est
+   DÉDUIT des deux capteurs (au-dessus de CNH : 86 %, entre CNM et CNH :
+   64 %, sous CNM : 34 %) ; traits des capteurs INCHANGÉS (rouges si
+   mouillés), cotes 300/250 L discrètes à droite, états sec/mouillé en
+   infobulle. Aucun texte d'état apparent : le dessin parle (client
+   20/09 : « les annotations du dessous n'ont pas lieu d'être »). */
+function resCuveElement(rs) {
+  const cv9 = el('div', 'sch-rescuve');
+  const haut9 = rs.haut_mouille === 1, mil9 = rs.milieu_mouille === 1;
+  const eau9 = el('div', 'sch-reseau');
+  eau9.style.height = (haut9 ? 86 : mil9 ? 64 : 34) + '%';
+  cv9.appendChild(eau9);
+  cv9.appendChild(el('div', 'sch-rair', 'air'));
+  cv9.appendChild(el('div', 'sch-refs', 'EFS'));
+  [[rs.haut_mouille, '300 L', 76, 'CNH'],
+   [rs.milieu_mouille, '250 L', 55, 'CNM']].forEach(([m9, c9, h9, nm9]) => {
+    const mou9 = m9 === 1;
+    const t9 = el('div', 'sch-rcap' + (mou9 ? ' mouille' : ''));
+    t9.style.bottom = h9 + '%';
+    cv9.appendChild(t9);
+    const ct9 = el('div', 'sch-rcote' + (mou9 ? ' mouille' : ''), c9);
+    ct9.style.bottom = h9 + '%';
+    ct9.title = 'Capteur ' + nm9 + ' à la cote ' + c9 + ' — '
+      + (has(m9) ? (mou9 ? 'mouillé' : 'sec') : 'état non publié par ce pilote');
+    cv9.appendChild(ct9);
+  });
+  cv9.title = "Réserve d'air 300 L du module maître — l'eau (EFS) monte et "
+    + "mouille les capteurs ; le compresseur refait le matelas d'air.";
+  return cv9;
+}
+/* Lot 91 -> 95 : JOURNAL DES APPOINTS D'AIR — voile ouvert par le bouton
+   « historique des appoints d'air » de la sous-fiche Réserve, en vue
+   AVANCÉE (plus d'accès depuis le Pupitre simple). Réutilise la mécanique
+   de fiches partagée
    (D183) : fichesDemander(3) fait la demande, la réponse arrive dans
    state.fich.data[3], et le rendu 2 s du salon repeint le voile. */
 function resJournalOuvrir() {
@@ -8049,40 +8147,19 @@ function rendreSalon(d) {
     if (tjOk) bande.appendChild(chip('Eau aujourd\u2019hui', n(tj) + ' L',
       'tirée par les logements'));
   }
-  { /* lot 91 : la réserve 300 L DANS la fiche module maître (schéma du
-       client 18/09) — une petite cuve, JUSTE les deux capteurs de niveau
-       étiquetés 300 L (CNH) et 250 L (CNM), sec ou mouillé. Un clic
-       ouvre le journal des appoints d'air (fiches compresseur, mécanique
-       partagée D183 t = 3). Les deux chips Réserve et le libellé
-       « niveau d'air OK » (trop voyant) sont supprimés. */
+  { /* lot 91 -> 95 : la réserve 300 L DANS la fiche module maître — la
+       cuve partagée resCuveElement seule (EFS bleu foncé en bas, air en
+       haut, capteurs et cotes). Les annotations en toutes lettres
+       (« 300 L — sec », « cliquer : journal… ») sont RETIRÉES et la
+       fiche n'est PLUS cliquable : l'historique des appoints d'air vit
+       dans la sous-fiche de la vue avancée (client 20/09). */
     const rs = ch.reserve || {};
     if (has(rs.milieu_mouille)) {
       const b9 = el('div', 'sch-res');
       b9.appendChild(el('b', null, 'Réserve 300 L'));
       const corps9 = el('div', 'sch-rescorps');
-      const cuve9 = el('div', 'sch-rescuve');
-      const lbl9 = el('div', 'sch-reslbl');
-      [[rs.haut_mouille, '300 L', 76, 'CNH'],
-       [rs.milieu_mouille, '250 L', 55, 'CNM']].forEach(([m9, c9, h9, nm9]) => {
-        const mou9 = m9 === 1;
-        const t9 = el('div', 'sch-rcap' + (mou9 ? ' mouille' : ''));
-        t9.style.bottom = h9 + '%';
-        cuve9.appendChild(t9);
-        const l9 = el('div', mou9 ? 'mouille' : '',
-          c9 + ' — ' + (has(m9) ? (mou9 ? 'mouillé' : 'sec') : '—'));
-        l9.title = 'Capteur ' + nm9 + ' à la cote ' + c9
-          + (has(m9) ? '' : ' — état non publié par ce pilote');
-        lbl9.appendChild(l9);
-      });
-      lbl9.appendChild(el('small', null,
-        "cliquer : journal des appoints d\u2019air"));
-      corps9.appendChild(cuve9); corps9.appendChild(lbl9);
+      corps9.appendChild(resCuveElement(rs));
       b9.appendChild(corps9);
-      b9.title = "Réserve d'air 300 L du module maître — l'eau qui monte "
-        + "mouille les capteurs ; le compresseur refait l'appoint d'air. "
-        + "Un clic ouvre le journal des appoints.";
-      b9.addEventListener('click', ev => {
-        ev.stopPropagation(); resJournalOuvrir(); });
       bande.appendChild(b9);
     }
   }
@@ -8128,7 +8205,6 @@ function rendreSalon(d) {
     }
   }
   g.appendChild(bande);
-  resJournalMaj();                    /* lot 91 : le voile suit les fiches */
   requestAnimationFrame(salonTuyaux);
 }
 salonConstruire();
