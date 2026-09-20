@@ -10,7 +10,43 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 2009.98 (lot 98, 20/09/2026)
+   enovaQ — pupitre de supervision · pupitre 2009.101 (lot 101, 20/09/2026)
+   Lot 101 (client 20/09) : LES QUATRE ÉTATS DU TUYAU + LES COLONNES ÉLEC.
+   (1) « L'animation ne fonctionne pas bien » : la transition de teinte
+   BOUCLAIT (tuyTeinte infinite : bleu->rouge, saut, bleu->rouge…). Elle
+   se joue maintenant UNE seule fois puis la couleur est TENUE — repos :
+   bleu FONCÉ fixe (#14537d op. 0.9, fini le pâle du lot 100) ; amorçage :
+   bleu -> rouge vif en 2,6 s puis rouge tenu ; remplissage : rouge vif,
+   tirets au débit ; bouchon : rouge -> bleu en 2,6 s puis bleu tenu.
+   Le dessin étant reconstruit à chaque envoi (~3 s), salonFluxActifs
+   mémorise QUAND chaque circuit est entré dans son étape (c9.depuis) et
+   fluxPoser reprend la transition là où elle en était (animation-delay
+   négatif) ou pose la teinte pleine si elle est finie.
+   (2) « Les compteurs électriques, pourquoi ce n'est toujours pas
+   fait » : la spec des deux colonnes avait été validée au lot 99, en
+   attente du go — le voilà. Tableau Consommation électrique : colonnes
+   « Moyenne / jour » (énergie affichée ÷ jours écoulés, 1 déc.) et
+   « Estimation annuelle » (moyenne × 365, entier), même fenêtre que la
+   colonne Énergie (_depuis sinon dates_deb) ; < 24 h de recul ou date
+   inconnue -> « — » avec infobulle ; note sous le tableau « calculées
+   sur N jours ». Pas de ligne Total : question restée sans réponse.
+   Lot 100 (client 20/09) : LE TUYAU AU REPOS EST FROID, DONC BLEU.
+   Réclamation : « la couleur des tuyaux n'a pas changé, à l'état repos
+   il est orange » — c'était un OUBLI du lot 98 (7) : la règle « rouge
+   s'il est chaud, bleu s'il est froid » avait été codée pour le FLUX
+   (teintes tuy-chaud/tuy-froid/tuy-monte/tuy-redescend, vitesse au
+   débit) mais le trait de base restait orange ECS. Corrigé : la
+   conduite au repos est BLEUE (EFS #1B6CA6, pâle, fixe) — l'eau y est
+   froide, comme l'eau bleue en veille des cuves (lot 47). L'orange
+   disparaît du tracé ; goutte de jonction et étiquettes Circuit A/B
+   passent en bleu foncé assorti (#14537d). Audit fait sur demande :
+   les 11 points du lot 98 et les 2 du lot 99 sont tous en place.
+   Lot 99 (client 20/09) : LE TRACÉ RESPIRE. (1) Le tuyau qui arrive sur
+   SA2 et qui en repart passe au MILIEU de la fiche (il longeait le haut
+   de la carte) — cohérent avec SA1 et SA3, déjà servis à mi-hauteur.
+   (2) Les montantes verticales s'écartent un peu des cartes (14 -> 26 px,
+   esthétique), bornées pour ne pas mordre les étiquettes d'étage à
+   gauche ni sortir du cadre à droite en écran étroit.
    Lot 98 (client 20/09) : LE PUPITRE SIMPLE, PASSE APRÈS PASSE.
    (1) SA1 à la MÊME LARGEUR que SA2 et SA3 : les cartes .sch-cuve ont
    une largeur commune (288 px) ; seules les jauges gardent leur hauteur
@@ -1430,7 +1466,14 @@ article.sat button{cursor:pointer}
      amorçage   -> bleu qui vire au rouge (l'ECS chasse l'EFS)
      remplissage-> rouge chaud, rapide
      bouchon    -> rouge qui vire au bleu (l'EFS repousse l'ECS)
-     récup      -> bleu froid, lent                                     */
+     récup      -> bleu froid, lent
+   Lot 101 (client 20/09 : « l'animation ne fonctionne pas bien ») : la
+   transition de teinte BOUCLAIT (bleu->rouge, saut, bleu->rouge…). Elle
+   se joue maintenant UNE seule fois (2,6 s) puis la couleur est TENUE
+   (1 forwards) : amorçage = bleu->rouge vif puis rouge tenu ; bouchon =
+   rouge->bleu puis bleu tenu. Le dessin étant refait à chaque envoi,
+   fluxPoser reprend la transition là où elle en était (delay négatif)
+   ou pose directement la teinte pleine quand elle est finie.          */
 #schTuyaux path.tuy-anim{stroke-dasharray:11 13;opacity:.85;
   animation:schFlux var(--tuyd,.9s) linear infinite}
 @keyframes schFlux{to{stroke-dashoffset:24}}
@@ -1438,15 +1481,15 @@ article.sat button{cursor:pointer}
 #schTuyaux path.tuy-froid{stroke:var(--efs,#1B6CA6)}
 #schTuyaux path.tuy-monte{--t0:var(--efs,#1B6CA6);--t1:var(--eau,#c3271e);
   animation:schFlux var(--tuyd,.9s) linear infinite,
-            tuyTeinte 2.6s linear infinite}
+            tuyTeinte 2.6s linear 1 forwards}
 #schTuyaux path.tuy-redescend{--t0:var(--eau,#c3271e);--t1:var(--efs,#1B6CA6);
   animation:schFlux var(--tuyd,.9s) linear infinite,
-            tuyTeinte 2.6s linear infinite}
-@keyframes tuyTeinte{0%{stroke:var(--t0)}80%,100%{stroke:var(--t1)}}
+            tuyTeinte 2.6s linear 1 forwards}
+@keyframes tuyTeinte{0%{stroke:var(--t0)}100%{stroke:var(--t1)}}
 .sch-chip.pompeOn span{color:var(--ecs)}
 /* Lot 91 -> 98 (5) : il ne reste QUE les étiquettes Circuit A / B sur
    le tracé — les distances sont rentrées dans les fiches (.sch-dist). */
-#schTuyaux text{font-family:var(--fs-cond);fill:#8a5a20;font-size:12px}
+#schTuyaux text{font-family:var(--fs-cond);fill:#14537d;font-size:12px} /* lot 100 : assorti au tuyau bleu */
 #schTuyaux text.circLbl{font-weight:700;font-size:12.5px;letter-spacing:.04em}
 /* Lot 98 (9) : « Eau tirée (toutes cuves) » et « Eau aujourd'hui »
    faisaient deux chips côte à côte disant la même chose — une SEULE
@@ -1846,7 +1889,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '2009.98';   // marqueur « pupitre » — bandeau, pied, salon
+const LOT        = '2009.101';  // marqueur « pupitre » — bandeau, pied, salon
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -4043,7 +4086,22 @@ function rendreElecTable(d) {
   const thead = document.createElement('thead');
   const hr = document.createElement('tr');
   const dep9 = (state.data && state.data._depuis) ? state.data._depuis : null;
+  /* lot 101 (demandé au lot 99, spec validée) : Moyenne / jour et
+     Estimation annuelle (× 365). La fenêtre est LA MÊME que la colonne
+     Énergie : date de comptage posée (_depuis) sinon départ réel des
+     compteurs (dates_deb du pilote). Jours comptés en fractionnaire —
+     la moyenne s'affine donc d'elle-même avec le temps ; moins de 24 h
+     de recul -> « — » (un chiffre extrapolé sur quelques heures serait
+     absurde). */
+  const dep0 = dep9 || dateInstallation();
+  let jours9 = 0;
+  if (dep0) {
+    const m9 = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dep0);
+    if (m9) jours9 = (Date.now()
+      - new Date(+m9[3], +m9[2] - 1, +m9[1]).getTime()) / 86400000;
+  }
   ['Compteur', dep9 ? 'Énergie · depuis le ' + dep9 : 'Énergie',
+   'Moyenne / jour', 'Estimation annuelle',
    'Puissance', 'Tension', 'Courant'].forEach(h => {
     const th = document.createElement('th'); th.textContent = h; hr.appendChild(th);
   });
@@ -4090,8 +4148,9 @@ function rendreElecTable(d) {
     td0.appendChild(adr);
     td0.title = lg.aide;
     tr.appendChild(td0);
-    lg.cols.forEach(col => {
+    lg.cols.forEach((col, i9) => {
       const td = document.createElement('td');
+      let nrj9 = null;                 /* lot 101 : l'énergie affichée */
       if (col === null) {
         td.textContent = '—';
         td.title = "Grandeur non publiée par ce compteur : énergie et puissance seulement (normal).";
@@ -4100,17 +4159,51 @@ function rendreElecTable(d) {
         if (!muet && has(v) && isFinite(v)) {
           td.appendChild(document.createTextNode(n(v, col[2])));
           td.appendChild(el('small', null, ' ' + col[1]));
+          if (i9 === 0) nrj9 = +v;
         } else {
           td.textContent = '—';
           td.title = "Compteur sans réponse sur le bus : la page affiche « — », jamais une ancienne valeur.";
         }
       }
       tr.appendChild(td);
+      if (i9 === 0) {   /* lot 101 : les deux colonnes calculées suivent
+           l'énergie AFFICHÉE (même fenêtre, brut ou daté indifférent) */
+        const ok9 = nrj9 !== null && jours9 >= 1;
+        const moy9 = ok9 ? nrj9 / jours9 : 0;
+        [[n(moy9, 1), ' kWh/j',
+          'Énergie affichée ÷ ' + n(jours9, 1) + ' jours écoulés.'],
+         [n(Math.round(moy9 * 365), 0), ' kWh',
+          'Moyenne journalière × 365 — plus il y a de jours de recul, plus elle est fiable.']]
+          .forEach(([val9, un9, aide9]) => {
+            const td9 = document.createElement('td');
+            if (ok9) {
+              td9.appendChild(document.createTextNode(val9));
+              td9.appendChild(el('small', null, un9));
+              td9.title = aide9;
+            } else {
+              td9.textContent = '—';
+              td9.title = nrj9 === null
+                ? "Pas d'énergie affichée pour ce compteur : pas de moyenne possible."
+                : (dep0
+                   ? 'Moyenne trop jeune : moins de 24 h de recul depuis le ' + dep0 + '.'
+                   : 'Date de départ des compteurs inconnue : moyenne impossible.');
+            }
+            tr.appendChild(td9);
+          });
+      }
     });
     tbody.appendChild(tr);
     if (muet) { if (!app) unAbsent = true; else unMuet = true; }
   });
   t.appendChild(tbody);
+  if (jours9 >= 1) {   /* lot 101 : dire sur QUOI porte la moyenne */
+    const je9 = Math.floor(jours9);
+    nb.appendChild(el('p', 'note',
+      'Moyenne / jour et estimation annuelle calculées sur ' + je9
+      + ' jour' + (je9 > 1 ? 's' : '')
+      + (dep0 ? ' (depuis le ' + dep0 + ')' : '')
+      + ' — elles s\u2019affinent avec le temps.'));
+  }
   if (unAbsent) nb.appendChild(el('p', 'peu-fiable-note',
     "Ligne grisée : le compteur n'apparaît pas dans le dernier envoi de "
     + "l'automate — pas de réponse sur le bus (câblage, adresse Modbus), ou un "
@@ -7442,7 +7535,15 @@ function salonTuyaux() {
     tx.textContent = t9;
     sv.appendChild(tx);
   };
-  [['A', '#c06712'], ['B', '#c06712']].forEach(([circ, coul]) => {
+  /* Lot 100 (client 20/09, rappel du lot 98 (7) : « rouge s'il est
+     chaud, bleu s'il est froid ») : au REPOS le tuyau ne charrie pas
+     d'eau chaude — il est FROID, donc BLEU. Le rouge n'apparaît que par
+     les teintes de flux ; l'orange n'existe plus sur la conduite. Même
+     logique que l'eau bleue en veille des cuves (lot 47).
+     Lot 101 (client 20/09 : « au repos le tuyau doit être bleu FONCÉ ») :
+     le bleu pâle du lot 100 devient un bleu foncé franc (#14537d,
+     opacité 0.9) — celui du point de jonction et des étiquettes. */
+  [['A', '#14537d'], ['B', '#14537d']].forEach(([circ, coul]) => {
     const cuves = [];
     g.querySelectorAll('.sch-cell[data-circ="' + circ + '"] .sch-cuve')
      .forEach(cv => cuves.push({r: cv.getBoundingClientRect(),
@@ -7459,7 +7560,7 @@ function salonTuyaux() {
       path.setAttribute('stroke-width', '6');
       path.setAttribute('stroke-linecap', 'round');
       path.setAttribute('stroke-linejoin', 'round');
-      path.setAttribute('opacity', '0.5');
+      path.setAttribute('opacity', '0.9');       /* lot 101 : foncé, franc */
       sv.appendChild(path);
     };
     /* lot 91 -> 98 (5) : dist9 SUPPRIMÉE — les distances sont rentrées
@@ -7474,12 +7575,22 @@ function salonTuyaux() {
        (bout du circuit) : les tirets du flux remontent donc depuis la
        chaufferie puis redescendent — comme l'eau. */
     if (circ === 'A' && par9.SA1 && par9.SA2 && par9.SA3) {
-      const xG = Math.min(...cuves.map(c2 => c2.r.left)) - rg.left - 14;
-      const xD = Math.max(...cuves.map(c2 => c2.r.right)) - rg.left + 14;
-      const yTop = par9.SA2.top - rg.top + 16;     /* palier du grenier   */
+      /* Lot 99 (client 20/09) : (1) les montantes s'ÉCARTENT des cartes
+         (14 -> 26 px, esthétique) — bornées pour ne jamais mordre les
+         étiquettes d'étage à gauche ni sortir du cadre SVG à droite en
+         écran étroit ; (2) le palier du grenier passe au MILIEU de la
+         carte SA2 : le tuyau y arrive et en repart à mi-hauteur, comme
+         il le fait déjà pour SA1 et SA3. */
+      const etg9 = g.querySelector('.sch-etg');
+      const xMin9 = etg9
+        ? etg9.getBoundingClientRect().right - rg.left - 6 : 0;
+      const xG = Math.max(
+        Math.min(...cuves.map(c2 => c2.r.left)) - rg.left - 26, xMin9);
+      const xD = Math.min(
+        Math.max(...cuves.map(c2 => c2.r.right)) - rg.left + 26, rg.width - 5);
+      const yTop = par9.SA2.top - rg.top + par9.SA2.height / 2;
       const y1 = par9.SA1.top - rg.top + par9.SA1.height / 2;
       const y3 = par9.SA3.top - rg.top + par9.SA3.height / 2;
-      const xS2 = par9.SA2.left - rg.left + par9.SA2.width / 2;
       const f1 = v9 => v9.toFixed(1);
       /* Lot 98 (7) : le MÊME chemin qu'au lot 92, mais en QUATRE
          tronçons nommés — chacun part du côté satellite et arrive du
@@ -7487,8 +7598,8 @@ function salonTuyaux() {
          depuis la chaufferie, comme l'eau).
          segA1 : chaufferie -> coude bas -> rez-de-chaussée
          piqA  : montante -> carte SA1
-         segA2 : rez-de-chaussée -> montante -> palier grenier -> SA2
-         segA3 : SA2 -> palier -> descente droite -> SA3                */
+         segA2 : rez-de-chaussée -> montante -> flanc gauche de SA2
+         segA3 : flanc droit de SA2 -> descente droite -> SA3          */
       trace9('M ' + f1(xG) + ' ' + f1(y1)
         + ' L ' + f1(xG) + ' ' + f1(yColl - R)
         + ' Q ' + f1(xG) + ' ' + f1(yColl) + ' '
@@ -7498,7 +7609,7 @@ function salonTuyaux() {
          (le tracé part du bord de la carte : tirets ENTRANTS). */
       trace9('M ' + f1(par9.SA1.left - rg.left + 8) + ' ' + f1(y1)
         + ' L ' + f1(xG) + ' ' + f1(y1), 'piqA');
-      trace9('M ' + f1(xS2) + ' ' + f1(yTop)
+      trace9('M ' + f1(par9.SA2.left - rg.left + 8) + ' ' + f1(yTop)
         + ' L ' + f1(xG + R) + ' ' + f1(yTop)
         + ' Q ' + f1(xG) + ' ' + f1(yTop) + ' '
                 + f1(xG) + ' ' + f1(yTop + R)
@@ -7510,7 +7621,7 @@ function salonTuyaux() {
         + ' L ' + f1(xD) + ' ' + f1(yTop + R)
         + ' Q ' + f1(xD) + ' ' + f1(yTop) + ' '
                 + f1(xD - R) + ' ' + f1(yTop)
-        + ' L ' + f1(xS2) + ' ' + f1(yTop), 'segA3');
+        + ' L ' + f1(par9.SA2.right - rg.left - 8) + ' ' + f1(yTop), 'segA3');
       texte9(xG + 9, yColl - R - 8, 'Circuit A', 'start', 'circLbl');
       return;
     }
@@ -7538,13 +7649,13 @@ function salonTuyaux() {
   ent.setAttribute('d', 'M ' + xCentre.toFixed(1) + ' ' + yColl.toFixed(1)
     + ' L ' + xCentre.toFixed(1) + ' ' + (rb.top - rg.top + 4).toFixed(1));
   ent.setAttribute('class', 'ent');                /* lot 91 : flux ciblé */
-  ent.setAttribute('fill', 'none'); ent.setAttribute('stroke', '#c06712');
+  ent.setAttribute('fill', 'none'); ent.setAttribute('stroke', '#14537d'); /* lot 101 : bleu FONCÉ au repos */
   ent.setAttribute('stroke-width', '6'); ent.setAttribute('stroke-linecap', 'round');
-  ent.setAttribute('opacity', '0.5');
+  ent.setAttribute('opacity', '0.9');
   sv.appendChild(ent);
   const pt = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
   pt.setAttribute('cx', xCentre.toFixed(1)); pt.setAttribute('cy', yColl.toFixed(1));
-  pt.setAttribute('r', '7'); pt.setAttribute('fill', '#8a5a20');
+  pt.setAttribute('r', '7'); pt.setAttribute('fill', '#14537d'); /* lot 100 */
   pt.setAttribute('opacity', '0.55');
   sv.appendChild(pt);
   salonFluxAppliquer(sv);   /* lot 98 (7) : seuls les tronçons servis bougent */
@@ -7925,6 +8036,17 @@ function salonFluxActifs(d) {
       }
     }
   });
+  /* lot 101 : QUAND chaque circuit est entré dans son étape — lu dans
+     l'ancien state.fluxSalon (même marche, même étape -> on garde le
+     timestamp), sinon maintenant. C'est ce qui permet à la transition
+     de teinte de se jouer UNE fois puis d'être tenue, alors que le
+     dessin est reconstruit à chaque envoi (~3 s). */
+  const av9 = (typeof state !== 'undefined' && state.fluxSalon) || {};
+  ['A', 'B'].forEach(k9 => {
+    const a9 = av9[k9];
+    r9[k9].depuis = (a9 && a9.on === r9[k9].on && a9.etape === r9[k9].etape
+                     && a9.depuis) ? a9.depuis : Date.now();
+  });
   return r9;
 }
 /* Lot 98 (7) : de la cuve servie au TRONÇON parcouru. Le circuit A suit
@@ -7951,7 +8073,20 @@ function fluxDuree(c9) {
 const FLUX_TEINTE = {1: 'tuy-monte', 3: 'tuy-chaud',
                      5: 'tuy-redescend', 7: 'tuy-froid'};
 function fluxPoser(p9, c9) {
-  p9.classList.add('tuy-anim', FLUX_TEINTE[c9.etape] || 'tuy-chaud');
+  /* lot 101 : la transition (2,6 s) ne se joue qu'UNE fois par étape.
+     age = temps passé dans l'étape ; transition finie -> teinte pleine
+     tenue (tuy-chaud / tuy-froid) ; en cours -> on reprend l'animation
+     là où elle en était (delay négatif : 0 s pour les tirets schFlux,
+     -age pour tuyTeinte — l'ordre suit la déclaration de la classe). */
+  let t9 = FLUX_TEINTE[c9.etape] || 'tuy-chaud';
+  const age9 = c9.depuis ? Math.max(0, (Date.now() - c9.depuis) / 1000) : 99;
+  if (age9 >= 2.6) {
+    if (t9 === 'tuy-monte')     t9 = 'tuy-chaud';
+    if (t9 === 'tuy-redescend') t9 = 'tuy-froid';
+  }
+  p9.classList.add('tuy-anim', t9);
+  if (t9 === 'tuy-monte' || t9 === 'tuy-redescend')
+    p9.style.animationDelay = '0s,' + (-age9).toFixed(2) + 's';
   p9.style.setProperty('--tuyd', fluxDuree(c9).toFixed(2) + 's');
 }
 /* Pose les classes d'animation sur les tracés déjà dessinés. L'entrée
