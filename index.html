@@ -10,7 +10,18 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   enovaQ — pupitre de supervision · pupitre 2009.108 (lot 108, 20/09/2026)
+   enovaQ — pupitre de supervision · pupitre 2009.109 (lot 109, 21/09/2026)
+   Lot 109 (client 21/09) : TUYAUX DU PUPITRE SIMPLE — DEUX COULEURS.
+   Réclamation : « les couleurs de tuyauterie ne fonctionnent pas très
+   bien ». Règle donnée par le client, appliquée telle quelle :
+   AMORÇAGE = le tuyau RESTE BLEU ; REMPLISSAGE, BASCULE DE VANNE et
+   BOUCHON = ROUGE ; RÉCUP = BLEU (la fermeture, déjà rangée dans la
+   famille récup, suit). Repos inchangé : bleu pâle fixe (lot 100).
+   Concrètement : FLUX_TEINTE passe à deux teintes tenues (tuy-froid /
+   tuy-chaud), fluxPoser ne gère plus de transition ni de reprise
+   (delay négatif du lot 101), et les règles CSS .tuy-monte /
+   .tuy-redescend + @keyframes tuyTeinte sont supprimées. Les tirets
+   de débit (schFlux) et leur vitesse au débit ne changent pas.
    Lot 108 (client 20/09) : BOUTON CAMÉRA — FILMER L'ÉCRAN.
    Un bouton à icône caméra, fixé juste SOUS la porte « Pupitre simple /
    Pupitre avancé » : il est donc présent sur les DEUX pupitres. Premier
@@ -1595,25 +1606,14 @@ article.sat button{cursor:pointer}
      remplissage-> rouge chaud, rapide
      bouchon    -> rouge qui vire au bleu (l'EFS repousse l'ECS)
      récup      -> bleu froid, lent
-   Lot 101 (client 20/09 : « l'animation ne fonctionne pas bien ») : la
-   transition de teinte BOUCLAIT (bleu->rouge, saut, bleu->rouge…). Elle
-   se joue maintenant UNE seule fois (2,6 s) puis la couleur est TENUE
-   (1 forwards) : amorçage = bleu->rouge vif puis rouge tenu ; bouchon =
-   rouge->bleu puis bleu tenu. Le dessin étant refait à chaque envoi,
-   fluxPoser reprend la transition là où elle en était (delay négatif)
-   ou pose directement la teinte pleine quand elle est finie.          */
+   Lot 109 : DEUX TEINTES, règle client — bleu à l'amorçage et à la
+   récup, rouge du remplissage au bouchon. Les transitions du lot 101
+   (.tuy-monte / .tuy-redescend, @keyframes tuyTeinte) sont SUPPRIMÉES. */
 #schTuyaux path.tuy-anim{stroke-dasharray:11 13;opacity:.85;
   animation:schFlux var(--tuyd,.9s) linear infinite}
 @keyframes schFlux{to{stroke-dashoffset:24}}
 #schTuyaux path.tuy-chaud{stroke:var(--eau,#c3271e)}
 #schTuyaux path.tuy-froid{stroke:var(--efs,#1B6CA6)}
-#schTuyaux path.tuy-monte{--t0:var(--efs,#1B6CA6);--t1:var(--eau,#c3271e);
-  animation:schFlux var(--tuyd,.9s) linear infinite,
-            tuyTeinte 2.6s linear 1 forwards}
-#schTuyaux path.tuy-redescend{--t0:var(--eau,#c3271e);--t1:var(--efs,#1B6CA6);
-  animation:schFlux var(--tuyd,.9s) linear infinite,
-            tuyTeinte 2.6s linear 1 forwards}
-@keyframes tuyTeinte{0%{stroke:var(--t0)}100%{stroke:var(--t1)}}
 .sch-chip.pompeOn span{color:var(--ecs)}
 /* Lot 91 -> 98 (5) : il ne reste QUE les étiquettes Circuit A / B sur
    le tracé — les distances sont rentrées dans les fiches (.sch-dist). */
@@ -2019,7 +2019,7 @@ function pilotePlusVieux(prog) {
   if (+p9[1] !== +a9[1]) return +p9[1] < +a9[1];
   return (p9[2] || '') < (a9[2] || '');
 }
-const LOT        = '2009.108';  // marqueur « pupitre » — bandeau, pied, salon
+const LOT        = '2009.109';  // marqueur « pupitre » — bandeau, pied, salon
 const PERIODE_MS = 2000;      // cadence de tirage (lot 43 : 3 -> 2 s)
 const PERIODE_AGE_MS = 1000;  // le compteur d'âge avance chaque seconde
 const PERIME_MS  = 90000;     // au-delà, le dernier envoi est considéré périmé
@@ -8401,25 +8401,15 @@ function fluxDuree(c9) {
   if (db9 > 0) return Math.max(0.5, Math.min(1.8, 8 / db9));
   return 0.9;
 }
-/* Teinte par phase : bleu -> rouge à l'amorçage (l'ECS chasse l'EFS),
-   rouge plein au remplissage, rouge -> bleu au bouchon, bleu à la récup. */
-const FLUX_TEINTE = {1: 'tuy-monte', 3: 'tuy-chaud',
-                     5: 'tuy-redescend', 7: 'tuy-froid'};
+/* Lot 109 — teinte par phase, règle client : BLEU à l'amorçage et à la
+   récup (fermeture comprise), ROUGE du remplissage au bouchon (bascule
+   de vanne comprise). Deux teintes tenues, plus de transition. */
+const FLUX_TEINTE = {1: 'tuy-froid', 3: 'tuy-chaud',
+                     5: 'tuy-chaud', 7: 'tuy-froid'};
 function fluxPoser(p9, c9) {
-  /* lot 101 : la transition (2,6 s) ne se joue qu'UNE fois par étape.
-     age = temps passé dans l'étape ; transition finie -> teinte pleine
-     tenue (tuy-chaud / tuy-froid) ; en cours -> on reprend l'animation
-     là où elle en était (delay négatif : 0 s pour les tirets schFlux,
-     -age pour tuyTeinte — l'ordre suit la déclaration de la classe). */
-  let t9 = FLUX_TEINTE[c9.etape] || 'tuy-chaud';
-  const age9 = c9.depuis ? Math.max(0, (Date.now() - c9.depuis) / 1000) : 99;
-  if (age9 >= 2.6) {
-    if (t9 === 'tuy-monte')     t9 = 'tuy-chaud';
-    if (t9 === 'tuy-redescend') t9 = 'tuy-froid';
-  }
-  p9.classList.add('tuy-anim', t9);
-  if (t9 === 'tuy-monte' || t9 === 'tuy-redescend')
-    p9.style.animationDelay = '0s,' + (-age9).toFixed(2) + 's';
+  /* lot 109 : la teinte est posée telle quelle — bleu ou rouge — sans
+     transition ni reprise (le delay négatif du lot 101 disparaît). */
+  p9.classList.add('tuy-anim', FLUX_TEINTE[c9.etape] || 'tuy-chaud');
   p9.style.setProperty('--tuyd', fluxDuree(c9).toFixed(2) + 's');
 }
 /* Pose les classes d'animation sur les tracés déjà dessinés. L'entrée
